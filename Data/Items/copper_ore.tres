@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Data/ItemData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = 436
+item_name = "Copper Ore"
+description = "A piece of copper ore."
+is_stackable = false
+max_stack = 1
+weight = 2.0
+value = 3
+category = "Resource"

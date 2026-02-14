@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ArmorData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Data/ArmorData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = 1117
+item_name = "Bronze Platebody"
+description = "Provides some basic protection."
+is_stackable = false
+max_stack = 1
+weight = 9.0
+value = 160
+category = "Armor"
+is_equippable = true
+defence_bonus = 15
+ranged_defence = 11
+magic_defence = -15
+required_defence_level = 1
+equipment_slot = "Body"

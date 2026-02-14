@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Data/WeaponData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = 1351
+item_name = "Bronze Axe"
+description = "A woodcutting axe."
+is_stackable = false
+max_stack = 1
+weight = 1.8
+value = 16
+category = "Tool"
+is_equippable = true
+attack_damage = 2
+attack_speed = 3.0
+attack_range = 1.5
+required_attack_level = 1
+attack_bonus = 2
+strength_bonus = 1
+combat_style = "Melee"
+attack_type = "Slash"
+attack_animation = "attack_slash"

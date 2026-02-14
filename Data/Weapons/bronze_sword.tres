@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Data/WeaponData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = 1277
+item_name = "Bronze Sword"
+description = "A razor-sharp sword."
+is_stackable = false
+max_stack = 1
+weight = 1.8
+value = 26
+category = "Weapon"
+is_equippable = true
+attack_damage = 4
+attack_speed = 2.4
+attack_range = 1.5
+required_attack_level = 1
+attack_bonus = 4
+strength_bonus = 3
+combat_style = "Melee"
+attack_type = "Slash"
+attack_animation = "attack_slash"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Data/ItemData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = 995
+item_name = "Coins"
+description = "Lovely money!"
+is_stackable = true
+max_stack = 2147483647
+weight = 0.0
+value = 1
+category = "General"

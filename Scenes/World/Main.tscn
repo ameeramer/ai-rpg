@@ -1,0 +1,155 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://Scenes/World/main.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Actors/Player/Player.tscn" id="2"]
+[ext_resource type="Script" path="res://Systems/camera_controller.gd" id="3"]
+[ext_resource type="PackedScene" path="res://UI/HUD/HUD.tscn" id="4"]
+[ext_resource type="Script" path="res://Systems/player_inventory.gd" id="5"]
+[ext_resource type="Script" path="res://Systems/player_skills.gd" id="6"]
+[ext_resource type="Script" path="res://Systems/gathering_node.gd" id="7"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_1"]
+size = Vector2(50, 50)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0.3, 0.55, 0.2, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(50, 0.1, 50)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_1"]
+vertices = PackedVector3Array(-25, 0, -25, -25, 0, 25, 25, 0, 25, 25, 0, -25)
+polygons = [PackedInt32Array(0, 1, 2, 3)]
+agent_radius = 0.4
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 10, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = Environment.new()
+
+[node name="Ground" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="GroundMesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("PlaneMesh_1")
+material_override = SubResource("StandardMaterial3D_1")
+
+[node name="GroundCollision" type="CollisionShape3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+shape = SubResource("BoxShape3D_ground")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_1")
+
+[node name="Player" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="PlayerInventory" type="Node" parent="Player"]
+script = ExtResource("5")
+
+[node name="PlayerSkills" type="Node" parent="Player"]
+script = ExtResource("6")
+
+[node name="CameraController" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.574, 0.819, 0, -0.819, 0.574, 0, 0, 0)
+script = ExtResource("3")
+
+[node name="Camera3D" type="Camera3D" parent="CameraController"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
+current = true
+
+[node name="Tree1" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 3)
+collision_layer = 8
+script = ExtResource("7")
+display_name = "Tree"
+interaction_verb = "Chop"
+ticks_per_action = 4
+required_skill = "Woodcutting"
+required_level = 1
+xp_reward = 25.0
+respawn_ticks = 15
+
+[node name="TreeTrunk" type="MeshInstance3D" parent="Tree1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+mesh = CylinderMesh.new()
+
+[node name="TreeTop" type="MeshInstance3D" parent="Tree1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
+mesh = SphereMesh.new()
+
+[node name="TreeCollision" type="CollisionShape3D" parent="Tree1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = CylinderShape3D.new()
+
+[node name="Tree2" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -2)
+collision_layer = 8
+script = ExtResource("7")
+display_name = "Oak Tree"
+interaction_verb = "Chop"
+ticks_per_action = 5
+required_skill = "Woodcutting"
+required_level = 15
+xp_reward = 37.5
+respawn_ticks = 20
+
+[node name="TreeTrunk" type="MeshInstance3D" parent="Tree2"]
+transform = Transform3D(1.3, 0, 0, 0, 1.5, 0, 0, 0, 1.3, 0, 1.5, 0)
+mesh = CylinderMesh.new()
+
+[node name="TreeTop" type="MeshInstance3D" parent="Tree2"]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, 4, 0)
+mesh = SphereMesh.new()
+
+[node name="TreeCollision" type="CollisionShape3D" parent="Tree2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = CylinderShape3D.new()
+
+[node name="Rock1" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 4)
+collision_layer = 8
+script = ExtResource("7")
+display_name = "Copper Rock"
+interaction_verb = "Mine"
+ticks_per_action = 4
+required_skill = "Mining"
+required_level = 1
+xp_reward = 17.5
+respawn_ticks = 10
+
+[node name="RockMesh" type="MeshInstance3D" parent="Rock1"]
+transform = Transform3D(1, 0, 0, 0, 0.7, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = BoxMesh.new()
+
+[node name="RockCollision" type="CollisionShape3D" parent="Rock1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = BoxShape3D.new()
+
+[node name="FishingSpot" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -6)
+collision_layer = 8
+script = ExtResource("7")
+display_name = "Fishing Spot"
+interaction_verb = "Fish"
+ticks_per_action = 5
+required_skill = "Fishing"
+required_level = 1
+xp_reward = 20.0
+respawn_ticks = 8
+
+[node name="WaterMesh" type="MeshInstance3D" parent="FishingSpot"]
+transform = Transform3D(2, 0, 0, 0, 0.1, 0, 0, 0, 2, 0, 0.05, 0)
+mesh = CylinderMesh.new()
+
+[node name="WaterCollision" type="CollisionShape3D" parent="FishingSpot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+shape = CylinderShape3D.new()
+
+[node name="HUD" parent="." instance=ExtResource("4")]

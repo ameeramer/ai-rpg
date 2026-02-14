@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Data/ItemData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = 317
+item_name = "Raw Shrimps"
+description = "Some raw shrimps."
+is_stackable = false
+max_stack = 1
+weight = 0.5
+value = 1
+category = "Food"

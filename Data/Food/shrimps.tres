@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="FoodData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Data/FoodData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = 315
+item_name = "Shrimps"
+description = "Some nicely cooked shrimps."
+is_stackable = false
+max_stack = 1
+weight = 0.5
+value = 5
+category = "Food"
+heal_amount = 3
+eat_ticks = 3
+raw_item_id = 317
+required_cooking_level = 1
+cooking_xp = 30.0
+burn_stop_level = 34
