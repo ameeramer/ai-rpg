@@ -1,0 +1,72 @@
+name: Build Android APK
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup export templates
+        run: |
+          mkdir -p /root/.local/share/godot/export_templates/4.3.stable
+          mv /root/.local/share/godot/export_templates/4.3.stable.mono /root/.local/share/godot/export_templates/4.3.stable 2>/dev/null || true
+          # Templates are pre-installed in the barichello/godot-ci image
+          ls /root/.local/share/godot/export_templates/
+
+      - name: Setup Android SDK and keystore
+        run: |
+          # Create a debug keystore for CI builds
+          mkdir -p /root/.android
+          keytool -genkey -v \
+            -keystore /root/.android/debug.keystore \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            2>/dev/null
+
+          # Configure Godot editor settings for Android export
+          mkdir -p /root/.config/godot
+          cat > /root/.config/godot/editor_settings-4.tres <<EOF
+          [gd_resource type="EditorSettings" format=3]
+          [resource]
+          export/android/android_sdk_path = "/usr/lib/android-sdk"
+          export/android/debug_keystore = "/root/.android/debug.keystore"
+          export/android/debug_keystore_user = "androiddebugkey"
+          export/android/debug_keystore_pass = "android"
+          EOF
+
+      - name: Import project
+        run: |
+          # Run Godot once to import all resources
+          godot --headless --import 2>&1 || true
+          # Wait for import to settle
+          sleep 2
+
+      - name: Create export directory
+        run: mkdir -p export
+
+      - name: Build APK
+        run: |
+          godot --headless --export-debug "Android" export/ai-rpg.apk 2>&1
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-rpg-android
+          path: export/ai-rpg.apk
+          retention-days: 14
+          if-no-files-found: error
