@@ -5,7 +5,7 @@ extends Node
 ## Emitted when the state changes.
 signal state_changed(old_state: State, new_state: State)
 
-@export var initial_state: State
+@export var initial_state: NodePath
 
 var current_state: State
 var states: Dictionary = {}
@@ -20,9 +20,11 @@ func _ready() -> void:
 			child.on_exit()  # Ensure all states start disabled
 
 	# Enter initial state
-	if initial_state:
-		current_state = initial_state
-		current_state.on_enter()
+	if initial_state != NodePath():
+		var start_node := get_node_or_null(initial_state)
+		if start_node is State:
+			current_state = start_node
+			current_state.on_enter()
 
 
 func _process(delta: float) -> void:
