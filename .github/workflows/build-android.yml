@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  GODOT_VERSION: "4.3"
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -18,17 +21,29 @@ jobs:
 
       - name: Setup export templates
         run: |
-          mkdir -p /root/.local/share/godot/export_templates/4.3.stable
-          mv /root/.local/share/godot/export_templates/4.3.stable.mono /root/.local/share/godot/export_templates/4.3.stable 2>/dev/null || true
-          # Templates are pre-installed in the barichello/godot-ci image
-          ls /root/.local/share/godot/export_templates/
+          # GitHub Actions sets HOME=/github/home inside containers,
+          # but barichello/godot-ci installs templates under /root/.
+          # Copy templates to where Godot will actually look for them.
+          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$TEMPLATE_DIR"
+          cp /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/* \
+             "$TEMPLATE_DIR/" 2>/dev/null || true
+          echo "Templates directory contents:"
+          ls -la "$TEMPLATE_DIR/" || echo "No templates found!"
+
+      - name: Setup Java SDK
+        run: |
+          # Find the Java installation path available in the container
+          JAVA_HOME_PATH=$(dirname $(dirname $(readlink -f $(which javac 2>/dev/null || which java 2>/dev/null))))
+          echo "Detected JAVA_HOME: $JAVA_HOME_PATH"
+          echo "JAVA_HOME=$JAVA_HOME_PATH" >> $GITHUB_ENV
 
       - name: Setup Android SDK and keystore
         run: |
           # Create a debug keystore for CI builds
-          mkdir -p /root/.android
+          mkdir -p "$HOME/.android"
           keytool -genkey -v \
-            -keystore /root/.android/debug.keystore \
+            -keystore "$HOME/.android/debug.keystore" \
             -storepass android \
             -alias androiddebugkey \
             -keypass android \
@@ -38,22 +53,35 @@ jobs:
             -dname "CN=Android Debug,O=Android,C=US" \
             2>/dev/null
 
+          # Find Android SDK path
+          ANDROID_SDK=""
+          for path in /usr/lib/android-sdk /opt/android-sdk "$ANDROID_HOME" "$ANDROID_SDK_ROOT"; do
+            if [ -d "$path" ]; then
+              ANDROID_SDK="$path"
+              break
+            fi
+          done
+          echo "Detected Android SDK: $ANDROID_SDK"
+
           # Configure Godot editor settings for Android export
-          mkdir -p /root/.config/godot
-          cat > /root/.config/godot/editor_settings-4.tres <<EOF
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
           [gd_resource type="EditorSettings" format=3]
+
           [resource]
-          export/android/android_sdk_path = "/usr/lib/android-sdk"
-          export/android/debug_keystore = "/root/.android/debug.keystore"
+          export/android/android_sdk_path = "$ANDROID_SDK"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          export/android/debug_keystore = "$HOME/.android/debug.keystore"
           export/android/debug_keystore_user = "androiddebugkey"
           export/android/debug_keystore_pass = "android"
           EOF
 
+          echo "Editor settings:"
+          cat "$HOME/.config/godot/editor_settings-4.tres"
+
       - name: Import project
         run: |
-          # Run Godot once to import all resources
           godot --headless --import 2>&1 || true
-          # Wait for import to settle
           sleep 2
 
       - name: Create export directory
