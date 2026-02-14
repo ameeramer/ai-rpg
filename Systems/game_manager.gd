@@ -21,6 +21,7 @@ var _tick_timer: float = 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	FileLogger.log_msg("GameManager ready")
 
 
 func _process(delta: float) -> void:
@@ -55,6 +56,7 @@ func toggle_pause() -> void:
 
 func log_action(message: String) -> void:
 	action_logged.emit(message)
+	FileLogger.log_msg(message)
 	print("[Action] ", message)
 
 

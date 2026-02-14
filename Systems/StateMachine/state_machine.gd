@@ -12,6 +12,8 @@ var states: Dictionary = {}
 
 
 func _ready() -> void:
+	FileLogger.log_msg("StateMachine._ready() states: %s, initial_state: %s" % [str(get_children().size()), str(initial_state)])
+
 	# Register all child State nodes
 	for child in get_children():
 		if child is State:
@@ -25,6 +27,11 @@ func _ready() -> void:
 		if start_node is State:
 			current_state = start_node
 			current_state.on_enter()
+			FileLogger.log_msg("StateMachine entered initial state: %s" % current_state.name)
+		else:
+			FileLogger.log_error("StateMachine: initial_state node '%s' is not a State" % str(initial_state))
+	else:
+		FileLogger.log_warning("StateMachine: no initial_state set")
 
 
 func _process(delta: float) -> void:

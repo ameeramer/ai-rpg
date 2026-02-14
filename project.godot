@@ -12,6 +12,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+FileLogger="*res://Systems/file_logger.gd"
 GameManager="*res://Systems/game_manager.gd"
 InputManager="*res://Systems/input_manager.gd"
 
@@ -72,4 +73,3 @@ pointing/emulate_mouse_from_touch=true
 
 renderer/rendering_method="mobile"
 textures/vram_compression/import_etc2_astc=true
-anti_aliasing/quality/msaa_3d=1
