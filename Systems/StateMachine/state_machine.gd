@@ -50,14 +50,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## Transition to a new state by name.
+## If already in that state, exit and re-enter (allows interrupting actions).
 func transition_to(state_name: String, msg: Dictionary = {}) -> void:
 	if not states.has(state_name):
 		push_warning("StateMachine: State '%s' not found." % state_name)
 		return
 
 	var new_state: State = states[state_name]
-	if new_state == current_state:
-		return
 
 	var old_state := current_state
 	if current_state:

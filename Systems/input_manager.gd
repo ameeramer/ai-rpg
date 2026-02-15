@@ -81,6 +81,12 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
 
+	# Exclude the player so clicks go through to objects behind them
+	var players := _camera.get_tree().get_nodes_in_group("player")
+	for p in players:
+		if p is CollisionObject3D:
+			query.exclude.append(p.get_rid())
+
 	var result := space_state.intersect_ray(query)
 	if result.is_empty():
 		return

@@ -37,6 +37,9 @@ func _ready() -> void:
 	_model_mesh = get_node_or_null("EnemyMesh") as MeshInstance3D
 	if _model_mesh and _model_mesh.material_override:
 		_original_color = _model_mesh.material_override.albedo_color
+		# Add name label if not already present
+		if not get_node_or_null("NameLabel"):
+			_add_name_label()
 	elif not _model_mesh:
 		_create_mesh()
 
@@ -85,12 +88,56 @@ func _create_mesh() -> void:
 	add_child(label)
 
 
+func _add_name_label() -> void:
+	var label := Label3D.new()
+	label.name = "NameLabel"
+	label.text = "%s (Lv %d)" % [display_name, combat_level]
+	label.font_size = 32
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.modulate = Color(1, 1, 0)
+	label.outline_size = 8
+	label.outline_modulate = Color(0, 0, 0)
+	# Position above the model
+	var mesh_top := 2.0
+	if _model_mesh:
+		mesh_top = _model_mesh.position.y + 1.0
+	label.position.y = mesh_top + 0.3
+	add_child(label)
+
+
+func _show_hitsplat(amount: int) -> void:
+	var label := Label3D.new()
+	label.text = str(amount) if amount > 0 else "Miss"
+	label.font_size = 48
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	label.outline_size = 10
+	label.outline_modulate = Color(0, 0, 0)
+	if amount > 0:
+		label.modulate = Color(1, 0.15, 0.15)
+	else:
+		label.modulate = Color(0.6, 0.6, 0.6)
+	var mesh_top := 2.0
+	if _model_mesh:
+		mesh_top = _model_mesh.position.y + 0.8
+	label.position.y = mesh_top
+	add_child(label)
+	# Animate: float up and fade out
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", mesh_top + 1.5, 0.8)
+	tween.tween_property(label, "modulate:a", 0.0, 0.8)
+	tween.set_parallel(false)
+	tween.tween_callback(label.queue_free)
+
+
 func take_damage(amount: int) -> void:
 	if _is_dead:
 		return
 	hp = max(0, hp - amount)
 	took_damage.emit(amount, hp)
 	_flash_damage()
+	_show_hitsplat(amount)
 	if hp <= 0:
 		_die()
 

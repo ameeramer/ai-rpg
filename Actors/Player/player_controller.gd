@@ -126,9 +126,32 @@ func take_damage(amount: int) -> void:
 		return
 	hitpoints = max(0, hitpoints - amount)
 	play_damage_flash()
+	_show_hitsplat(amount)
 	GameManager.log_action("You take %d damage. HP: %d/%d" % [amount, hitpoints, max_hitpoints])
 	if hitpoints <= 0:
 		_die()
+
+
+func _show_hitsplat(amount: int) -> void:
+	var label := Label3D.new()
+	label.text = str(amount) if amount > 0 else "Miss"
+	label.font_size = 48
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	label.outline_size = 10
+	label.outline_modulate = Color(0, 0, 0)
+	if amount > 0:
+		label.modulate = Color(1, 0.15, 0.15)
+	else:
+		label.modulate = Color(0.6, 0.6, 0.6)
+	label.position.y = 2.2
+	add_child(label)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", 3.5, 0.8)
+	tween.tween_property(label, "modulate:a", 0.0, 0.8)
+	tween.set_parallel(false)
+	tween.tween_callback(label.queue_free)
 
 
 func heal(amount: int) -> void:
