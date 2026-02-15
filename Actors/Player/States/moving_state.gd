@@ -1,7 +1,7 @@
 extends State
 ## Player Moving state — pathfinding to a target position.
 
-@onready var player: Node3D = owner as Node3D
+@onready var player: PlayerController = owner as PlayerController
 
 var _interact_on_arrive: bool = false
 var _interact_target: Node3D = null

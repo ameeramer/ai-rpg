@@ -1,13 +1,13 @@
 extends State
 ## Player Dead state — shows death message and respawns after a delay.
 
-@onready var player: Node3D = owner as Node3D
+@onready var player: PlayerController = owner as PlayerController
 
 var _respawn_ticks: int = 0
 const RESPAWN_DELAY_TICKS: int = 5  # ~3 seconds
 
 var _tick_connected: bool = false
-var _original_colors: Array = []
+var _original_colors: Array[Dictionary] = []
 
 
 func on_enter(_msg: Dictionary = {}) -> void:

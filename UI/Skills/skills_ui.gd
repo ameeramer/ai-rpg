@@ -7,7 +7,7 @@ var _player: Node3D
 var _skill_rows: Dictionary = {}
 
 ## Skill names — duplicated here to avoid class_name dependency issues on Android
-var SKILL_NAMES: Array = [
+const SKILL_NAMES: Array[String] = [
 	"Attack", "Strength", "Defence", "Hitpoints",
 	"Ranged", "Prayer", "Magic",
 	"Cooking", "Woodcutting", "Fishing", "Mining",
@@ -119,7 +119,7 @@ func refresh() -> void:
 			xp_bar.value = (current_xp - current_level_xp) / (next_level_xp - current_level_xp)
 
 
-func _xp_for_level(level: int) -> float:
+static func _xp_for_level(level: int) -> float:
 	var total: float = 0.0
 	for i in range(1, level):
 		total += floorf(i + 300.0 * pow(2.0, i / 7.0))

@@ -3,29 +3,28 @@ extends Node
 ## Generic Finite State Machine. Add State nodes as children.
 
 ## Emitted when the state changes.
-signal state_changed(old_state, new_state)
+signal state_changed(old_state: State, new_state: State)
 
 @export var initial_state: NodePath
 
-var current_state: Node
+var current_state: State
 var states: Dictionary = {}
 
 
 func _ready() -> void:
 	FileLogger.log_msg("StateMachine._ready() states: %s, initial_state: %s" % [str(get_children().size()), str(initial_state)])
 
-	# Register all child nodes as states.
-	# All children of StateMachine are expected to be State scripts.
-	# Avoid `is State` and `has_method()` — both fail on Android Godot 4.3.
+	# Register all child State nodes
 	for child in get_children():
-		states[child.name] = child
-		child.set("state_machine", self)
-		child.call("on_exit")  # Ensure all states start disabled
+		if child is State:
+			states[child.name] = child
+			child.state_machine = self
+			child.on_exit()  # Ensure all states start disabled
 
 	# Enter initial state
 	if initial_state != NodePath():
 		var start_node := get_node_or_null(initial_state)
-		if start_node and states.has(start_node.name):
+		if start_node is State:
 			current_state = start_node
 			current_state.on_enter()
 			FileLogger.log_msg("StateMachine entered initial state: %s" % current_state.name)
@@ -57,7 +56,7 @@ func transition_to(state_name: String, msg: Dictionary = {}) -> void:
 		push_warning("StateMachine: State '%s' not found." % state_name)
 		return
 
-	var new_state: Node = states[state_name]
+	var new_state: State = states[state_name]
 
 	var old_state := current_state
 	if current_state:

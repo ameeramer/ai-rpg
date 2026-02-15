@@ -3,7 +3,7 @@ extends State
 ## Handles repeating actions (e.g., chopping tree tick by tick).
 ## NOTE: has_method() fails on Android Godot 4.3 — use .call() directly.
 
-@onready var player: Node3D = owner as Node3D
+@onready var player: PlayerController = owner as PlayerController
 
 var _target: Node3D = null
 var _tick_connected: bool = false

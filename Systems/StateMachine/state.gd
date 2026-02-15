@@ -3,7 +3,7 @@ extends Node
 ## Base class for all states in a StateMachine.
 ## Override the virtual methods to implement state behavior.
 
-var state_machine: Node
+var state_machine: StateMachine
 
 
 ## Called when entering this state. msg is optional data from the transition.

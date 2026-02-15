@@ -1,7 +1,7 @@
 extends State
 ## Player Idle state — waiting for input.
 
-@onready var player: Node3D = owner as Node3D
+@onready var player: PlayerController = owner as PlayerController
 
 
 func on_enter(_msg: Dictionary = {}) -> void:

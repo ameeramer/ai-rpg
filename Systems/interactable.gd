@@ -9,7 +9,7 @@ extends StaticBody3D
 @export var required_skill: String = ""  # Skill name required (empty = none)
 @export var required_level: int = 1
 @export var xp_reward: float = 0.0
-@export var drop_table: Array = []
+@export var drop_table: Array[DropTableEntry] = []
 
 ## Whether this object can be interacted with right now
 @export var is_active: bool = true
@@ -107,7 +107,7 @@ func _complete_action(player: Node3D) -> Dictionary:
 	return {"completed": false}
 
 
-func _give_item_to_player(player: Node3D, item, quantity: int) -> void:
+func _give_item_to_player(player: Node3D, item: ItemData, quantity: int) -> void:
 	# Use .call("add_item") which emits signals and handles stacking
 	if player.get("_initialized"):
 		var added = player.call("add_item", item, quantity)

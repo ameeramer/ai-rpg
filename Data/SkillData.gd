@@ -17,7 +17,7 @@ const XP_TABLE_SIZE: int = 100
 
 ## Calculate XP required for a given level using OSRS formula.
 ## Level 1 = 0 XP, Level 2 = 83 XP, etc.
-func xp_for_level(level: int) -> float:
+static func xp_for_level(level: int) -> float:
 	var total: float = 0.0
 	for i in range(1, level):
 		total += floorf(i + 300.0 * pow(2.0, i / 7.0))
@@ -25,7 +25,7 @@ func xp_for_level(level: int) -> float:
 
 
 ## Get the level for a given amount of XP.
-func level_for_xp(xp: float) -> int:
+static func level_for_xp(xp: float) -> int:
 	for level in range(99, 0, -1):
 		if xp >= xp_for_level(level):
 			return level
