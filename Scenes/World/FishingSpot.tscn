@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://Systems/gathering_node.gd" id="1"]
+[ext_resource type="Script" path="res://Systems/interactable.gd" id="1"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_water"]
 radius = 1.5

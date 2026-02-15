@@ -95,14 +95,17 @@ func _on_game_tick(_tick) -> void:
 
 
 func _perform_attack() -> void:
+	FileLogger.log_msg("Combat: _perform_attack() start")
 	var max_hit := _calculate_max_hit()
 	var damage := randi_range(0, max_hit)
+	FileLogger.log_msg("Combat: max_hit=%d damage=%d" % [max_hit, damage])
 
 	# Call take_damage directly — we know layer 4 objects are enemies with this method
-	# has_method() fails on Android, so skip the check
 	_target.call("take_damage", damage)
 
-	var target_name: String = _target.get("display_name") if _target.get("display_name") else _target.name
+	var target_name = _target.get("display_name")
+	if target_name == null:
+		target_name = _target.name
 	if damage > 0:
 		GameManager.log_action("You hit the %s for %d damage." % [target_name, damage])
 	else:

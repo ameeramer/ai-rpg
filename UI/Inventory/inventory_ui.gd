@@ -10,15 +10,19 @@ var _slot_buttons: Array = []
 
 
 func _ready() -> void:
-	columns = 4  # 4 columns x 7 rows = 28 slots
+	FileLogger.log_msg("InventoryUI._ready() start")
+	columns = 4
 	add_theme_constant_override("h_separation", 6)
 	add_theme_constant_override("v_separation", 6)
 	_create_slots()
+	FileLogger.log_msg("InventoryUI._ready() done, %d buttons" % _slot_buttons.size())
 
 
 func setup() -> void:
+	FileLogger.log_msg("InventoryUI.setup() start")
 	PlayerInventory.inventory_changed.connect(refresh)
 	refresh()
+	FileLogger.log_msg("InventoryUI.setup() done")
 
 
 func _create_slots() -> void:

@@ -15,7 +15,9 @@ var _initialized: bool = false
 
 
 func _ready() -> void:
+	FileLogger.log_msg("PlayerInventory._ready() start")
 	ensure_initialized()
+	FileLogger.log_msg("PlayerInventory._ready() done")
 
 
 func ensure_initialized() -> void:

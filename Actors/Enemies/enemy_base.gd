@@ -1,18 +1,18 @@
-class_name EnemyBase
 extends CharacterBody3D
 ## Base class for all enemies. Handles HP, combat, drops, and respawn.
-## Creates visible meshes programmatically based on display_name.
+## NO class_name — referenced by script path in .tscn files.
+## Meshes MUST be defined as sub_resource in .tscn (Android requirement).
 
 @export var display_name: String = "Enemy"
 @export var max_hp: int = 10
 @export var attack_damage: int = 1
-@export var attack_speed_ticks: int = 4  # Ticks between attacks
+@export var attack_speed_ticks: int = 4
 @export var attack_range: float = 2.0
-@export var aggro_range: float = 0.0  # 0 = passive, >0 = aggressive within range
+@export var aggro_range: float = 0.0
 @export var combat_level: int = 1
-@export var xp_reward: float = 40.0  # Total combat XP on kill
+@export var xp_reward: float = 40.0
 @export var drop_table: Array = []
-@export var respawn_ticks: int = 50  # ~30 seconds
+@export var respawn_ticks: int = 50
 
 signal died(enemy)
 signal took_damage(amount, current_hp)
@@ -29,76 +29,24 @@ var _initialized: bool = false
 
 
 func _ready() -> void:
-	FileLogger.log_msg("EnemyBase._ready() %s (display_name=%s)" % [name, display_name])
 	ensure_initialized()
 
 
-## Idempotent initialization — safe to call multiple times.
-## On Android, _ready() may not fire for PackedScene scripts, so Main.gd
-## calls this explicitly as a fallback.
 func ensure_initialized() -> void:
 	if _initialized:
 		return
 	_initialized = true
-
 	hp = max_hp
 	_spawn_position = global_position
-	collision_layer = 4  # Layer 3: Enemies
-	collision_mask = 3   # Collide with world + player
-
-	# Use existing EnemyMesh if defined in .tscn, otherwise create one
+	collision_layer = 4
+	collision_mask = 3
 	_model_mesh = get_node_or_null("EnemyMesh") as MeshInstance3D
 	if _model_mesh and _model_mesh.material_override:
 		_original_color = _model_mesh.material_override.albedo_color
-		if not get_node_or_null("NameLabel"):
-			_add_name_label()
-	elif not _model_mesh:
-		_create_mesh()
-
+	if not get_node_or_null("NameLabel"):
+		_add_name_label()
 	GameManager.game_tick.connect(_on_game_tick)
-	add_to_group("enemies")
-	FileLogger.log_msg("EnemyBase.initialized: %s hp=%d atk=%d aggro=%.1f" % [display_name, hp, attack_damage, aggro_range])
-
-
-func _create_mesh() -> void:
-	var capsule := CapsuleMesh.new()
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-
-	var name_lower := display_name.to_lower()
-	if name_lower.contains("goblin"):
-		capsule.radius = 0.4
-		capsule.height = 1.4
-		mat.albedo_color = Color(0.3, 0.55, 0.2)
-	elif name_lower.contains("skeleton"):
-		capsule.radius = 0.35
-		capsule.height = 1.8
-		mat.albedo_color = Color(0.85, 0.82, 0.75)
-	else:
-		capsule.radius = 0.4
-		capsule.height = 1.6
-		mat.albedo_color = Color(0.6, 0.2, 0.2)
-
-	_original_color = mat.albedo_color
-
-	_model_mesh = MeshInstance3D.new()
-	_model_mesh.name = "EnemyMesh"
-	_model_mesh.mesh = capsule
-	_model_mesh.material_override = mat
-	_model_mesh.position.y = capsule.height / 2.0
-	add_child(_model_mesh)
-
-	# Add name label above the enemy
-	var label := Label3D.new()
-	label.name = "NameLabel"
-	label.text = "%s (Lv %d)" % [display_name, combat_level]
-	label.font_size = 32
-	label.position.y = capsule.height + 0.3
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.modulate = Color(1, 1, 0)
-	label.outline_size = 8
-	label.outline_modulate = Color(0, 0, 0)
-	add_child(label)
+	FileLogger.log_msg("Enemy.init: %s hp=%d aggro=%.1f" % [display_name, hp, aggro_range])
 
 
 func _add_name_label() -> void:
@@ -110,7 +58,6 @@ func _add_name_label() -> void:
 	label.modulate = Color(1, 1, 0)
 	label.outline_size = 8
 	label.outline_modulate = Color(0, 0, 0)
-	# Position above the model
 	var mesh_top := 2.0
 	if _model_mesh:
 		mesh_top = _model_mesh.position.y + 1.0
@@ -118,34 +65,8 @@ func _add_name_label() -> void:
 	add_child(label)
 
 
-func _show_hitsplat(amount: int) -> void:
-	var label := Label3D.new()
-	label.text = str(amount) if amount > 0 else "Miss"
-	label.font_size = 48
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.no_depth_test = true
-	label.outline_size = 10
-	label.outline_modulate = Color(0, 0, 0)
-	if amount > 0:
-		label.modulate = Color(1, 0.15, 0.15)
-	else:
-		label.modulate = Color(0.6, 0.6, 0.6)
-	var mesh_top := 2.0
-	if _model_mesh:
-		mesh_top = _model_mesh.position.y + 0.8
-	label.position.y = mesh_top
-	add_child(label)
-	# Animate: float up and fade out
-	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(label, "position:y", mesh_top + 1.5, 0.8)
-	tween.tween_property(label, "modulate:a", 0.0, 0.8)
-	tween.set_parallel(false)
-	tween.tween_callback(label.queue_free)
-
-
 func take_damage(amount: int) -> void:
-	ensure_initialized()  # Safety: ensure HP is set before taking damage
+	ensure_initialized()
 	if _is_dead:
 		return
 	hp = max(0, hp - amount)
@@ -159,10 +80,32 @@ func take_damage(amount: int) -> void:
 func _flash_damage() -> void:
 	if not _model_mesh or not _model_mesh.material_override:
 		return
-	var mat: StandardMaterial3D = _model_mesh.material_override
+	var mat = _model_mesh.material_override
 	var tween := create_tween()
 	tween.tween_property(mat, "albedo_color", Color(1, 0.15, 0.15), 0.05)
 	tween.tween_property(mat, "albedo_color", _original_color, 0.2)
+
+
+func _show_hitsplat(amount: int) -> void:
+	var label := Label3D.new()
+	label.text = str(amount) if amount > 0 else "Miss"
+	label.font_size = 48
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	label.outline_size = 10
+	label.outline_modulate = Color(0, 0, 0)
+	label.modulate = Color(1, 0.15, 0.15) if amount > 0 else Color(0.6, 0.6, 0.6)
+	var mesh_top := 2.0
+	if _model_mesh:
+		mesh_top = _model_mesh.position.y + 0.8
+	label.position.y = mesh_top
+	add_child(label)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", mesh_top + 1.5, 0.8)
+	tween.tween_property(label, "modulate:a", 0.0, 0.8)
+	tween.set_parallel(false)
+	tween.tween_callback(label.queue_free)
 
 
 func is_dead() -> bool:
@@ -173,12 +116,8 @@ func _on_game_tick(_tick) -> void:
 	if _is_dead:
 		_handle_respawn()
 		return
-
-	# Aggro check
 	if _target == null and aggro_range > 0:
 		_check_aggro()
-
-	# Attack if in combat
 	if _target and is_instance_valid(_target):
 		_combat_tick()
 
@@ -186,7 +125,6 @@ func _on_game_tick(_tick) -> void:
 func _check_aggro() -> void:
 	var players := get_tree().get_nodes_in_group("player")
 	for player in players:
-		# Don't aggro dead players
 		if player.get("hitpoints") != null and player.get("hitpoints") <= 0:
 			continue
 		if global_position.distance_to(player.global_position) <= aggro_range:
@@ -199,17 +137,13 @@ func _combat_tick() -> void:
 	if not is_instance_valid(_target):
 		_target = null
 		return
-
-	# Don't attack dead players
 	if _target.get("hitpoints") != null and _target.get("hitpoints") <= 0:
 		_target = null
 		return
-
 	var distance := global_position.distance_to(_target.global_position)
 	if distance > aggro_range * 2 and aggro_range > 0:
 		_target = null
 		return
-
 	_ticks_since_attack += 1
 	if _ticks_since_attack >= attack_speed_ticks and distance <= attack_range:
 		_perform_attack()
@@ -219,7 +153,6 @@ func _combat_tick() -> void:
 func _perform_attack() -> void:
 	if _target:
 		var damage := randi_range(0, attack_damage)
-		# Call take_damage directly — has_method fails on Android
 		_target.call("take_damage", damage)
 		if damage > 0:
 			GameManager.log_action("The %s hits you for %d damage." % [display_name, damage])
@@ -230,16 +163,9 @@ func _perform_attack() -> void:
 func _die() -> void:
 	_is_dead = true
 	_target = null
-
 	_drop_loot()
-
-	# Grant combat XP via autoload singleton
 	PlayerSkills.add_combat_xp(xp_reward)
-	FileLogger.log_msg("Combat XP: %.1f total (split Attack/HP)" % xp_reward)
-
 	died.emit(self)
-
-	# Hide and start respawn timer
 	visible = false
 	collision_layer = 0
 	_respawn_counter = respawn_ticks
@@ -247,11 +173,11 @@ func _die() -> void:
 
 func _drop_loot() -> void:
 	for entry in drop_table:
-		var drop := entry.roll()
-		if not drop.is_empty():
+		var drop = entry.call("roll")
+		if drop and not drop.is_empty():
 			var item = drop["item"]
-			var qty: int = drop["quantity"]
-			GameManager.log_action("The %s drops: %s x%d" % [display_name, item.get_display_name(), qty])
+			var qty = drop["quantity"]
+			GameManager.log_action("The %s drops: %s x%d" % [display_name, item.call("get_display_name"), qty])
 			var added = PlayerInventory.add_item(item, qty)
 			if not added:
 				GameManager.log_action("Your inventory is full!")
