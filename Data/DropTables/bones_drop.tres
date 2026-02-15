@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DropTableEntry" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Data/DropTableEntry.gd" id="1"]
+[ext_resource type="Resource" path="res://Data/Items/bones.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+item = ExtResource("2")
+min_quantity = 1
+max_quantity = 1
+drop_chance = 1.0

@@ -60,7 +60,7 @@ func _update_hp_bar() -> void:
 		hp_bar.max_value = _player.max_hitpoints
 		hp_bar.value = _player.hitpoints
 	if hp_label and _player:
-		hp_label.text = "%d / %d" % [_player.hitpoints, _player.max_hitpoints]
+		hp_label.text = "HP: %d / %d" % [_player.hitpoints, _player.max_hitpoints]
 
 
 func _toggle_inventory() -> void:

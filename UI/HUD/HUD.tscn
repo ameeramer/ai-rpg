@@ -1,6 +1,44 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://UI/HUD/hud.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp"]
+bg_color = Color(0.6, 0.1, 0.1, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.2, 0.75, 0.15, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel_bg"]
+bg_color = Color(0.12, 0.1, 0.08, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.4, 0.35, 0.25, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_log_bg"]
+bg_color = Color(0.05, 0.05, 0.05, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.25, 0.18, 0.8)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1")
@@ -12,21 +50,23 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
 
 [node name="TopBar" type="HBoxContainer" parent="MainContainer"]
 layout_mode = 2
 size_flags_vertical = 0
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 44)
 mouse_filter = 2
 
 [node name="HPBar" type="ProgressBar" parent="MainContainer/TopBar"]
 layout_mode = 2
-custom_minimum_size = Vector2(150, 32)
+custom_minimum_size = Vector2(180, 36)
 size_flags_vertical = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_hp")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 max_value = 10.0
 value = 10.0
 show_percentage = false
@@ -38,11 +78,17 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "10 / 10"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 14
+text = "HP: 10 / 10"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="PrayerBar" type="ProgressBar" parent="MainContainer/TopBar"]
+visible = false
 layout_mode = 2
 custom_minimum_size = Vector2(150, 32)
 size_flags_vertical = 4
@@ -63,7 +109,8 @@ vertical_alignment = 1
 
 [node name="DebugBtn" type="Button" parent="MainContainer/TopBar"]
 layout_mode = 2
-custom_minimum_size = Vector2(48, 48)
+custom_minimum_size = Vector2(48, 36)
+theme_override_font_sizes/font_size = 11
 text = "DBG"
 
 [node name="Spacer" type="Control" parent="MainContainer/TopBar"]
@@ -72,8 +119,9 @@ size_flags_horizontal = 3
 mouse_filter = 2
 
 [node name="Minimap" type="Control" parent="MainContainer/TopBar"]
+visible = false
 layout_mode = 2
-custom_minimum_size = Vector2(150, 150)
+custom_minimum_size = Vector2(100, 100)
 
 [node name="MinimapBG" type="ColorRect" parent="MainContainer/TopBar/Minimap"]
 layout_mode = 1
@@ -88,7 +136,7 @@ color = Color(0.1, 0.1, 0.1, 0.7)
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 3
-custom_minimum_size = Vector2(220, 0)
+custom_minimum_size = Vector2(280, 0)
 mouse_filter = 2
 
 [node name="TabButtons" type="HBoxContainer" parent="MainContainer/SidePanel"]
@@ -99,30 +147,37 @@ mouse_filter = 2
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 40)
+theme_override_font_sizes/font_size = 14
 text = "Inventory"
 
 [node name="SkillsTab" type="Button" parent="MainContainer/SidePanel/TabButtons"]
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 40)
+theme_override_font_sizes/font_size = 14
 text = "Skills"
 
 [node name="InventoryPanel" type="Panel" parent="MainContainer/SidePanel"]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel_bg")
 
 [node name="SkillsPanel" type="Panel" parent="MainContainer/SidePanel"]
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel_bg")
 
 [node name="BottomBar" type="PanelContainer" parent="MainContainer"]
 layout_mode = 2
 size_flags_vertical = 8
-custom_minimum_size = Vector2(0, 100)
+custom_minimum_size = Vector2(0, 80)
+theme_override_styles/panel = SubResource("StyleBoxFlat_log_bg")
 
 [node name="ActionLog" type="RichTextLabel" parent="MainContainer/BottomBar"]
 layout_mode = 2
+theme_override_colors/default_color = Color(0.9, 0.85, 0.7, 1)
+theme_override_font_sizes/normal_font_size = 13
 bbcode_enabled = true
 text = "Welcome to AI RPG."
 scroll_following = true

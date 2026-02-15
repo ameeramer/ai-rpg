@@ -7,7 +7,7 @@ extends CharacterBody3D
 @export var interaction_range: float = 2.0
 
 const PLAYER_MODEL_PATH := "res://Assets/Models/Characters/player_character.glb"
-const PLAYER_MODEL_SCALE := Vector3(0.5, 0.5, 0.5)
+const PLAYER_MODEL_SCALE := Vector3(1.0, 1.0, 1.0)
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var nav_agent: NavigationAgent3D = $NavigationAgent3D

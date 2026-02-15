@@ -15,44 +15,62 @@ func setup(skills: PlayerSkills) -> void:
 
 
 func _build_ui() -> void:
-	# Clear existing children
 	for child in get_children():
 		child.queue_free()
 
+	add_theme_constant_override("separation", 2)
+
+	var xp_bg := StyleBoxFlat.new()
+	xp_bg.bg_color = Color(0.15, 0.12, 0.08, 0.8)
+	xp_bg.corner_radius_top_left = 2
+	xp_bg.corner_radius_top_right = 2
+	xp_bg.corner_radius_bottom_right = 2
+	xp_bg.corner_radius_bottom_left = 2
+
+	var xp_fill := StyleBoxFlat.new()
+	xp_fill.bg_color = Color(0.2, 0.65, 0.15, 1)
+	xp_fill.corner_radius_top_left = 2
+	xp_fill.corner_radius_top_right = 2
+	xp_fill.corner_radius_bottom_right = 2
+	xp_fill.corner_radius_bottom_left = 2
+
 	for skill_name in PlayerSkills.SKILL_NAMES:
-		var row := _create_skill_row(skill_name)
+		var row := _create_skill_row(skill_name, xp_bg, xp_fill)
 		add_child(row)
 		_skill_rows[skill_name] = row
 
 
-func _create_skill_row(skill_name: String) -> HBoxContainer:
+func _create_skill_row(skill_name: String, xp_bg: StyleBoxFlat, xp_fill: StyleBoxFlat) -> HBoxContainer:
 	var row := HBoxContainer.new()
-	row.custom_minimum_size = Vector2(0, 28)
+	row.custom_minimum_size = Vector2(0, 24)
 
-	# Skill name label
 	var name_label := Label.new()
 	name_label.name = "NameLabel"
 	name_label.text = skill_name
-	name_label.custom_minimum_size = Vector2(90, 0)
+	name_label.custom_minimum_size = Vector2(100, 0)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
 	row.add_child(name_label)
 
-	# Level label
 	var level_label := Label.new()
 	level_label.name = "LevelLabel"
 	level_label.text = "1"
 	level_label.custom_minimum_size = Vector2(30, 0)
 	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	level_label.add_theme_font_size_override("font_size", 14)
+	level_label.add_theme_color_override("font_color", Color(1, 0.9, 0.5))
 	row.add_child(level_label)
 
-	# XP progress bar
 	var progress := ProgressBar.new()
 	progress.name = "XPBar"
-	progress.custom_minimum_size = Vector2(80, 0)
+	progress.custom_minimum_size = Vector2(70, 0)
 	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress.show_percentage = false
 	progress.max_value = 1.0
 	progress.value = 0.0
+	progress.add_theme_stylebox_override("background", xp_bg)
+	progress.add_theme_stylebox_override("fill", xp_fill)
 	row.add_child(progress)
 
 	return row

@@ -5,11 +5,13 @@ extends State
 @onready var player: PlayerController = owner as PlayerController
 
 var _target: Node3D = null
-var _tick_connection: Callable
+var _tick_connected: bool = false
 
 
 func on_enter(msg: Dictionary = {}) -> void:
 	_target = msg.get("target", null)
+	_tick_connected = false
+
 	if _target == null or not _target.has_method("interact"):
 		FileLogger.log_msg("Interacting: no valid target, returning to Idle")
 		state_machine.transition_to("Idle")
@@ -28,6 +30,10 @@ func on_enter(msg: Dictionary = {}) -> void:
 	if look_pos.distance_to(player.global_position) > 0.01:
 		player.look_at(look_pos, Vector3.UP)
 
+	# Stop movement
+	player.velocity = Vector3.ZERO
+	player.is_moving = false
+
 	# Start interaction
 	FileLogger.log_msg("Interacting: starting interaction with '%s'" % (_target.name))
 	var success: bool = _target.interact(player)
@@ -38,8 +44,8 @@ func on_enter(msg: Dictionary = {}) -> void:
 
 	# If it's a repeating action, connect to game tick
 	if _target.has_method("is_repeating") and _target.is_repeating():
-		_tick_connection = _on_game_tick
-		GameManager.game_tick.connect(_tick_connection)
+		GameManager.game_tick.connect(_on_game_tick)
+		_tick_connected = true
 
 	if player.anim_player:
 		var anim_name: String = "interact"
@@ -51,17 +57,33 @@ func on_enter(msg: Dictionary = {}) -> void:
 
 func on_exit() -> void:
 	FileLogger.log_msg("Interacting: exiting state")
-	if _tick_connection.is_valid() and GameManager.game_tick.is_connected(_tick_connection):
-		GameManager.game_tick.disconnect(_tick_connection)
+	if _tick_connected and GameManager.game_tick.is_connected(_on_game_tick):
+		GameManager.game_tick.disconnect(_on_game_tick)
+		_tick_connected = false
 
-	if _target and _target.has_method("stop_interaction"):
+	if is_instance_valid(_target) and _target.has_method("stop_interaction"):
 		_target.stop_interaction(player)
 
 	_target = null
 
 
+func on_physics_update(_delta: float) -> void:
+	# Safety: if target became invalid or depleted while interacting, go to idle
+	if _target == null or not is_instance_valid(_target):
+		state_machine.transition_to("Idle")
+		return
+	if _target is Interactable and _target._is_depleted:
+		state_machine.transition_to("Idle")
+		return
+
+
 func _on_game_tick(_tick: int) -> void:
 	if _target == null or not is_instance_valid(_target):
+		state_machine.transition_to("Idle")
+		return
+
+	# Check if target was depleted
+	if _target is Interactable and _target._is_depleted:
 		state_machine.transition_to("Idle")
 		return
 
