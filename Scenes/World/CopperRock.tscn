@@ -1,30 +1,11 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Systems/interactable.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Assets/Models/World/rock_copper.glb" id="rock_model"]
+[ext_resource type="PackedScene" path="res://Assets/Models/World/rock_depleted.glb" id="depleted_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_rock"]
 size = Vector3(1.5, 1.2, 1.5)
-
-[sub_resource type="StandardMaterial3D" id="mat_rock"]
-shading_mode = 0
-albedo_color = Color(0.65, 0.42, 0.18, 1)
-
-[sub_resource type="BoxMesh" id="mesh_rock"]
-size = Vector3(1.3, 1.0, 1.3)
-
-[sub_resource type="StandardMaterial3D" id="mat_rock_vein"]
-shading_mode = 0
-albedo_color = Color(0.8, 0.5, 0.15, 1)
-
-[sub_resource type="BoxMesh" id="mesh_rock_vein"]
-size = Vector3(0.5, 0.4, 0.15)
-
-[sub_resource type="StandardMaterial3D" id="mat_rock_depleted"]
-shading_mode = 0
-albedo_color = Color(0.35, 0.33, 0.3, 1)
-
-[sub_resource type="BoxMesh" id="mesh_rock_depleted"]
-size = Vector3(1.1, 0.6, 1.1)
 
 [node name="CopperRock" type="StaticBody3D"]
 collision_layer = 8
@@ -43,20 +24,9 @@ shape = SubResource("BoxShape3D_rock")
 
 [node name="ActiveMesh" type="Node3D" parent="."]
 
-[node name="Rock" type="MeshInstance3D" parent="ActiveMesh"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("mesh_rock")
-material_override = SubResource("mat_rock")
-
-[node name="Vein" type="MeshInstance3D" parent="ActiveMesh"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.6)
-mesh = SubResource("mesh_rock_vein")
-material_override = SubResource("mat_rock_vein")
+[node name="RockModel" parent="ActiveMesh" instance=ExtResource("rock_model")]
 
 [node name="DepletedMesh" type="Node3D" parent="."]
 visible = false
 
-[node name="DepletedRock" type="MeshInstance3D" parent="DepletedMesh"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
-mesh = SubResource("mesh_rock_depleted")
-material_override = SubResource("mat_rock_depleted")
+[node name="DepletedModel" parent="DepletedMesh" instance=ExtResource("depleted_model")]
