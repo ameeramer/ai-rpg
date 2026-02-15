@@ -42,7 +42,7 @@ func show_for_item(item, slot_idx: int, screen_pos: Vector2) -> void:
 	var header = Label.new()
 	header.text = item.call("get_display_name")
 	header.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
-	header.add_theme_font_size_override("font_size", 26)
+	header.add_theme_font_size_override("font_size", 39)
 	_vbox.add_child(header)
 	# Determine available actions
 	var actions = _get_actions_for_item(item)
@@ -52,10 +52,10 @@ func show_for_item(item, slot_idx: int, screen_pos: Vector2) -> void:
 	var vp_size = get_viewport().get_visible_rect().size
 	var px = screen_pos.x
 	var py = screen_pos.y
-	if px + 200 > vp_size.x:
-		px = vp_size.x - 200
-	if py + 300 > vp_size.y:
-		py = vp_size.y - 300
+	if px + 300 > vp_size.x:
+		px = vp_size.x - 300
+	if py + 450 > vp_size.y:
+		py = vp_size.y - 450
 	position = Vector2(px, py)
 	visible = true
 
@@ -88,8 +88,8 @@ func _get_actions_for_item(item) -> Array:
 func _add_action_button(action_name: String) -> void:
 	var btn = Button.new()
 	btn.text = action_name
-	btn.custom_minimum_size = Vector2(200, 60)
-	btn.add_theme_font_size_override("font_size", 26)
+	btn.custom_minimum_size = Vector2(300, 90)
+	btn.add_theme_font_size_override("font_size", 39)
 	var style_n = StyleBoxFlat.new()
 	style_n.bg_color = Color(0.18, 0.15, 0.1, 0.9)
 	style_n.corner_radius_top_left = 4

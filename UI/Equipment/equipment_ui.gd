@@ -24,7 +24,7 @@ func _ready() -> void:
 	_setup_render_viewport()
 	_build_layout()
 	_stats_label = Label.new()
-	_stats_label.add_theme_font_size_override("font_size", 26)
+	_stats_label.add_theme_font_size_override("font_size", 39)
 	_stats_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
 	_stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_stats_label)
@@ -76,9 +76,9 @@ func _build_layout() -> void:
 		add_child(hbox)
 		for slot_name in row:
 			var btn = Button.new()
-			btn.custom_minimum_size = Vector2(100, 100)
+			btn.custom_minimum_size = Vector2(150, 150)
 			btn.add_theme_stylebox_override("normal", slot_style)
-			btn.add_theme_font_size_override("font_size", 16)
+			btn.add_theme_font_size_override("font_size", 24)
 			btn.add_theme_color_override("font_color", Color(0.5, 0.45, 0.35))
 			btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			btn.expand_icon = true

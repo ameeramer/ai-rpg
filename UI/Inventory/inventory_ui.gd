@@ -1,6 +1,6 @@
 extends GridContainer
 
-var SLOT_SIZE = Vector2(110, 110)
+var SLOT_SIZE = Vector2(165, 165)
 var SLOT_COUNT: int = 28
 var ICON_RES: int = 128
 
@@ -85,7 +85,7 @@ func _create_slots() -> void:
 		btn.add_theme_stylebox_override("normal", slot_normal)
 		btn.add_theme_stylebox_override("hover", slot_hover)
 		btn.add_theme_stylebox_override("pressed", slot_hover)
-		btn.add_theme_font_size_override("font_size", 22)
+		btn.add_theme_font_size_override("font_size", 33)
 		btn.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
 		btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		btn.expand_icon = true

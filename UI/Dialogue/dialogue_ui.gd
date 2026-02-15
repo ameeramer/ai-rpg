@@ -27,18 +27,18 @@ func _ready() -> void:
 	style.content_margin_right = 20
 	style.content_margin_bottom = 16
 	add_theme_stylebox_override("panel", style)
-	custom_minimum_size = Vector2(640, 0)
+	custom_minimum_size = Vector2(960, 0)
 	var vbox = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 12)
 	add_child(vbox)
 	_name_label = Label.new()
 	_name_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))
-	_name_label.add_theme_font_size_override("font_size", 30)
+	_name_label.add_theme_font_size_override("font_size", 45)
 	vbox.add_child(_name_label)
 	_text_label = RichTextLabel.new()
 	_text_label.bbcode_enabled = true
-	_text_label.custom_minimum_size = Vector2(580, 90)
-	_text_label.add_theme_font_size_override("normal_font_size", 28)
+	_text_label.custom_minimum_size = Vector2(870, 135)
+	_text_label.add_theme_font_size_override("normal_font_size", 42)
 	_text_label.add_theme_color_override("default_color", Color(0.9, 0.85, 0.7))
 	_text_label.fit_content = true
 	_text_label.scroll_active = false
@@ -68,8 +68,8 @@ func _btn_style() -> StyleBoxFlat:
 func _make_btn(label: String, style: StyleBoxFlat, parent: Node) -> Button:
 	var btn = Button.new()
 	btn.text = label
-	btn.custom_minimum_size = Vector2(140, 56)
-	btn.add_theme_font_size_override("font_size", 26)
+	btn.custom_minimum_size = Vector2(210, 84)
+	btn.add_theme_font_size_override("font_size", 39)
 	btn.add_theme_stylebox_override("normal", style)
 	parent.add_child(btn)
 	return btn
