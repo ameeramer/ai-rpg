@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=52 format=3]
 
 [ext_resource type="Script" path="res://Scenes/World/main.gd" id="1"]
 [ext_resource type="PackedScene" path="res://Actors/Player/Player.tscn" id="2"]
@@ -30,35 +30,6 @@ vertices = PackedVector3Array(-40, 0, -40, -40, 0, 40, 40, 0, 40, 40, 0, -40)
 polygons = [PackedInt32Array(0, 1, 2, 3)]
 agent_radius = 0.4
 
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_tree"]
-radius = 0.8
-height = 4.0
-
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_oak"]
-radius = 1.0
-height = 5.0
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_rock"]
-size = Vector3(1.5, 1.2, 1.5)
-
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_water"]
-radius = 1.5
-height = 0.5
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_goblin"]
-radius = 0.5
-height = 1.6
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_skeleton"]
-radius = 0.4
-height = 2.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_water"]
-transparency = 1
-albedo_color = Color(0.15, 0.4, 0.75, 0.5)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_water"]
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dirt_path"]
 shading_mode = 0
 albedo_color = Color(0.45, 0.35, 0.2, 1)
@@ -68,6 +39,127 @@ size = Vector2(3, 20)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_path2"]
 size = Vector2(25, 3)
+
+; --- Tree meshes ---
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_tree"]
+radius = 0.8
+height = 4.0
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_oak"]
+radius = 1.0
+height = 5.0
+
+[sub_resource type="StandardMaterial3D" id="mat_trunk"]
+shading_mode = 0
+albedo_color = Color(0.45, 0.3, 0.15, 1)
+
+[sub_resource type="CylinderMesh" id="mesh_trunk"]
+top_radius = 0.25
+bottom_radius = 0.35
+height = 2.5
+
+[sub_resource type="StandardMaterial3D" id="mat_canopy"]
+shading_mode = 0
+albedo_color = Color(0.18, 0.5, 0.12, 1)
+
+[sub_resource type="SphereMesh" id="mesh_canopy"]
+radius = 1.5
+height = 3.0
+
+[sub_resource type="StandardMaterial3D" id="mat_stump"]
+shading_mode = 0
+albedo_color = Color(0.4, 0.28, 0.12, 1)
+
+[sub_resource type="CylinderMesh" id="mesh_stump"]
+top_radius = 0.4
+bottom_radius = 0.45
+height = 0.5
+
+[sub_resource type="CylinderMesh" id="mesh_oak_trunk"]
+top_radius = 0.35
+bottom_radius = 0.45
+height = 3.5
+
+[sub_resource type="StandardMaterial3D" id="mat_oak_canopy"]
+shading_mode = 0
+albedo_color = Color(0.12, 0.42, 0.08, 1)
+
+[sub_resource type="SphereMesh" id="mesh_oak_canopy"]
+radius = 2.2
+height = 4.0
+
+; --- Rock meshes ---
+[sub_resource type="BoxShape3D" id="BoxShape3D_rock"]
+size = Vector3(1.5, 1.2, 1.5)
+
+[sub_resource type="StandardMaterial3D" id="mat_rock"]
+shading_mode = 0
+albedo_color = Color(0.65, 0.42, 0.18, 1)
+
+[sub_resource type="BoxMesh" id="mesh_rock"]
+size = Vector3(1.3, 1.0, 1.3)
+
+[sub_resource type="StandardMaterial3D" id="mat_rock_vein"]
+shading_mode = 0
+albedo_color = Color(0.8, 0.5, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="mesh_rock_vein"]
+size = Vector3(0.5, 0.4, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="mat_rock_depleted"]
+shading_mode = 0
+albedo_color = Color(0.35, 0.33, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="mesh_rock_depleted"]
+size = Vector3(1.1, 0.6, 1.1)
+
+; --- Fishing meshes ---
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_water"]
+radius = 1.5
+height = 0.5
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_water"]
+transparency = 1
+albedo_color = Color(0.15, 0.4, 0.75, 0.5)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_water"]
+
+; --- Enemy meshes ---
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_goblin"]
+radius = 0.5
+height = 1.6
+
+[sub_resource type="StandardMaterial3D" id="mat_goblin"]
+shading_mode = 0
+albedo_color = Color(0.3, 0.55, 0.2, 1)
+
+[sub_resource type="CapsuleMesh" id="mesh_goblin"]
+radius = 0.4
+height = 1.4
+
+[sub_resource type="StandardMaterial3D" id="mat_goblin_head"]
+shading_mode = 0
+albedo_color = Color(0.35, 0.6, 0.25, 1)
+
+[sub_resource type="SphereMesh" id="mesh_goblin_head"]
+radius = 0.25
+height = 0.5
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_skeleton"]
+radius = 0.4
+height = 2.0
+
+[sub_resource type="StandardMaterial3D" id="mat_skeleton"]
+shading_mode = 0
+albedo_color = Color(0.85, 0.82, 0.75, 1)
+
+[sub_resource type="CapsuleMesh" id="mesh_skeleton"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="SphereMesh" id="mesh_skeleton_head"]
+radius = 0.22
+height = 0.44
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1")
@@ -109,7 +201,7 @@ material_override = SubResource("StandardMaterial3D_dirt_path")
 navigation_mesh = SubResource("NavigationMesh_1")
 
 [node name="Player" parent="." instance=ExtResource("2")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 2)
 
 [node name="PlayerInventory" type="Node" parent="Player"]
 script = ExtResource("5")
@@ -127,6 +219,8 @@ max_zoom = 18.0
 [node name="Camera3D" type="Camera3D" parent="CameraController"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
 current = true
+
+; ==================== FOREST ZONE ====================
 
 [node name="ForestZone" type="Node3D" parent="."]
 
@@ -147,6 +241,26 @@ respawn_ticks = 15
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 shape = SubResource("CylinderShape3D_tree")
 
+[node name="ActiveMesh" type="Node3D" parent="ForestZone/Tree1"]
+
+[node name="Trunk" type="MeshInstance3D" parent="ForestZone/Tree1/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+mesh = SubResource("mesh_trunk")
+material_override = SubResource("mat_trunk")
+
+[node name="Canopy" type="MeshInstance3D" parent="ForestZone/Tree1/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
+mesh = SubResource("mesh_canopy")
+material_override = SubResource("mat_canopy")
+
+[node name="DepletedMesh" type="Node3D" parent="ForestZone/Tree1"]
+visible = false
+
+[node name="Stump" type="MeshInstance3D" parent="ForestZone/Tree1/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("mesh_stump")
+material_override = SubResource("mat_stump")
+
 [node name="Tree2" type="StaticBody3D" parent="ForestZone"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 2)
 collision_layer = 8
@@ -163,6 +277,26 @@ respawn_ticks = 15
 [node name="Collision" type="CollisionShape3D" parent="ForestZone/Tree2"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 shape = SubResource("CylinderShape3D_tree")
+
+[node name="ActiveMesh" type="Node3D" parent="ForestZone/Tree2"]
+
+[node name="Trunk" type="MeshInstance3D" parent="ForestZone/Tree2/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+mesh = SubResource("mesh_trunk")
+material_override = SubResource("mat_trunk")
+
+[node name="Canopy" type="MeshInstance3D" parent="ForestZone/Tree2/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
+mesh = SubResource("mesh_canopy")
+material_override = SubResource("mat_canopy")
+
+[node name="DepletedMesh" type="Node3D" parent="ForestZone/Tree2"]
+visible = false
+
+[node name="Stump" type="MeshInstance3D" parent="ForestZone/Tree2/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("mesh_stump")
+material_override = SubResource("mat_stump")
 
 [node name="Tree3" type="StaticBody3D" parent="ForestZone"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 7)
@@ -181,6 +315,26 @@ respawn_ticks = 15
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 shape = SubResource("CylinderShape3D_tree")
 
+[node name="ActiveMesh" type="Node3D" parent="ForestZone/Tree3"]
+
+[node name="Trunk" type="MeshInstance3D" parent="ForestZone/Tree3/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+mesh = SubResource("mesh_trunk")
+material_override = SubResource("mat_trunk")
+
+[node name="Canopy" type="MeshInstance3D" parent="ForestZone/Tree3/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
+mesh = SubResource("mesh_canopy")
+material_override = SubResource("mat_canopy")
+
+[node name="DepletedMesh" type="Node3D" parent="ForestZone/Tree3"]
+visible = false
+
+[node name="Stump" type="MeshInstance3D" parent="ForestZone/Tree3/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("mesh_stump")
+material_override = SubResource("mat_stump")
+
 [node name="Tree4" type="StaticBody3D" parent="ForestZone"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, 5)
 collision_layer = 8
@@ -197,6 +351,26 @@ respawn_ticks = 15
 [node name="Collision" type="CollisionShape3D" parent="ForestZone/Tree4"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 shape = SubResource("CylinderShape3D_tree")
+
+[node name="ActiveMesh" type="Node3D" parent="ForestZone/Tree4"]
+
+[node name="Trunk" type="MeshInstance3D" parent="ForestZone/Tree4/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+mesh = SubResource("mesh_trunk")
+material_override = SubResource("mat_trunk")
+
+[node name="Canopy" type="MeshInstance3D" parent="ForestZone/Tree4/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
+mesh = SubResource("mesh_canopy")
+material_override = SubResource("mat_canopy")
+
+[node name="DepletedMesh" type="Node3D" parent="ForestZone/Tree4"]
+visible = false
+
+[node name="Stump" type="MeshInstance3D" parent="ForestZone/Tree4/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("mesh_stump")
+material_override = SubResource("mat_stump")
 
 [node name="Tree5" type="StaticBody3D" parent="ForestZone"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 10)
@@ -215,6 +389,26 @@ respawn_ticks = 15
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 shape = SubResource("CylinderShape3D_tree")
 
+[node name="ActiveMesh" type="Node3D" parent="ForestZone/Tree5"]
+
+[node name="Trunk" type="MeshInstance3D" parent="ForestZone/Tree5/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+mesh = SubResource("mesh_trunk")
+material_override = SubResource("mat_trunk")
+
+[node name="Canopy" type="MeshInstance3D" parent="ForestZone/Tree5/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, 0)
+mesh = SubResource("mesh_canopy")
+material_override = SubResource("mat_canopy")
+
+[node name="DepletedMesh" type="Node3D" parent="ForestZone/Tree5"]
+visible = false
+
+[node name="Stump" type="MeshInstance3D" parent="ForestZone/Tree5/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("mesh_stump")
+material_override = SubResource("mat_stump")
+
 [node name="OakTree1" type="StaticBody3D" parent="ForestZone"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 8)
 collision_layer = 8
@@ -231,6 +425,26 @@ respawn_ticks = 20
 [node name="Collision" type="CollisionShape3D" parent="ForestZone/OakTree1"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
 shape = SubResource("CylinderShape3D_oak")
+
+[node name="ActiveMesh" type="Node3D" parent="ForestZone/OakTree1"]
+
+[node name="Trunk" type="MeshInstance3D" parent="ForestZone/OakTree1/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+mesh = SubResource("mesh_oak_trunk")
+material_override = SubResource("mat_trunk")
+
+[node name="Canopy" type="MeshInstance3D" parent="ForestZone/OakTree1/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.82, 0)
+mesh = SubResource("mesh_oak_canopy")
+material_override = SubResource("mat_oak_canopy")
+
+[node name="DepletedMesh" type="Node3D" parent="ForestZone/OakTree1"]
+visible = false
+
+[node name="Stump" type="MeshInstance3D" parent="ForestZone/OakTree1/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("mesh_stump")
+material_override = SubResource("mat_stump")
 
 [node name="OakTree2" type="StaticBody3D" parent="ForestZone"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 0, 4)
@@ -249,6 +463,26 @@ respawn_ticks = 20
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
 shape = SubResource("CylinderShape3D_oak")
 
+[node name="ActiveMesh" type="Node3D" parent="ForestZone/OakTree2"]
+
+[node name="Trunk" type="MeshInstance3D" parent="ForestZone/OakTree2/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+mesh = SubResource("mesh_oak_trunk")
+material_override = SubResource("mat_trunk")
+
+[node name="Canopy" type="MeshInstance3D" parent="ForestZone/OakTree2/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.82, 0)
+mesh = SubResource("mesh_oak_canopy")
+material_override = SubResource("mat_oak_canopy")
+
+[node name="DepletedMesh" type="Node3D" parent="ForestZone/OakTree2"]
+visible = false
+
+[node name="Stump" type="MeshInstance3D" parent="ForestZone/OakTree2/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("mesh_stump")
+material_override = SubResource("mat_stump")
+
 [node name="OakTree3" type="StaticBody3D" parent="ForestZone"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 12)
 collision_layer = 8
@@ -265,6 +499,28 @@ respawn_ticks = 20
 [node name="Collision" type="CollisionShape3D" parent="ForestZone/OakTree3"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
 shape = SubResource("CylinderShape3D_oak")
+
+[node name="ActiveMesh" type="Node3D" parent="ForestZone/OakTree3"]
+
+[node name="Trunk" type="MeshInstance3D" parent="ForestZone/OakTree3/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+mesh = SubResource("mesh_oak_trunk")
+material_override = SubResource("mat_trunk")
+
+[node name="Canopy" type="MeshInstance3D" parent="ForestZone/OakTree3/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.82, 0)
+mesh = SubResource("mesh_oak_canopy")
+material_override = SubResource("mat_oak_canopy")
+
+[node name="DepletedMesh" type="Node3D" parent="ForestZone/OakTree3"]
+visible = false
+
+[node name="Stump" type="MeshInstance3D" parent="ForestZone/OakTree3/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("mesh_stump")
+material_override = SubResource("mat_stump")
+
+; ==================== MINING ZONE ====================
 
 [node name="MiningZone" type="Node3D" parent="."]
 
@@ -285,6 +541,26 @@ respawn_ticks = 10
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 shape = SubResource("BoxShape3D_rock")
 
+[node name="ActiveMesh" type="Node3D" parent="MiningZone/CopperRock1"]
+
+[node name="Rock" type="MeshInstance3D" parent="MiningZone/CopperRock1/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("mesh_rock")
+material_override = SubResource("mat_rock")
+
+[node name="Vein" type="MeshInstance3D" parent="MiningZone/CopperRock1/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.6)
+mesh = SubResource("mesh_rock_vein")
+material_override = SubResource("mat_rock_vein")
+
+[node name="DepletedMesh" type="Node3D" parent="MiningZone/CopperRock1"]
+visible = false
+
+[node name="DepletedRock" type="MeshInstance3D" parent="MiningZone/CopperRock1/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+mesh = SubResource("mesh_rock_depleted")
+material_override = SubResource("mat_rock_depleted")
+
 [node name="CopperRock2" type="StaticBody3D" parent="MiningZone"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 8)
 collision_layer = 8
@@ -301,6 +577,26 @@ respawn_ticks = 10
 [node name="Collision" type="CollisionShape3D" parent="MiningZone/CopperRock2"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 shape = SubResource("BoxShape3D_rock")
+
+[node name="ActiveMesh" type="Node3D" parent="MiningZone/CopperRock2"]
+
+[node name="Rock" type="MeshInstance3D" parent="MiningZone/CopperRock2/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("mesh_rock")
+material_override = SubResource("mat_rock")
+
+[node name="Vein" type="MeshInstance3D" parent="MiningZone/CopperRock2/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.6)
+mesh = SubResource("mesh_rock_vein")
+material_override = SubResource("mat_rock_vein")
+
+[node name="DepletedMesh" type="Node3D" parent="MiningZone/CopperRock2"]
+visible = false
+
+[node name="DepletedRock" type="MeshInstance3D" parent="MiningZone/CopperRock2/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+mesh = SubResource("mesh_rock_depleted")
+material_override = SubResource("mat_rock_depleted")
 
 [node name="CopperRock3" type="StaticBody3D" parent="MiningZone"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, 9)
@@ -319,6 +615,26 @@ respawn_ticks = 10
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 shape = SubResource("BoxShape3D_rock")
 
+[node name="ActiveMesh" type="Node3D" parent="MiningZone/CopperRock3"]
+
+[node name="Rock" type="MeshInstance3D" parent="MiningZone/CopperRock3/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("mesh_rock")
+material_override = SubResource("mat_rock")
+
+[node name="Vein" type="MeshInstance3D" parent="MiningZone/CopperRock3/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.6)
+mesh = SubResource("mesh_rock_vein")
+material_override = SubResource("mat_rock_vein")
+
+[node name="DepletedMesh" type="Node3D" parent="MiningZone/CopperRock3"]
+visible = false
+
+[node name="DepletedRock" type="MeshInstance3D" parent="MiningZone/CopperRock3/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+mesh = SubResource("mesh_rock_depleted")
+material_override = SubResource("mat_rock_depleted")
+
 [node name="CopperRock4" type="StaticBody3D" parent="MiningZone"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 5)
 collision_layer = 8
@@ -336,6 +652,28 @@ respawn_ticks = 10
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 shape = SubResource("BoxShape3D_rock")
 
+[node name="ActiveMesh" type="Node3D" parent="MiningZone/CopperRock4"]
+
+[node name="Rock" type="MeshInstance3D" parent="MiningZone/CopperRock4/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("mesh_rock")
+material_override = SubResource("mat_rock")
+
+[node name="Vein" type="MeshInstance3D" parent="MiningZone/CopperRock4/ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0.6)
+mesh = SubResource("mesh_rock_vein")
+material_override = SubResource("mat_rock_vein")
+
+[node name="DepletedMesh" type="Node3D" parent="MiningZone/CopperRock4"]
+visible = false
+
+[node name="DepletedRock" type="MeshInstance3D" parent="MiningZone/CopperRock4/DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+mesh = SubResource("mesh_rock_depleted")
+material_override = SubResource("mat_rock_depleted")
+
+; ==================== FISHING ZONE ====================
+
 [node name="FishingZone" type="Node3D" parent="."]
 
 [node name="FishingSpot1" type="StaticBody3D" parent="FishingZone"]
@@ -351,7 +689,9 @@ xp_reward = 10.0
 drop_table = [ExtResource("12")]
 respawn_ticks = 8
 
-[node name="WaterMesh" type="MeshInstance3D" parent="FishingZone/FishingSpot1"]
+[node name="ActiveMesh" type="Node3D" parent="FishingZone/FishingSpot1"]
+
+[node name="WaterMesh" type="MeshInstance3D" parent="FishingZone/FishingSpot1/ActiveMesh"]
 transform = Transform3D(3, 0, 0, 0, 0.1, 0, 0, 0, 3, 0, 0.05, 0)
 mesh = SubResource("CylinderMesh_water")
 material_override = SubResource("StandardMaterial3D_water")
@@ -373,7 +713,9 @@ xp_reward = 10.0
 drop_table = [ExtResource("12")]
 respawn_ticks = 8
 
-[node name="WaterMesh" type="MeshInstance3D" parent="FishingZone/FishingSpot2"]
+[node name="ActiveMesh" type="Node3D" parent="FishingZone/FishingSpot2"]
+
+[node name="WaterMesh" type="MeshInstance3D" parent="FishingZone/FishingSpot2/ActiveMesh"]
 transform = Transform3D(3, 0, 0, 0, 0.1, 0, 0, 0, 3, 0, 0.05, 0)
 mesh = SubResource("CylinderMesh_water")
 material_override = SubResource("StandardMaterial3D_water")
@@ -395,7 +737,9 @@ xp_reward = 10.0
 drop_table = [ExtResource("12")]
 respawn_ticks = 8
 
-[node name="WaterMesh" type="MeshInstance3D" parent="FishingZone/FishingSpot3"]
+[node name="ActiveMesh" type="Node3D" parent="FishingZone/FishingSpot3"]
+
+[node name="WaterMesh" type="MeshInstance3D" parent="FishingZone/FishingSpot3/ActiveMesh"]
 transform = Transform3D(3, 0, 0, 0, 0.1, 0, 0, 0, 3, 0, 0.05, 0)
 mesh = SubResource("CylinderMesh_water")
 material_override = SubResource("StandardMaterial3D_water")
@@ -403,6 +747,8 @@ material_override = SubResource("StandardMaterial3D_water")
 [node name="Collision" type="CollisionShape3D" parent="FishingZone/FishingSpot3"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
 shape = SubResource("CylinderShape3D_water")
+
+; ==================== GOBLIN CAMP ====================
 
 [node name="GoblinCamp" type="Node3D" parent="."]
 
@@ -426,6 +772,16 @@ respawn_ticks = 50
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("CapsuleShape3D_goblin")
 
+[node name="EnemyMesh" type="MeshInstance3D" parent="GoblinCamp/Goblin1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+mesh = SubResource("mesh_goblin")
+material_override = SubResource("mat_goblin")
+
+[node name="Head" type="MeshInstance3D" parent="GoblinCamp/Goblin1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+mesh = SubResource("mesh_goblin_head")
+material_override = SubResource("mat_goblin_head")
+
 [node name="Goblin2" type="CharacterBody3D" parent="GoblinCamp"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -6)
 collision_layer = 4
@@ -445,6 +801,16 @@ respawn_ticks = 50
 [node name="Collision" type="CollisionShape3D" parent="GoblinCamp/Goblin2"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("CapsuleShape3D_goblin")
+
+[node name="EnemyMesh" type="MeshInstance3D" parent="GoblinCamp/Goblin2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+mesh = SubResource("mesh_goblin")
+material_override = SubResource("mat_goblin")
+
+[node name="Head" type="MeshInstance3D" parent="GoblinCamp/Goblin2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+mesh = SubResource("mesh_goblin_head")
+material_override = SubResource("mat_goblin_head")
 
 [node name="Goblin3" type="CharacterBody3D" parent="GoblinCamp"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, -10)
@@ -466,6 +832,16 @@ respawn_ticks = 50
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("CapsuleShape3D_goblin")
 
+[node name="EnemyMesh" type="MeshInstance3D" parent="GoblinCamp/Goblin3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+mesh = SubResource("mesh_goblin")
+material_override = SubResource("mat_goblin")
+
+[node name="Head" type="MeshInstance3D" parent="GoblinCamp/Goblin3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+mesh = SubResource("mesh_goblin_head")
+material_override = SubResource("mat_goblin_head")
+
 [node name="Goblin4" type="CharacterBody3D" parent="GoblinCamp"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0, -11)
 collision_layer = 4
@@ -485,6 +861,18 @@ respawn_ticks = 50
 [node name="Collision" type="CollisionShape3D" parent="GoblinCamp/Goblin4"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
 shape = SubResource("CapsuleShape3D_goblin")
+
+[node name="EnemyMesh" type="MeshInstance3D" parent="GoblinCamp/Goblin4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+mesh = SubResource("mesh_goblin")
+material_override = SubResource("mat_goblin")
+
+[node name="Head" type="MeshInstance3D" parent="GoblinCamp/Goblin4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+mesh = SubResource("mesh_goblin_head")
+material_override = SubResource("mat_goblin_head")
+
+; ==================== SKELETON GRAVEYARD ====================
 
 [node name="SkeletonGraveyard" type="Node3D" parent="."]
 
@@ -508,6 +896,16 @@ respawn_ticks = 80
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_skeleton")
 
+[node name="EnemyMesh" type="MeshInstance3D" parent="SkeletonGraveyard/Skeleton1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("mesh_skeleton")
+material_override = SubResource("mat_skeleton")
+
+[node name="Head" type="MeshInstance3D" parent="SkeletonGraveyard/Skeleton1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+mesh = SubResource("mesh_skeleton_head")
+material_override = SubResource("mat_skeleton")
+
 [node name="Skeleton2" type="CharacterBody3D" parent="SkeletonGraveyard"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -8)
 collision_layer = 4
@@ -528,6 +926,16 @@ respawn_ticks = 80
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_skeleton")
 
+[node name="EnemyMesh" type="MeshInstance3D" parent="SkeletonGraveyard/Skeleton2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("mesh_skeleton")
+material_override = SubResource("mat_skeleton")
+
+[node name="Head" type="MeshInstance3D" parent="SkeletonGraveyard/Skeleton2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+mesh = SubResource("mesh_skeleton_head")
+material_override = SubResource("mat_skeleton")
+
 [node name="Skeleton3" type="CharacterBody3D" parent="SkeletonGraveyard"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -14)
 collision_layer = 4
@@ -547,5 +955,15 @@ respawn_ticks = 80
 [node name="Collision" type="CollisionShape3D" parent="SkeletonGraveyard/Skeleton3"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_skeleton")
+
+[node name="EnemyMesh" type="MeshInstance3D" parent="SkeletonGraveyard/Skeleton3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("mesh_skeleton")
+material_override = SubResource("mat_skeleton")
+
+[node name="Head" type="MeshInstance3D" parent="SkeletonGraveyard/Skeleton3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+mesh = SubResource("mesh_skeleton_head")
+material_override = SubResource("mat_skeleton")
 
 [node name="HUD" parent="." instance=ExtResource("4")]

@@ -19,11 +19,11 @@ func _ready() -> void:
 	collision_layer = 8  # Layer 4: Interactables
 	_gathers_remaining = randi_range(min_gathers, max_gathers)
 
-	# Look for existing mesh variants first
+	# Look for existing mesh variants defined in .tscn
 	_active_mesh = get_node_or_null("ActiveMesh")
 	_depleted_mesh = get_node_or_null("DepletedMesh")
 
-	# Create default meshes if none exist
+	# Only create programmatic meshes as last resort
 	if not _active_mesh:
 		_create_default_meshes()
 

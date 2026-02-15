@@ -150,11 +150,21 @@ func play_attack_animation() -> void:
 
 
 func play_damage_flash() -> void:
-	var mesh := model.get_node_or_null("PlayerMesh") as MeshInstance3D
-	if not mesh or not mesh.material_override:
+	if not model:
 		return
-	var mat: StandardMaterial3D = mesh.material_override
-	var original := mat.albedo_color
+	# Collect original colors first
+	var parts: Array[Dictionary] = []
+	for child in model.get_children():
+		if child is MeshInstance3D and child.material_override is StandardMaterial3D:
+			parts.append({"mat": child.material_override, "color": child.material_override.albedo_color})
+	if parts.is_empty():
+		return
 	var tween := create_tween()
-	tween.tween_property(mat, "albedo_color", Color(1, 0.2, 0.2), 0.05)
-	tween.tween_property(mat, "albedo_color", original, 0.15)
+	tween.set_parallel(true)
+	for p in parts:
+		tween.tween_property(p["mat"], "albedo_color", Color(1, 0.2, 0.2), 0.05)
+	tween.set_parallel(false)
+	tween.tween_interval(0.05)
+	tween.set_parallel(true)
+	for p in parts:
+		tween.tween_property(p["mat"], "albedo_color", p["color"], 0.15)

@@ -33,7 +33,12 @@ func _ready() -> void:
 	collision_layer = 4  # Layer 3: Enemies
 	collision_mask = 3   # Collide with world + player
 
-	_create_mesh()
+	# Use existing EnemyMesh if defined in .tscn, otherwise create one
+	_model_mesh = get_node_or_null("EnemyMesh") as MeshInstance3D
+	if _model_mesh and _model_mesh.material_override:
+		_original_color = _model_mesh.material_override.albedo_color
+	elif not _model_mesh:
+		_create_mesh()
 
 	GameManager.game_tick.connect(_on_game_tick)
 	add_to_group("enemies")
