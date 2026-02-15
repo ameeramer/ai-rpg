@@ -17,8 +17,8 @@ func _ready() -> void:
 	hud.setup(player)
 	FileLogger.log_msg("HUD setup done")
 
-	# Set up inventory UI
-	var inventory_panel := hud.get_node_or_null("MainContainer/SidePanel/InventoryPanel")
+	# Set up inventory UI inside the overlay panel
+	var inventory_panel := hud.get_node_or_null("InventoryOverlay/VBox/InventoryPanel")
 	if inventory_panel:
 		var inv_ui := InventoryUI.new()
 		inv_ui.name = "InventoryGrid"
@@ -28,8 +28,8 @@ func _ready() -> void:
 			inv_ui.setup(player_inv)
 	FileLogger.log_msg("Inventory UI done")
 
-	# Set up skills UI
-	var skills_panel := hud.get_node_or_null("MainContainer/SidePanel/SkillsPanel")
+	# Set up skills UI inside the scroll container
+	var skills_panel := hud.get_node_or_null("SkillsOverlay/VBox/SkillsScroll/SkillsPanel")
 	if skills_panel:
 		var skills_ui := SkillsUI.new()
 		skills_ui.name = "SkillsList"
@@ -39,13 +39,5 @@ func _ready() -> void:
 			skills_ui.setup(player_skills)
 	FileLogger.log_msg("Skills UI done")
 
-	# Connect tab buttons
-	var inv_tab := hud.get_node_or_null("MainContainer/SidePanel/TabButtons/InventoryTab")
-	var skills_tab := hud.get_node_or_null("MainContainer/SidePanel/TabButtons/SkillsTab")
-	if inv_tab:
-		inv_tab.pressed.connect(func(): hud._toggle_inventory())
-	if skills_tab:
-		skills_tab.pressed.connect(func(): hud._toggle_skills())
-
 	FileLogger.log_msg("Main._ready() complete")
-	GameManager.log_action("Welcome to AI RPG! Click to move, click objects to interact.")
+	GameManager.log_action("Welcome to AI RPG! Tap to move, tap objects to interact.")

@@ -2,7 +2,7 @@ class_name InventoryUI
 extends GridContainer
 ## Renders the 28-slot inventory grid with OSRS-style slot buttons.
 
-const SLOT_SIZE := Vector2(62, 62)
+const SLOT_SIZE := Vector2(68, 68)
 
 var _inventory: PlayerInventory
 var _slot_buttons: Array[Button] = []
@@ -54,7 +54,7 @@ func _create_slots() -> void:
 		btn.add_theme_stylebox_override("normal", slot_normal)
 		btn.add_theme_stylebox_override("hover", slot_hover)
 		btn.add_theme_stylebox_override("pressed", slot_hover)
-		btn.add_theme_font_size_override("font_size", 11)
+		btn.add_theme_font_size_override("font_size", 13)
 		btn.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
 		btn.text = ""
 		btn.pressed.connect(_on_slot_pressed.bind(i))

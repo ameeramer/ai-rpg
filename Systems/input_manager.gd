@@ -3,7 +3,6 @@ extends Node
 ## Converts all input into world-space actions.
 
 ## Emitted when the player taps/clicks a point in the 3D world.
-## position: Vector3 world position, normal: Vector3 surface normal
 signal world_clicked(position: Vector3, normal: Vector3)
 
 ## Emitted when the player taps/clicks on a Node3D (e.g., an enemy, tree, NPC).
@@ -90,7 +89,17 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 	var hit_normal: Vector3 = result["normal"]
 	var collider: Node3D = result["collider"]
 
-	# Check if we hit an interactable object (on layer 4)
+	# Check if we hit an enemy (layer 3, value 4)
+	if collider.get_collision_layer_value(3) or _has_enemy_parent(collider):
+		var enemy := _find_enemy(collider)
+		if enemy:
+			if is_context:
+				object_context.emit(enemy, screen_pos)
+			else:
+				object_clicked.emit(enemy, hit_position)
+			return
+
+	# Check if we hit an interactable object (layer 4, value 8)
 	if collider.get_collision_layer_value(4) or _has_interactable_parent(collider):
 		var interactable := _find_interactable(collider)
 		if interactable:
@@ -115,13 +124,31 @@ func _has_interactable_parent(node: Node) -> bool:
 
 
 func _find_interactable(node: Node) -> Node3D:
-	# Check self first
 	if node.has_method("interact"):
 		return node as Node3D
-	# Walk up to find the interactable parent
 	var parent := node.get_parent()
 	while parent:
 		if parent.has_method("interact"):
+			return parent as Node3D
+		parent = parent.get_parent()
+	return null
+
+
+func _has_enemy_parent(node: Node) -> bool:
+	var parent := node.get_parent()
+	while parent:
+		if parent is EnemyBase:
+			return true
+		parent = parent.get_parent()
+	return false
+
+
+func _find_enemy(node: Node) -> Node3D:
+	if node is EnemyBase:
+		return node as Node3D
+	var parent := node.get_parent()
+	while parent:
+		if parent is EnemyBase:
 			return parent as Node3D
 		parent = parent.get_parent()
 	return null

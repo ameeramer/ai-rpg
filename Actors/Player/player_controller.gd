@@ -4,10 +4,7 @@ extends CharacterBody3D
 ## Child nodes: StateMachine, NavigationAgent3D, CollisionShape3D, AnimationPlayer
 
 @export var move_speed: float = 4.0
-@export var interaction_range: float = 2.0
-
-const PLAYER_MODEL_PATH := "res://Assets/Models/Characters/player_character.glb"
-const PLAYER_MODEL_SCALE := Vector3(1.0, 1.0, 1.0)
+@export var interaction_range: float = 3.0
 
 @onready var state_machine: StateMachine = $StateMachine
 @onready var nav_agent: NavigationAgent3D = $NavigationAgent3D
@@ -19,16 +16,13 @@ var target_object: Node3D = null
 var target_position: Vector3 = Vector3.ZERO
 var is_moving: bool = false
 
-## Player stats — these get set up by the Skills system
+## Player stats
 var hitpoints: int = 10
 var max_hitpoints: int = 10
 
 
 func _ready() -> void:
 	FileLogger.log_msg("PlayerController._ready() start")
-
-	# Load 3D player model
-	_load_player_model()
 
 	# Connect to InputManager signals
 	InputManager.world_clicked.connect(_on_world_clicked)
@@ -44,38 +38,46 @@ func _ready() -> void:
 	FileLogger.log_msg("PlayerController._ready() done")
 
 
-func _load_player_model() -> void:
-	var scene: PackedScene = load(PLAYER_MODEL_PATH)
-	if not scene:
-		FileLogger.log_msg("Failed to load player model: " + PLAYER_MODEL_PATH)
-		return
-	# Remove the placeholder capsule mesh
-	var placeholder := model.get_node_or_null("PlayerMesh")
-	if placeholder:
-		placeholder.queue_free()
-	var instance := scene.instantiate()
-	instance.scale = PLAYER_MODEL_SCALE
-	instance.name = "PlayerModel"
-	model.add_child(instance)
-	FileLogger.log_msg("Player 3D model loaded")
-
-
 func _on_world_clicked(world_pos: Vector3, _normal: Vector3) -> void:
+	if is_dead_state():
+		return
 	target_object = null
 	target_position = world_pos
 	state_machine.transition_to("Moving", {"target": world_pos})
 
 
 func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
+	if is_dead_state():
+		return
+
 	target_object = object
 	target_position = object.global_position
 
-	# Check if we're already in range
+	# Enemy -> combat
+	if object is EnemyBase:
+		if object.is_dead():
+			return
+		var distance := global_position.distance_to(object.global_position)
+		if distance <= interaction_range:
+			state_machine.transition_to("Combat", {"target": object})
+		else:
+			state_machine.transition_to("Moving", {
+				"target": object.global_position,
+				"interact_on_arrive": true,
+				"interact_target": object
+			})
+		return
+
+	# Depleted interactable -> just walk there
+	if object is Interactable and (not object.is_active or object._is_depleted):
+		state_machine.transition_to("Moving", {"target": object.global_position})
+		return
+
+	# Interactable object
 	var distance := global_position.distance_to(object.global_position)
 	if distance <= interaction_range:
 		state_machine.transition_to("Interacting", {"target": object})
 	else:
-		# Move to object first, then interact
 		state_machine.transition_to("Moving", {
 			"target": object.global_position,
 			"interact_on_arrive": true,
@@ -90,9 +92,8 @@ func move_toward_target(delta: float) -> void:
 
 	var next_pos := nav_agent.get_next_path_position()
 	var direction := (next_pos - global_position).normalized()
-	direction.y = 0  # Keep movement on the horizontal plane
+	direction.y = 0
 
-	# Face movement direction
 	if direction.length() > 0.01:
 		var look_target := global_position + direction
 		look_target.y = global_position.y
@@ -116,8 +117,15 @@ func is_in_range_of(target: Node3D) -> bool:
 	return global_position.distance_to(target.global_position) <= interaction_range
 
 
+func is_dead_state() -> bool:
+	return hitpoints <= 0
+
+
 func take_damage(amount: int) -> void:
+	if hitpoints <= 0:
+		return
 	hitpoints = max(0, hitpoints - amount)
+	play_damage_flash()
 	GameManager.log_action("You take %d damage. HP: %d/%d" % [amount, hitpoints, max_hitpoints])
 	if hitpoints <= 0:
 		_die()
@@ -129,4 +137,24 @@ func heal(amount: int) -> void:
 
 func _die() -> void:
 	GameManager.log_action("Oh dear, you are dead!")
-	# TODO: Respawn logic
+	state_machine.transition_to("Dead")
+
+
+func play_attack_animation() -> void:
+	if not model:
+		return
+	var tween := create_tween()
+	tween.tween_property(model, "rotation_degrees:y", -30.0, 0.08)
+	tween.tween_property(model, "rotation_degrees:y", 15.0, 0.06)
+	tween.tween_property(model, "rotation_degrees:y", 0.0, 0.06)
+
+
+func play_damage_flash() -> void:
+	var mesh := model.get_node_or_null("PlayerMesh") as MeshInstance3D
+	if not mesh or not mesh.material_override:
+		return
+	var mat: StandardMaterial3D = mesh.material_override
+	var original := mat.albedo_color
+	var tween := create_tween()
+	tween.tween_property(mat, "albedo_color", Color(1, 0.2, 0.2), 0.05)
+	tween.tween_property(mat, "albedo_color", original, 0.15)

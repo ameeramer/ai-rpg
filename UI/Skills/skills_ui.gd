@@ -42,29 +42,29 @@ func _build_ui() -> void:
 
 func _create_skill_row(skill_name: String, xp_bg: StyleBoxFlat, xp_fill: StyleBoxFlat) -> HBoxContainer:
 	var row := HBoxContainer.new()
-	row.custom_minimum_size = Vector2(0, 24)
+	row.custom_minimum_size = Vector2(0, 32)
 
 	var name_label := Label.new()
 	name_label.name = "NameLabel"
 	name_label.text = skill_name
-	name_label.custom_minimum_size = Vector2(100, 0)
+	name_label.custom_minimum_size = Vector2(110, 0)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.add_theme_font_size_override("font_size", 15)
 	name_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
 	row.add_child(name_label)
 
 	var level_label := Label.new()
 	level_label.name = "LevelLabel"
 	level_label.text = "1"
-	level_label.custom_minimum_size = Vector2(30, 0)
+	level_label.custom_minimum_size = Vector2(36, 0)
 	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	level_label.add_theme_font_size_override("font_size", 14)
+	level_label.add_theme_font_size_override("font_size", 16)
 	level_label.add_theme_color_override("font_color", Color(1, 0.9, 0.5))
 	row.add_child(level_label)
 
 	var progress := ProgressBar.new()
 	progress.name = "XPBar"
-	progress.custom_minimum_size = Vector2(70, 0)
+	progress.custom_minimum_size = Vector2(80, 0)
 	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress.show_percentage = false
 	progress.max_value = 1.0

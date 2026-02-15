@@ -15,9 +15,6 @@ func on_enter(msg: Dictionary = {}) -> void:
 	player.set_nav_target(target)
 	FileLogger.log_msg("State -> Moving to %s%s" % [str(target), " (then interact)" if _interact_on_arrive else ""])
 
-	if player.anim_player and player.anim_player.has_animation("walk"):
-		player.anim_player.play("walk")
-
 
 func on_physics_update(delta: float) -> void:
 	if player.is_at_target():
@@ -25,9 +22,10 @@ func on_physics_update(delta: float) -> void:
 		return
 
 	# If we have an interact target, check if we're close enough
-	if _interact_on_arrive and _interact_target and player.is_in_range_of(_interact_target):
-		_arrive()
-		return
+	if _interact_on_arrive and _interact_target and is_instance_valid(_interact_target):
+		if player.is_in_range_of(_interact_target):
+			_arrive()
+			return
 
 	player.move_toward_target(delta)
 
@@ -37,7 +35,14 @@ func on_exit() -> void:
 
 
 func _arrive() -> void:
-	if _interact_on_arrive and _interact_target:
-		state_machine.transition_to("Interacting", {"target": _interact_target})
+	if _interact_on_arrive and _interact_target and is_instance_valid(_interact_target):
+		# Route to Combat for enemies, Interacting for everything else
+		if _interact_target is EnemyBase:
+			if not _interact_target.is_dead():
+				state_machine.transition_to("Combat", {"target": _interact_target})
+			else:
+				state_machine.transition_to("Idle")
+		else:
+			state_machine.transition_to("Interacting", {"target": _interact_target})
 	else:
 		state_machine.transition_to("Idle")
