@@ -104,7 +104,7 @@ func _complete_action(player: Node3D) -> Dictionary:
 		if drop and not drop.is_empty():
 			var item = drop["item"]
 			var qty = drop["quantity"]
-			var added = PlayerInventory.add_item(item, qty)
+			var added = PlayerInventory.call("add_item", item, qty)
 			if added:
 				GameManager.log_action("You get some %s." % item.call("get_display_name"))
 			else:

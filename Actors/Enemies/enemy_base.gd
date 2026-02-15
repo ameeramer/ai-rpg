@@ -178,7 +178,7 @@ func _drop_loot() -> void:
 			var item = drop["item"]
 			var qty = drop["quantity"]
 			GameManager.log_action("The %s drops: %s x%d" % [display_name, item.call("get_display_name"), qty])
-			var added = PlayerInventory.add_item(item, qty)
+			var added = PlayerInventory.call("add_item", item, qty)
 			if not added:
 				GameManager.log_action("Your inventory is full!")
 

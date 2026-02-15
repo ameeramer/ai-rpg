@@ -20,13 +20,18 @@ func _ready() -> void:
 
 func setup() -> void:
 	FileLogger.log_msg("InventoryUI.setup() start")
-	PlayerInventory.inventory_changed.connect(refresh)
+	var sig = PlayerInventory.get("inventory_changed")
+	if sig:
+		PlayerInventory.inventory_changed.connect(refresh)
+		FileLogger.log_msg("InventoryUI: connected to inventory_changed")
+	else:
+		FileLogger.log_msg("InventoryUI: WARNING — no inventory_changed signal")
 	refresh()
 	FileLogger.log_msg("InventoryUI.setup() done")
 
 
 func _create_slots() -> void:
-	var slot_normal := StyleBoxFlat.new()
+	var slot_normal = StyleBoxFlat.new()
 	slot_normal.bg_color = Color(0.18, 0.15, 0.12, 0.9)
 	slot_normal.border_width_left = 1
 	slot_normal.border_width_top = 1
@@ -38,7 +43,7 @@ func _create_slots() -> void:
 	slot_normal.corner_radius_bottom_right = 3
 	slot_normal.corner_radius_bottom_left = 3
 
-	var slot_hover := StyleBoxFlat.new()
+	var slot_hover = StyleBoxFlat.new()
 	slot_hover.bg_color = Color(0.25, 0.22, 0.16, 0.95)
 	slot_hover.border_width_left = 1
 	slot_hover.border_width_top = 1
@@ -51,7 +56,7 @@ func _create_slots() -> void:
 	slot_hover.corner_radius_bottom_left = 3
 
 	for i in range(SLOT_COUNT):
-		var btn := Button.new()
+		var btn = Button.new()
 		btn.custom_minimum_size = SLOT_SIZE
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -67,10 +72,12 @@ func _create_slots() -> void:
 
 
 func refresh() -> void:
-	var inv_slots = PlayerInventory.slots
+	var inv_slots = PlayerInventory.get("slots")
+	if inv_slots == null:
+		return
 
 	for i in range(SLOT_COUNT):
-		var btn := _slot_buttons[i]
+		var btn = _slot_buttons[i]
 		var slot_data = inv_slots[i] if i < inv_slots.size() else null
 
 		if slot_data == null:
@@ -80,22 +87,24 @@ func refresh() -> void:
 		else:
 			var item = slot_data["item"]
 			var qty: int = slot_data["quantity"]
-			btn.tooltip_text = item.get_display_name()
+			btn.tooltip_text = item.call("get_display_name")
 
 			if item.icon:
 				btn.icon = item.icon
 				btn.text = str(qty) if qty > 1 else ""
 			else:
-				var display := item.item_name.substr(0, 6)
+				var display_text = str(item.item_name).substr(0, 6)
 				if qty > 1:
-					display += "\nx" + str(qty)
-				btn.text = display
+					display_text += "\nx" + str(qty)
+				btn.text = display_text
 
 
 func _on_slot_pressed(slot_index: int) -> void:
-	var inv_slots = PlayerInventory.slots
+	var inv_slots = PlayerInventory.get("slots")
+	if inv_slots == null:
+		return
 	if slot_index >= inv_slots.size() or inv_slots[slot_index] == null:
 		return
 
 	var item = inv_slots[slot_index]["item"]
-	GameManager.log_action("Selected: %s" % item.get_display_name())
+	GameManager.log_action("Selected: %s" % item.call("get_display_name"))

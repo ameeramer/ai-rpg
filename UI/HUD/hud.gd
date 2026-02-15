@@ -39,11 +39,21 @@ func setup(player) -> void:
 	FileLogger.log_msg("HUD.setup() start")
 	_player = player
 
-	# Connect to autoload signals for XP/level/inventory
-	PlayerSkills.xp_gained.connect(_on_xp_gained)
-	PlayerSkills.level_up.connect(_on_level_up)
-	PlayerInventory.inventory_changed.connect(_on_inventory_changed)
-	FileLogger.log_msg("HUD.setup() autoload signals connected")
+	# Connect to autoload signals — guard with .get() in case script didn't parse
+	var xp_sig = PlayerSkills.get("xp_gained")
+	if xp_sig:
+		PlayerSkills.xp_gained.connect(_on_xp_gained)
+		PlayerSkills.level_up.connect(_on_level_up)
+		FileLogger.log_msg("HUD: PlayerSkills signals connected")
+	else:
+		FileLogger.log_msg("HUD: WARNING — PlayerSkills has no signals")
+
+	var inv_sig = PlayerInventory.get("inventory_changed")
+	if inv_sig:
+		PlayerInventory.inventory_changed.connect(_on_inventory_changed)
+		FileLogger.log_msg("HUD: PlayerInventory signals connected")
+	else:
+		FileLogger.log_msg("HUD: WARNING — PlayerInventory has no signals")
 
 	# Instantiate inventory UI from PackedScene
 	_setup_inventory_ui()

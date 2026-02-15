@@ -5,8 +5,6 @@ extends Node
 
 var MAX_SLOTS: int = 28
 
-signal item_added(item, quantity, slot_idx)
-signal item_removed(item, quantity, slot_idx)
 signal inventory_changed()
 signal inventory_full()
 
@@ -34,61 +32,65 @@ func ensure_initialized() -> void:
 func add_item(item, quantity: int = 1) -> bool:
 	if item == null or quantity <= 0:
 		return false
+	# Try stacking into existing slot first
 	if item.is_stackable:
 		for i in range(MAX_SLOTS):
 			if slots[i] != null and slots[i]["item"].id == item.id:
 				slots[i]["quantity"] += quantity
-				item_added.emit(item, quantity, i)
 				inventory_changed.emit()
 				return true
+	# Find an empty slot
 	if item.is_stackable:
-		var slot := _find_empty_slot()
-		if slot == -1:
+		var empty = _find_empty_slot()
+		if empty == -1:
 			inventory_full.emit()
 			return false
-		slots[slot] = {"item": item, "quantity": quantity}
-		item_added.emit(item, quantity, slot)
+		slots[empty] = {"item": item, "quantity": quantity}
 		inventory_changed.emit()
 		return true
 	else:
-		var added_count := 0
+		var added_count: int = 0
 		for _q in range(quantity):
-			var slot := _find_empty_slot()
-			if slot == -1:
+			var empty = _find_empty_slot()
+			if empty == -1:
 				if added_count == 0:
 					inventory_full.emit()
 					return false
 				inventory_changed.emit()
 				return true
-			slots[slot] = {"item": item, "quantity": 1}
-			item_added.emit(item, 1, slot)
+			slots[empty] = {"item": item, "quantity": 1}
 			added_count += 1
 		inventory_changed.emit()
 		return true
 
 
-func remove_item_at(slot: int, quantity: int = 1) -> Dictionary:
-	if slot < 0 or slot >= MAX_SLOTS or slots[slot] == null:
+func remove_item_at(slot_idx: int, quantity: int = 1) -> Dictionary:
+	if slot_idx < 0 or slot_idx >= MAX_SLOTS or slots[slot_idx] == null:
 		return {}
-	var slot_data: Dictionary = slots[slot]
-	var removed_qty := min(quantity, slot_data["quantity"])
-	slot_data["quantity"] -= removed_qty
+	var slot_data: Dictionary = slots[slot_idx]
+	var qty = slot_data["quantity"]
+	var to_remove = quantity
+	if to_remove > qty:
+		to_remove = qty
+	slot_data["quantity"] -= to_remove
 	if slot_data["quantity"] <= 0:
-		slots[slot] = null
-	item_removed.emit(slot_data["item"], removed_qty, slot)
+		slots[slot_idx] = null
 	inventory_changed.emit()
-	return {"item": slot_data["item"], "quantity": removed_qty}
+	return {"item": slot_data["item"], "quantity": to_remove}
 
 
 func remove_item_by_id(item_id: int, quantity: int = 1) -> bool:
-	var remaining := quantity
+	var remaining: int = quantity
 	for i in range(MAX_SLOTS):
 		if remaining <= 0:
 			break
 		if slots[i] != null and slots[i]["item"].id == item_id:
-			var can_remove := min(remaining, slots[i]["quantity"])
-			slots[i]["quantity"] -= can_remove
-			remaining -= can_remove
+			var qty = slots[i]["quantity"]
+			var to_remove = remaining
+			if to_remove > qty:
+				to_remove = qty
+			slots[i]["quantity"] -= to_remove
+			remaining -= to_remove
 			if slots[i]["quantity"] <= 0:
 				slots[i] = null
 	if remaining < quantity:
@@ -97,14 +99,14 @@ func remove_item_by_id(item_id: int, quantity: int = 1) -> bool:
 	return false
 
 
-func get_slot(slot: int) -> Dictionary:
-	if slot < 0 or slot >= MAX_SLOTS or slots[slot] == null:
+func get_slot(slot_idx: int) -> Dictionary:
+	if slot_idx < 0 or slot_idx >= MAX_SLOTS or slots[slot_idx] == null:
 		return {}
-	return slots[slot]
+	return slots[slot_idx]
 
 
 func has_item(item_id: int, quantity: int = 1) -> bool:
-	var total := 0
+	var total: int = 0
 	for slot in slots:
 		if slot != null and slot["item"].id == item_id:
 			total += slot["quantity"]
@@ -114,24 +116,26 @@ func has_item(item_id: int, quantity: int = 1) -> bool:
 
 
 func count_item(item_id: int) -> int:
-	var total := 0
+	var total: int = 0
 	for slot in slots:
 		if slot != null and slot["item"].id == item_id:
 			total += slot["quantity"]
 	return total
 
 
-func swap_slots(from: int, to: int) -> void:
-	if from < 0 or from >= MAX_SLOTS or to < 0 or to >= MAX_SLOTS:
+func swap_slots(from_idx: int, to_idx: int) -> void:
+	if from_idx < 0 or from_idx >= MAX_SLOTS:
 		return
-	var temp = slots[from]
-	slots[from] = slots[to]
-	slots[to] = temp
+	if to_idx < 0 or to_idx >= MAX_SLOTS:
+		return
+	var temp = slots[from_idx]
+	slots[from_idx] = slots[to_idx]
+	slots[to_idx] = temp
 	inventory_changed.emit()
 
 
 func get_used_slots() -> int:
-	var count := 0
+	var count: int = 0
 	for slot in slots:
 		if slot != null:
 			count += 1
