@@ -46,30 +46,28 @@ func _ready() -> void:
 
 
 ## Ensure a child subsystem node exists with its script properly loaded.
-## On Android, inline script attachment in .tscn files silently fails for some nodes.
-## This method: 1) finds or creates the node, 2) forces the script onto it, 3) calls ensure_initialized().
+## On Android, inline script attachment in .tscn files silently fails —
+## get_script() returns the script but methods are NOT callable.
+## ALWAYS force set_script() to make methods work.
 func _ensure_subsystem(node_name: String, script_path: String) -> void:
-	var node := get_node_or_null(node_name)
 	var scr = load(script_path)
 	if scr == null:
 		FileLogger.log_error("Failed to load script: %s" % script_path)
 		return
 
+	var node := get_node_or_null(node_name)
 	if node == null:
-		# Node doesn't exist at all — create it
 		node = Node.new()
 		node.name = node_name
-		node.set_script(scr)
 		add_child(node)
-		FileLogger.log_msg("Created subsystem: %s" % node_name)
-	elif node.get_script() != scr:
-		# Node exists but script isn't loaded (Android inline script failure)
-		node.set_script(scr)
-		FileLogger.log_msg("Re-attached script to subsystem: %s" % node_name)
-	else:
-		FileLogger.log_msg("Subsystem already loaded: %s" % node_name)
+		FileLogger.log_msg("Created subsystem node: %s" % node_name)
 
-	# Force-initialize
+	# ALWAYS force set_script — on Android, even when get_script() returns
+	# the correct script object, methods may not be callable until re-set
+	node.set_script(scr)
+	FileLogger.log_msg("Force-set script on subsystem: %s" % node_name)
+
+	# Force-initialize — now methods should be callable
 	node.call("ensure_initialized")
 
 
