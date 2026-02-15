@@ -12,6 +12,7 @@ max_stack = 1
 weight = 1.8
 value = 26
 category = "Weapon"
+model_path = "res://Assets/Models/Weapons/bronze_sword.glb"
 is_equippable = true
 attack_damage = 4
 attack_speed = 2.4

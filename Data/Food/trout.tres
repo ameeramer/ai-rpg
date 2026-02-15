@@ -12,6 +12,7 @@ max_stack = 1
 weight = 0.5
 value = 20
 category = "Food"
+model_path = "res://Assets/Models/Food/cooked_trout.glb"
 heal_amount = 7
 eat_ticks = 3
 raw_item_id = 335

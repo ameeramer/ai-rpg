@@ -12,6 +12,7 @@ max_stack = 1
 weight = 9.0
 value = 160
 category = "Armor"
+model_path = "res://Assets/Models/Armor/bronze_platebody.glb"
 is_equippable = true
 defence_bonus = 15
 ranged_defence = 11

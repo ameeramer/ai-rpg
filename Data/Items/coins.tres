@@ -12,3 +12,4 @@ max_stack = 2147483647
 weight = 0.0
 value = 1
 category = "General"
+model_path = "res://Assets/Models/Items/coins.glb"
