@@ -54,6 +54,8 @@ func setup(player) -> void:
 		_dialogue_ui.visible = false
 		if _dialogue_ui.get("dialogue_closed"):
 			_dialogue_ui.dialogue_closed.connect(_on_dialogue_closed)
+		if _dialogue_ui.get("trade_requested"):
+			_dialogue_ui.trade_requested.connect(_on_trade_requested)
 
 func _load_ui(path: String, parent: Control) -> void:
 	var scene = load(path)
@@ -103,10 +105,8 @@ func _toggle(key: String) -> void:
 		_current_panel = panel
 
 func _close_panels() -> void:
-	inventory_overlay.visible = false
-	skills_overlay.visible = false
-	equipment_overlay.visible = false
-	touch_blocker.visible = false
+	for p in [inventory_overlay, skills_overlay, equipment_overlay, touch_blocker]:
+		p.visible = false
 	_current_panel = null
 	if _context_menu:
 		_context_menu.visible = false
@@ -114,9 +114,7 @@ func _close_panels() -> void:
 		_shop_ui.visible = false
 
 func _on_blocker_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		_close_panels()
-	elif event is InputEventScreenTouch and event.pressed:
+	if (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
 		_close_panels()
 
 func _on_action_logged(message) -> void:
@@ -160,15 +158,23 @@ func _on_ctx_action(action: String, slot_idx: int) -> void:
 			desc = item.call("get_display_name")
 		GameManager.log_action(desc)
 
-func show_dialogue(npc_name: String, lines: Array) -> void:
+func show_dialogue(npc_name: String, lines: Array, merchant: bool = false, npc: Node3D = null) -> void:
 	if _dialogue_ui:
-		_dialogue_ui.call("show_dialogue", npc_name, lines)
+		_dialogue_ui.call("show_dialogue", npc_name, lines, merchant, npc)
 
 func _on_dialogue_closed() -> void:
-	if _player:
-		var sm = _player.get("state_machine")
-		if sm:
-			sm.call("transition_to", "Idle")
+	if _player and _player.get("state_machine"):
+		_player.get("state_machine").call("transition_to", "Idle")
+
+func _on_trade_requested(npc) -> void:
+	if npc == null:
+		return
+	var name = npc.get("display_name")
+	if name == null:
+		name = npc.name
+	var stock = npc.call("get_shop_stock")
+	if stock:
+		show_shop(name, stock)
 
 func show_shop(npc_name: String, stock: Array) -> void:
 	if _shop_ui == null or not is_instance_valid(_shop_ui):

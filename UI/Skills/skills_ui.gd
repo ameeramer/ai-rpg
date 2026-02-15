@@ -51,23 +51,23 @@ func _build_ui() -> void:
 
 func _create_skill_row(skill_name: String, xp_bg: StyleBoxFlat, xp_fill: StyleBoxFlat) -> HBoxContainer:
 	var row := HBoxContainer.new()
-	row.custom_minimum_size = Vector2(0, 42)
+	row.custom_minimum_size = Vector2(0, 52)
 
 	var name_label := Label.new()
 	name_label.name = "NameLabel"
 	name_label.text = skill_name
-	name_label.custom_minimum_size = Vector2(140, 0)
+	name_label.custom_minimum_size = Vector2(170, 0)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_font_size_override("font_size", 20)
+	name_label.add_theme_font_size_override("font_size", 26)
 	name_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
 	row.add_child(name_label)
 
 	var level_label := Label.new()
 	level_label.name = "LevelLabel"
 	level_label.text = "1"
-	level_label.custom_minimum_size = Vector2(48, 0)
+	level_label.custom_minimum_size = Vector2(56, 0)
 	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	level_label.add_theme_font_size_override("font_size", 22)
+	level_label.add_theme_font_size_override("font_size", 28)
 	level_label.add_theme_color_override("font_color", Color(1, 0.9, 0.5))
 	row.add_child(level_label)
 

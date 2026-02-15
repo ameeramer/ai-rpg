@@ -169,9 +169,9 @@ func _die() -> void:
 func set_hud(hud: Node) -> void:
 	_hud_ref = hud
 
-func open_dialogue(npc_name: String, lines: Array) -> void:
+func open_dialogue(npc_name: String, lines: Array, merchant: bool = false, npc: Node3D = null) -> void:
 	if _hud_ref:
-		_hud_ref.call("show_dialogue", npc_name, lines)
+		_hud_ref.call("show_dialogue", npc_name, lines, merchant, npc)
 
 func open_shop(npc_name: String, stock: Array) -> void:
 	if _hud_ref:

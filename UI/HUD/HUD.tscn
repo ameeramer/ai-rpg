@@ -57,13 +57,13 @@ script = ExtResource("1")
 anchors_preset = 0
 offset_left = 12.0
 offset_top = 12.0
-offset_right = 300.0
-offset_bottom = 72.0
+offset_right = 370.0
+offset_bottom = 84.0
 mouse_filter = 2
 
 [node name="HPBar" type="ProgressBar" parent="TopLeft"]
 layout_mode = 2
-custom_minimum_size = Vector2(280, 56)
+custom_minimum_size = Vector2(340, 68)
 theme_override_styles/background = SubResource("StyleBoxFlat_hp")
 theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 max_value = 10.0
@@ -81,7 +81,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 30
 text = "HP: 10 / 10"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -91,8 +91,8 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -170.0
-offset_bottom = -90.0
+offset_top = -200.0
+offset_bottom = -102.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
@@ -101,7 +101,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_log")
 [node name="ActionLog" type="RichTextLabel" parent="ActionLogContainer"]
 layout_mode = 2
 theme_override_colors/default_color = Color(0.9, 0.85, 0.7, 1)
-theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/normal_font_size = 26
 bbcode_enabled = true
 text = "Welcome to AI RPG."
 scroll_following = true
@@ -111,7 +111,7 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -88.0
+offset_top = -100.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_toolbar")
@@ -123,29 +123,29 @@ alignment = 1
 
 [node name="InventoryBtn" type="Button" parent="BottomToolbar/ButtonRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(140, 72)
-theme_override_font_sizes/font_size = 24
+custom_minimum_size = Vector2(170, 84)
+theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 text = "Bag"
 
 [node name="SkillsBtn" type="Button" parent="BottomToolbar/ButtonRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(140, 72)
-theme_override_font_sizes/font_size = 24
+custom_minimum_size = Vector2(170, 84)
+theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 text = "Skills"
 
 [node name="EquipBtn" type="Button" parent="BottomToolbar/ButtonRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(140, 72)
-theme_override_font_sizes/font_size = 24
+custom_minimum_size = Vector2(170, 84)
+theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 text = "Equip"
 
 [node name="DebugBtn" type="Button" parent="BottomToolbar/ButtonRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(100, 72)
-theme_override_font_sizes/font_size = 18
+custom_minimum_size = Vector2(120, 84)
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 text = "DBG"
 
@@ -165,10 +165,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -320.0
-offset_top = -300.0
-offset_right = 320.0
-offset_bottom = 300.0
+offset_left = -380.0
+offset_top = -340.0
+offset_right = 380.0
+offset_bottom = 340.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
@@ -179,20 +179,20 @@ theme_override_constants/separation = 6
 
 [node name="Header" type="HBoxContainer" parent="InventoryOverlay/VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 60)
 
 [node name="Title" type="Label" parent="InventoryOverlay/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 34
 text = "Inventory"
 vertical_alignment = 1
 
 [node name="CloseBtn" type="Button" parent="InventoryOverlay/VBox/Header"]
 layout_mode = 2
-custom_minimum_size = Vector2(56, 48)
-theme_override_font_sizes/font_size = 26
+custom_minimum_size = Vector2(68, 56)
+theme_override_font_sizes/font_size = 30
 text = "X"
 
 [node name="InventoryPanel" type="Panel" parent="InventoryOverlay/VBox"]
@@ -206,10 +206,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -320.0
-offset_right = 300.0
-offset_bottom = 320.0
+offset_left = -360.0
+offset_top = -360.0
+offset_right = 360.0
+offset_bottom = 360.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
@@ -220,20 +220,20 @@ theme_override_constants/separation = 6
 
 [node name="Header" type="HBoxContainer" parent="SkillsOverlay/VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 60)
 
 [node name="Title" type="Label" parent="SkillsOverlay/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 34
 text = "Skills"
 vertical_alignment = 1
 
 [node name="CloseBtn" type="Button" parent="SkillsOverlay/VBox/Header"]
 layout_mode = 2
-custom_minimum_size = Vector2(56, 48)
-theme_override_font_sizes/font_size = 26
+custom_minimum_size = Vector2(68, 56)
+theme_override_font_sizes/font_size = 30
 text = "X"
 
 [node name="SkillsScroll" type="ScrollContainer" parent="SkillsOverlay/VBox"]
@@ -251,10 +251,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -280.0
-offset_top = -320.0
-offset_right = 280.0
-offset_bottom = 320.0
+offset_left = -340.0
+offset_top = -360.0
+offset_right = 340.0
+offset_bottom = 360.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
@@ -265,20 +265,20 @@ theme_override_constants/separation = 6
 
 [node name="Header" type="HBoxContainer" parent="EquipmentOverlay/VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 60)
 
 [node name="Title" type="Label" parent="EquipmentOverlay/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 34
 text = "Equipment"
 vertical_alignment = 1
 
 [node name="CloseBtn" type="Button" parent="EquipmentOverlay/VBox/Header"]
 layout_mode = 2
-custom_minimum_size = Vector2(56, 48)
-theme_override_font_sizes/font_size = 26
+custom_minimum_size = Vector2(68, 56)
+theme_override_font_sizes/font_size = 30
 text = "X"
 
 [node name="EquipmentPanel" type="Panel" parent="EquipmentOverlay/VBox"]

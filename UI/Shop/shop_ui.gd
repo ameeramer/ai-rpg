@@ -20,17 +20,17 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	_title_label = _add_label(24, Color(0.3, 1.0, 0.3))
-	_coins_label = _add_label(20, Color(1, 0.85, 0.3))
-	_add_label(18, Color(0.7, 0.65, 0.5)).text = "-- Shop Stock --"
+	_title_label = _add_label(30, Color(0.3, 1.0, 0.3))
+	_coins_label = _add_label(26, Color(1, 0.85, 0.3))
+	_add_label(24, Color(0.7, 0.65, 0.5)).text = "-- Shop Stock --"
 	var shop_scroll = ScrollContainer.new()
-	shop_scroll.custom_minimum_size = Vector2(0, 160)
+	shop_scroll.custom_minimum_size = Vector2(0, 200)
 	add_child(shop_scroll)
 	_shop_grid = _make_grid()
 	shop_scroll.add_child(_shop_grid)
-	_add_label(18, Color(0.7, 0.65, 0.5)).text = "-- Your Items (tap to sell) --"
+	_add_label(24, Color(0.7, 0.65, 0.5)).text = "-- Your Items (tap to sell) --"
 	var inv_scroll = ScrollContainer.new()
-	inv_scroll.custom_minimum_size = Vector2(0, 160)
+	inv_scroll.custom_minimum_size = Vector2(0, 200)
 	add_child(inv_scroll)
 	_player_grid = _make_grid()
 	inv_scroll.add_child(_player_grid)
@@ -81,9 +81,9 @@ func _build_shop_buttons() -> void:
 		var item = entry["item"]
 		var price = entry["price"]
 		var btn = Button.new()
-		btn.custom_minimum_size = Vector2(72, 72)
+		btn.custom_minimum_size = Vector2(96, 96)
 		btn.add_theme_stylebox_override("normal", btn_style)
-		btn.add_theme_font_size_override("font_size", 14)
+		btn.add_theme_font_size_override("font_size", 18)
 		btn.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
 		var name_str = item.call("get_display_name")
 		btn.text = str(name_str).substr(0, 5) + "\n" + str(price) + "gp"
@@ -114,9 +114,9 @@ func _build_inv_buttons() -> void:
 		if sell_price < 1:
 			sell_price = 1
 		var btn = Button.new()
-		btn.custom_minimum_size = Vector2(72, 72)
+		btn.custom_minimum_size = Vector2(96, 96)
 		btn.add_theme_stylebox_override("normal", btn_style)
-		btn.add_theme_font_size_override("font_size", 14)
+		btn.add_theme_font_size_override("font_size", 18)
 		btn.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
 		var name_str = item.call("get_display_name")
 		var label_text = str(name_str).substr(0, 5)

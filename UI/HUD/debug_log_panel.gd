@@ -38,13 +38,13 @@ func _ready() -> void:
 
 	_copy_btn = Button.new()
 	_copy_btn.text = "Copy All"
-	_copy_btn.custom_minimum_size = Vector2(120, 48)
+	_copy_btn.custom_minimum_size = Vector2(140, 56)
 	_copy_btn.pressed.connect(_on_copy_pressed)
 	header.add_child(_copy_btn)
 
 	_close_btn = Button.new()
 	_close_btn.text = "Close"
-	_close_btn.custom_minimum_size = Vector2(100, 48)
+	_close_btn.custom_minimum_size = Vector2(120, 56)
 	_close_btn.pressed.connect(_on_close_pressed)
 	header.add_child(_close_btn)
 
@@ -53,7 +53,7 @@ func _ready() -> void:
 	_text_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_text_edit.editable = false
 	_text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	var font_size := 11
+	var font_size = 18
 	_text_edit.add_theme_font_size_override("font_size", font_size)
 	vbox.add_child(_text_edit)
 

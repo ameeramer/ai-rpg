@@ -42,7 +42,7 @@ func show_for_item(item, slot_idx: int, screen_pos: Vector2) -> void:
 	var header = Label.new()
 	header.text = item.call("get_display_name")
 	header.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
-	header.add_theme_font_size_override("font_size", 20)
+	header.add_theme_font_size_override("font_size", 26)
 	_vbox.add_child(header)
 	# Determine available actions
 	var actions = _get_actions_for_item(item)
@@ -88,8 +88,8 @@ func _get_actions_for_item(item) -> Array:
 func _add_action_button(action_name: String) -> void:
 	var btn = Button.new()
 	btn.text = action_name
-	btn.custom_minimum_size = Vector2(160, 48)
-	btn.add_theme_font_size_override("font_size", 22)
+	btn.custom_minimum_size = Vector2(200, 60)
+	btn.add_theme_font_size_override("font_size", 26)
 	var style_n = StyleBoxFlat.new()
 	style_n.bg_color = Color(0.18, 0.15, 0.1, 0.9)
 	style_n.corner_radius_top_left = 4
