@@ -16,6 +16,7 @@ var _initialized: bool = false
 
 
 func _ready() -> void:
+	FileLogger.log_msg("PlayerInventory._ready() called")
 	ensure_initialized()
 
 
@@ -25,10 +26,12 @@ func _ready() -> void:
 func ensure_initialized() -> void:
 	if _initialized:
 		return
-	_initialized = true
+	FileLogger.log_msg("PlayerInventory.ensure_initialized() starting")
 	slots.resize(MAX_SLOTS)
 	for i in range(MAX_SLOTS):
 		slots[i] = null
+	# Set _initialized AFTER all init code succeeds
+	_initialized = true
 	FileLogger.log_msg("PlayerInventory.initialized: %d slots" % MAX_SLOTS)
 
 

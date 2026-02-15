@@ -30,6 +30,7 @@ var _initialized: bool = false
 
 
 func _ready() -> void:
+	FileLogger.log_msg("PlayerSkills._ready() called")
 	ensure_initialized()
 
 
@@ -39,15 +40,18 @@ func _ready() -> void:
 func ensure_initialized() -> void:
 	if _initialized:
 		return
-	_initialized = true
+	FileLogger.log_msg("PlayerSkills.ensure_initialized() starting")
 	# Initialize all skills at level 1 (0 XP), Hitpoints at level 10
 	for skill in SKILL_NAMES:
 		if skill == "Hitpoints":
-			skill_xp[skill] = SkillData.xp_for_level(10)
+			skill_xp[skill] = _xp_for_level(10)
 			skill_levels[skill] = 10
 		else:
 			skill_xp[skill] = 0.0
 			skill_levels[skill] = 1
+	# Set _initialized AFTER all init code succeeds — if init crashes,
+	# the next call will retry instead of silently returning
+	_initialized = true
 	FileLogger.log_msg("PlayerSkills.initialized: %d skills" % skill_levels.size())
 
 
@@ -66,7 +70,7 @@ func get_xp_to_next_level(skill_name: String) -> float:
 	var current_level := get_level(skill_name)
 	if current_level >= 99:
 		return 0.0
-	var next_level_xp := SkillData.xp_for_level(current_level + 1)
+	var next_level_xp := _xp_for_level(current_level + 1)
 	return next_level_xp - get_xp(skill_name)
 
 
@@ -75,8 +79,8 @@ func get_level_progress(skill_name: String) -> float:
 	var current_level := get_level(skill_name)
 	if current_level >= 99:
 		return 1.0
-	var current_level_xp := SkillData.xp_for_level(current_level)
-	var next_level_xp := SkillData.xp_for_level(current_level + 1)
+	var current_level_xp := _xp_for_level(current_level)
+	var next_level_xp := _xp_for_level(current_level + 1)
 	var xp := get_xp(skill_name)
 	return (xp - current_level_xp) / (next_level_xp - current_level_xp)
 
@@ -91,7 +95,7 @@ func add_xp(skill_name: String, amount: float) -> void:
 	xp_gained.emit(skill_name, amount, skill_xp[skill_name])
 
 	# Check for level up
-	var new_level := SkillData.level_for_xp(skill_xp[skill_name])
+	var new_level := _level_for_xp(skill_xp[skill_name])
 	if new_level > skill_levels[skill_name]:
 		var old_level := skill_levels[skill_name]
 		skill_levels[skill_name] = new_level
@@ -129,3 +133,20 @@ func _update_max_hp() -> void:
 	if player and "max_hitpoints" in player:
 		player.max_hitpoints = get_level("Hitpoints")
 		player.hitpoints = player.max_hitpoints
+
+
+## OSRS XP formula inlined — _xp_for_level() static calls crash on Android
+## because class_name type dispatch is unreliable.
+static func _xp_for_level(level: int) -> float:
+	var total: float = 0.0
+	for i in range(1, level):
+		total += floorf(i + 300.0 * pow(2.0, i / 7.0))
+	return floorf(total / 4.0)
+
+
+## Get level for a given XP amount — inlined OSRS formula
+static func _level_for_xp(xp: float) -> int:
+	for level in range(99, 0, -1):
+		if xp >= _xp_for_level(level):
+			return level
+	return 1
