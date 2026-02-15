@@ -15,17 +15,15 @@ var hitpoints: int = 10
 var max_hitpoints: int = 10
 var _initialized: bool = false
 var _cached_mats: Array = []
+var _hud_ref: Node = null
 
 func _ready() -> void:
-	FileLogger.log_msg("PlayerController._ready() start")
 	ensure_initialized()
-	FileLogger.log_msg("PlayerController._ready() done")
 
 func ensure_initialized() -> void:
 	if _initialized:
 		return
 	_initialized = true
-	FileLogger.log_msg("PlayerController.ensure_initialized() running")
 	InputManager.world_clicked.connect(_on_world_clicked)
 	InputManager.object_clicked.connect(_on_object_clicked)
 	if nav_agent == null:
@@ -68,56 +66,52 @@ func _on_world_clicked(world_pos: Vector3, _normal: Vector3) -> void:
 	if hitpoints <= 0:
 		return
 	target_object = null
-	target_position = world_pos
 	state_machine.call("transition_to", "Moving", {"target": world_pos})
 
 func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
 	if hitpoints <= 0:
 		return
 	target_object = object
-	target_position = object.global_position
-	var obj_layer: int = object.get("collision_layer") if object.get("collision_layer") != null else 0
+	var obj_layer = object.get("collision_layer")
+	if obj_layer == null:
+		obj_layer = 0
 	var dist = global_position.distance_to(object.global_position)
 	if obj_layer == 4:
 		var is_dead = object.get("_is_dead")
-		if is_dead != null and is_dead:
+		if is_dead:
 			return
-		if dist <= interaction_range:
-			state_machine.call("transition_to", "Combat", {"target": object})
-		else:
-			state_machine.call("transition_to", "Moving", {
-				"target": object.global_position,
-				"interact_on_arrive": true,
-				"interact_target": object
-			})
-		return
-	if obj_layer == 8:
+		_interact_or_walk("Combat", object, dist)
+	elif obj_layer == 8:
 		if object.get("_is_depleted"):
 			state_machine.call("transition_to", "Moving", {"target": object.global_position})
 			return
-		if dist <= interaction_range:
-			state_machine.call("transition_to", "Interacting", {"target": object})
-		else:
-			state_machine.call("transition_to", "Moving", {
-				"target": object.global_position,
-				"interact_on_arrive": true,
-				"interact_target": object
-			})
-		return
+		_interact_or_walk("Interacting", object, dist)
+	elif obj_layer == 16:
+		_interact_or_walk("Talking", object, dist)
 
-func move_toward_target(delta: float) -> void:
+func _interact_or_walk(state_name: String, object: Node3D, dist: float) -> void:
+	if dist <= interaction_range:
+		state_machine.call("transition_to", state_name, {"target": object})
+	else:
+		state_machine.call("transition_to", "Moving", {
+			"target": object.global_position,
+			"interact_on_arrive": true,
+			"interact_target": object
+		})
+
+func move_toward_target(_delta: float) -> void:
 	if nav_agent.is_navigation_finished():
 		is_moving = false
 		return
 	var next_pos = nav_agent.get_next_path_position()
-	var direction = (next_pos - global_position).normalized()
-	direction.y = 0
-	if direction.length() > 0.01:
-		var look_target = global_position + direction
-		look_target.y = global_position.y
-		if look_target.distance_to(global_position) > 0.01:
-			look_at(look_target, Vector3.UP)
-	velocity = direction * move_speed
+	var dir = (next_pos - global_position).normalized()
+	dir.y = 0
+	if dir.length() > 0.01:
+		var lt = global_position + dir
+		lt.y = global_position.y
+		if lt.distance_to(global_position) > 0.01:
+			look_at(lt, Vector3.UP)
+	velocity = dir * move_speed
 	move_and_slide()
 	is_moving = true
 
@@ -133,6 +127,15 @@ func is_in_range_of(target: Node3D) -> bool:
 func take_damage(amount: int) -> void:
 	if hitpoints <= 0:
 		return
+	var def_bonus = PlayerEquipment.call("get_defence_bonus")
+	if def_bonus == null:
+		def_bonus = 0
+	var def_level = PlayerSkills.call("get_level", "Defence")
+	if def_level == null:
+		def_level = 1
+	var block_chance = float(def_bonus + def_level) / float(def_bonus + def_level + 80)
+	if amount > 0 and randf() < block_chance:
+		amount = 0
 	hitpoints = max(0, hitpoints - amount)
 	play_damage_flash()
 	_show_hitsplat(amount)
@@ -148,10 +151,7 @@ func _show_hitsplat(amount: int) -> void:
 	label.no_depth_test = true
 	label.outline_size = 10
 	label.outline_modulate = Color(0, 0, 0)
-	if amount > 0:
-		label.modulate = Color(1, 0.15, 0.15)
-	else:
-		label.modulate = Color(0.6, 0.6, 0.6)
+	label.modulate = Color(1, 0.15, 0.15) if amount > 0 else Color(0.6, 0.6, 0.6)
 	label.position.y = 2.2
 	add_child(label)
 	var tween = create_tween()
@@ -167,6 +167,17 @@ func heal(amount: int) -> void:
 func _die() -> void:
 	GameManager.log_action("Oh dear, you are dead!")
 	state_machine.call("transition_to", "Dead")
+
+func set_hud(hud: Node) -> void:
+	_hud_ref = hud
+
+func open_dialogue(npc_name: String, lines: Array) -> void:
+	if _hud_ref:
+		_hud_ref.call("show_dialogue", npc_name, lines)
+
+func open_shop(npc_name: String, stock: Array) -> void:
+	if _hud_ref:
+		_hud_ref.call("show_shop", npc_name, stock)
 
 func play_attack_animation() -> void:
 	if not model:

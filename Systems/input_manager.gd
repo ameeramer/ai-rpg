@@ -80,8 +80,8 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
-	# Exclude player layer (2) from raycast — only hit world(1), enemies(4), interactables(8)
-	query.collision_mask = 1 | 4 | 8
+	# Exclude player layer (2) from raycast — hit world(1), enemies(4), interactables(8), NPCs(16)
+	query.collision_mask = 1 | 4 | 8 | 16
 
 	var result := space_state.intersect_ray(query)
 	if result.is_empty():
@@ -92,7 +92,7 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 	var collider: Node3D = result["collider"]
 
 	# Detect by collision_layer value — proven reliable on Android
-	# Layer values: 1=world, 2=player, 4=enemies, 8=interactables
+	# Layer values: 1=world, 2=player, 4=enemies, 8=interactables, 16=NPCs
 	var layer: int = collider.get("collision_layer") if collider.get("collision_layer") != null else 0
 
 	if layer == 4:
@@ -111,6 +111,12 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 			object_context.emit(collider, screen_pos)
 		else:
 			object_clicked.emit(collider, hit_position)
+		return
+
+	if layer == 16:
+		# NPC — collision layer 16
+		FileLogger.log_msg("Detected NPC: %s (layer %d)" % [collider.name, layer])
+		object_clicked.emit(collider, hit_position)
 		return
 
 	# Otherwise it's a ground click — move there

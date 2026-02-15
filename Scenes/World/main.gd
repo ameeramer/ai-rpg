@@ -45,17 +45,15 @@ func _force_initialize_objects() -> void:
 		# Check if node's script parsed (has _initialized property)
 		var init_check = node.get("_initialized")
 		if layer == 4:
-			FileLogger.log_msg("Main: enemy node '%s' _initialized=%s" % [node.name, str(init_check)])
 			if init_check != null:
 				node.call("ensure_initialized")
 			enemies_count += 1
-		elif layer == 8:
-			FileLogger.log_msg("Main: interactable node '%s' _initialized=%s" % [node.name, str(init_check)])
+		elif layer == 8 or layer == 16:
 			if init_check != null:
 				node.call("ensure_initialized")
 			interactables_count += 1
 
-	FileLogger.log_msg("Force-initialized %d enemies, %d interactables" % [enemies_count, interactables_count])
+	FileLogger.log_msg("Force-initialized %d enemies, %d objects" % [enemies_count, interactables_count])
 
 
 func _get_all_descendants(node: Node) -> Array:

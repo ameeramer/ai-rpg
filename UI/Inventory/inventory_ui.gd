@@ -169,4 +169,17 @@ func _on_slot_pressed(slot_index: int) -> void:
 	if slot_index >= inv_slots.size() or inv_slots[slot_index] == null:
 		return
 	var item = inv_slots[slot_index]["item"]
-	GameManager.log_action("Selected: %s" % item.call("get_display_name"))
+	# Show context menu — find the HUD parent and call show_context_menu
+	var btn = _slot_buttons[slot_index]
+	var pos = btn.global_position + Vector2(btn.size.x, 0)
+	var hud = _find_hud()
+	if hud:
+		hud.call("show_context_menu", item, slot_index, pos)
+
+func _find_hud() -> Node:
+	var node = get_parent()
+	while node:
+		if node.get("show_context_menu") != null:
+			return node
+		node = node.get_parent()
+	return null

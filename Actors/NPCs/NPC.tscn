@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Actors/NPCs/npc_base.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Assets/Models/Characters/player_character.glb" id="npc_model"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_npc"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="npc_tunic"]
+albedo_color = Color(0.2, 0.5, 0.8, 1)
+
+[node name="NPC" type="CharacterBody3D"]
+collision_layer = 16
+collision_mask = 1
+script = ExtResource("1")
+display_name = "Villager"
+npc_role = "talk"
+dialogue_lines = ["Hello there, adventurer!", "Welcome to our village."]
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_npc")
+
+[node name="NPCMesh" type="Node3D" parent="."]
+
+[node name="NPCModel" parent="NPCMesh" instance=ExtResource("npc_model")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
