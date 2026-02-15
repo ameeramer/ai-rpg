@@ -17,7 +17,7 @@ extends CharacterBody3D
 signal died(enemy: EnemyBase)
 signal took_damage(amount: int, current_hp: int)
 
-var hp: int
+var hp: int = 0
 var _target: Node3D = null
 var _ticks_since_attack: int = 0
 var _is_dead: bool = false
@@ -25,10 +25,22 @@ var _respawn_counter: int = 0
 var _spawn_position: Vector3
 var _model_mesh: MeshInstance3D
 var _original_color: Color
+var _initialized: bool = false
 
 
 func _ready() -> void:
 	FileLogger.log_msg("EnemyBase._ready() %s (display_name=%s)" % [name, display_name])
+	ensure_initialized()
+
+
+## Idempotent initialization — safe to call multiple times.
+## On Android, _ready() may not fire for PackedScene scripts, so Main.gd
+## calls this explicitly as a fallback.
+func ensure_initialized() -> void:
+	if _initialized:
+		return
+	_initialized = true
+
 	hp = max_hp
 	_spawn_position = global_position
 	collision_layer = 4  # Layer 3: Enemies
@@ -38,7 +50,6 @@ func _ready() -> void:
 	_model_mesh = get_node_or_null("EnemyMesh") as MeshInstance3D
 	if _model_mesh and _model_mesh.material_override:
 		_original_color = _model_mesh.material_override.albedo_color
-		# Add name label if not already present
 		if not get_node_or_null("NameLabel"):
 			_add_name_label()
 	elif not _model_mesh:
@@ -46,6 +57,7 @@ func _ready() -> void:
 
 	GameManager.game_tick.connect(_on_game_tick)
 	add_to_group("enemies")
+	FileLogger.log_msg("EnemyBase.initialized: %s hp=%d atk=%d aggro=%.1f" % [display_name, hp, attack_damage, aggro_range])
 
 
 func _create_mesh() -> void:
@@ -133,6 +145,7 @@ func _show_hitsplat(amount: int) -> void:
 
 
 func take_damage(amount: int) -> void:
+	ensure_initialized()  # Safety: ensure HP is set before taking damage
 	if _is_dead:
 		return
 	hp = max(0, hp - amount)
@@ -204,9 +217,10 @@ func _combat_tick() -> void:
 
 
 func _perform_attack() -> void:
-	if _target and _target.has_method("take_damage"):
+	if _target:
 		var damage := randi_range(0, attack_damage)
-		_target.take_damage(damage)
+		# Call take_damage directly — has_method fails on Android
+		_target.call("take_damage", damage)
 		if damage > 0:
 			GameManager.log_action("The %s hits you for %d damage." % [display_name, damage])
 		else:
@@ -219,13 +233,13 @@ func _die() -> void:
 
 	_drop_loot()
 
-	# Grant XP to nearby player
+	# Grant XP to nearby player — use .call() instead of has_method (fails on Android)
 	var players := get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		var player: Node3D = players[0]
 		var skills := player.get_node_or_null("PlayerSkills")
-		if skills and skills.has_method("add_combat_xp"):
-			skills.add_combat_xp(xp_reward)
+		if skills:
+			skills.call("add_combat_xp", xp_reward)
 
 	died.emit(self)
 
@@ -247,8 +261,9 @@ func _drop_loot() -> void:
 			GameManager.log_action("The %s drops: %s x%d" % [display_name, item.get_display_name(), qty])
 			if player:
 				var inventory := player.get_node_or_null("PlayerInventory")
-				if inventory and inventory.has_method("add_item"):
-					var added := inventory.add_item(item, qty)
+				if inventory:
+					# Use .call() instead of has_method — has_method fails on Android
+					var added: bool = inventory.call("add_item", item, qty)
 					if not added:
 						GameManager.log_action("Your inventory is full!")
 

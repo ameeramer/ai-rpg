@@ -13,10 +13,22 @@ extends Interactable
 var _gathers_remaining: int = 0
 var _active_mesh: Node3D
 var _depleted_mesh: Node3D
+var _initialized: bool = false
 
 
 func _ready() -> void:
 	super._ready()
+	ensure_initialized()
+
+
+## Idempotent initialization — safe to call multiple times.
+## On Android, _ready() may not fire for PackedScene scripts, so Main.gd
+## calls this explicitly as a fallback.
+func ensure_initialized() -> void:
+	if _initialized:
+		return
+	_initialized = true
+
 	collision_layer = 8  # Layer 4: Interactables
 	_gathers_remaining = randi_range(min_gathers, max_gathers)
 
@@ -32,6 +44,7 @@ func _ready() -> void:
 		_depleted_mesh.visible = false
 
 	respawned.connect(_on_respawned)
+	FileLogger.log_msg("GatheringNode.initialized: %s verb=%s" % [display_name, interaction_verb])
 
 
 func _create_default_meshes() -> void:
@@ -240,8 +253,8 @@ func _complete_action(player: Node3D) -> Dictionary:
 	var success_chance := base_success_chance
 	if required_skill != "":
 		var skills_node := player.get_node_or_null("PlayerSkills")
-		if skills_node and skills_node.has_method("get_level"):
-			var level: int = skills_node.get_level(required_skill)
+		if skills_node:
+			var level: int = skills_node.call("get_level", required_skill)
 			# Higher level = better chance, capped at 95%
 			success_chance = min(0.95, base_success_chance + (level - required_level) * 0.02)
 

@@ -39,7 +39,9 @@ func _arrive() -> void:
 		# Route to Combat for enemies (layer 4), Interacting for everything else
 		var target_layer: int = _interact_target.get("collision_layer") if _interact_target.get("collision_layer") != null else 0
 		if target_layer == 4:
-			if _interact_target.has_method("is_dead") and _interact_target.is_dead():
+			# Use .get("_is_dead") instead of has_method("is_dead") — has_method fails on Android
+			var is_dead = _interact_target.get("_is_dead")
+			if is_dead != null and is_dead:
 				state_machine.transition_to("Idle")
 			else:
 				state_machine.transition_to("Combat", {"target": _interact_target})

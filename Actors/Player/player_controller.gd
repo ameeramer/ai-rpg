@@ -56,7 +56,9 @@ func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
 	# Enemy (collision layer 4) -> combat
 	var obj_layer: int = object.get("collision_layer") if object.get("collision_layer") != null else 0
 	if obj_layer == 4:
-		if object.has_method("is_dead") and object.is_dead():
+		# Use .get("_is_dead") instead of has_method("is_dead") — has_method fails on Android
+		var is_dead = object.get("_is_dead")
+		if is_dead != null and is_dead:
 			return
 		var distance := global_position.distance_to(object.global_position)
 		if distance <= interaction_range:

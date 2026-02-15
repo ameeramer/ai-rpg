@@ -39,8 +39,8 @@ func interact(player: Node3D) -> bool:
 	# Check skill requirement
 	if required_skill != "":
 		var skills_node := player.get_node_or_null("PlayerSkills")
-		if skills_node and skills_node.has_method("get_level"):
-			var level: int = skills_node.get_level(required_skill)
+		if skills_node:
+			var level: int = skills_node.call("get_level", required_skill)
 			if level < required_level:
 				GameManager.log_action("You need level %d %s to %s this." % [
 					required_level, required_skill, interaction_verb.to_lower()
@@ -85,8 +85,8 @@ func _complete_action(player: Node3D) -> Dictionary:
 	# Grant XP
 	if xp_reward > 0.0 and required_skill != "":
 		var skills_node := player.get_node_or_null("PlayerSkills")
-		if skills_node and skills_node.has_method("add_xp"):
-			skills_node.add_xp(required_skill, xp_reward)
+		if skills_node:
+			skills_node.call("add_xp", required_skill, xp_reward)
 
 	interaction_completed.emit(player)
 
@@ -103,8 +103,8 @@ func _complete_action(player: Node3D) -> Dictionary:
 
 func _give_item_to_player(player: Node3D, item: ItemData, quantity: int) -> void:
 	var inventory := player.get_node_or_null("PlayerInventory")
-	if inventory and inventory.has_method("add_item"):
-		var added := inventory.add_item(item, quantity)
+	if inventory:
+		var added: bool = inventory.call("add_item", item, quantity)
 		if added:
 			GameManager.log_action("You get some %s." % item.get_display_name())
 		else:

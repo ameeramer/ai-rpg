@@ -1,5 +1,6 @@
 extends State
 ## Player Combat state — OSRS-style tick-based auto-attack.
+## NOTE: has_method() fails on Android Godot 4.3 — use .call() directly.
 
 @onready var player: PlayerController = owner as PlayerController
 
@@ -7,6 +8,14 @@ var _target: Node3D = null
 var _ticks_since_attack: int = 0
 var _attack_speed_ticks: int = 4  # Default: 4 ticks (2.4s)
 var _tick_connected: bool = false
+
+
+func _is_target_dead() -> bool:
+	# has_method() fails on Android — use .get() to check _is_dead property directly
+	var dead = _target.get("_is_dead")
+	if dead != null:
+		return dead
+	return false
 
 
 func on_enter(msg: Dictionary = {}) -> void:
@@ -30,6 +39,7 @@ func on_enter(msg: Dictionary = {}) -> void:
 
 	var target_name: String = _target.get("display_name") if _target.get("display_name") else _target.name
 	GameManager.log_action("You attack the %s." % target_name)
+	FileLogger.log_msg("Combat: entered combat with %s" % target_name)
 
 
 func on_exit() -> void:
@@ -44,8 +54,7 @@ func on_physics_update(delta: float) -> void:
 		state_machine.transition_to("Idle")
 		return
 
-	# Check if target died
-	if _target.has_method("is_dead") and _target.is_dead():
+	if _is_target_dead():
 		state_machine.transition_to("Idle")
 		return
 
@@ -66,7 +75,7 @@ func _on_game_tick(_tick: int) -> void:
 		state_machine.transition_to("Idle")
 		return
 
-	if _target.has_method("is_dead") and _target.is_dead():
+	if _is_target_dead():
 		state_machine.transition_to("Idle")
 		return
 
@@ -78,24 +87,27 @@ func _on_game_tick(_tick: int) -> void:
 
 
 func _perform_attack() -> void:
-	if _target.has_method("take_damage"):
-		var max_hit := _calculate_max_hit()
-		var damage := randi_range(0, max_hit)
-		_target.take_damage(damage)
+	var max_hit := _calculate_max_hit()
+	var damage := randi_range(0, max_hit)
 
-		var target_name: String = _target.get("display_name") if _target.get("display_name") else _target.name
-		if damage > 0:
-			GameManager.log_action("You hit the %s for %d damage." % [target_name, damage])
-		else:
-			GameManager.log_action("You miss the %s." % target_name)
+	# Call take_damage directly — we know layer 4 objects are enemies with this method
+	# has_method() fails on Android, so skip the check
+	_target.call("take_damage", damage)
 
-		# Play tween attack animation
-		player.play_attack_animation()
+	var target_name: String = _target.get("display_name") if _target.get("display_name") else _target.name
+	if damage > 0:
+		GameManager.log_action("You hit the %s for %d damage." % [target_name, damage])
+	else:
+		GameManager.log_action("You miss the %s." % target_name)
+	FileLogger.log_msg("Combat: dealt %d damage to %s" % [damage, target_name])
 
-		# Check if target is dead
-		if _target.has_method("is_dead") and _target.is_dead():
-			GameManager.log_action("You defeated the %s!" % target_name)
-			state_machine.transition_to("Idle")
+	# Play tween attack animation
+	player.play_attack_animation()
+
+	# Check if target is dead
+	if _is_target_dead():
+		GameManager.log_action("You defeated the %s!" % target_name)
+		state_machine.transition_to("Idle")
 
 
 func _calculate_max_hit() -> int:
@@ -103,8 +115,8 @@ func _calculate_max_hit() -> int:
 	var strength_bonus: int = 0
 
 	var skills_node := player.get_node_or_null("PlayerSkills")
-	if skills_node and skills_node.has_method("get_level"):
-		strength_level = skills_node.get_level("Strength")
+	if skills_node:
+		strength_level = skills_node.call("get_level", "Strength")
 
 	var effective_strength := strength_level + 8
 	var max_hit := int(0.5 + effective_strength * (strength_bonus + 64) / 640.0)
