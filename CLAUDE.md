@@ -4,7 +4,7 @@
 A single-player, Old School RuneScape-inspired RPG built with **Godot 4.x** and **GDScript**, targeting Android (mobile-first) with PC debug support. No multiplayer — this is a solo adventure with OSRS-style mechanics (skills, tick-based combat, click-to-move, gathering, crafting).
 
 ## Tech Stack
-- **Engine**: Godot 4.6+
+- **Engine**: Godot 4.3 (deployed on Android as 4.3-stable)
 - **Language**: GDScript (primary)
 - **Target Platform**: Android (mobile-first), with PC for testing
 - **3D Style**: Low-poly (OSRS aesthetic)
@@ -50,9 +50,12 @@ res://
     └── Audio/
 ```
 
-### Autoloads (Singletons)
-- `GameManager` — Global game state, save/load, tick system
-- `InputManager` — Unified input for mouse (PC) and touch (Android)
+### Autoloads (Singletons) — load order matters
+1. `FileLogger` — Logging to file + logcat (initialized first so all others can log)
+2. `GameManager` — Global game state, tick system (0.6s ticks), action log
+3. `InputManager` — Unified input for mouse (PC) and touch (Android)
+4. `PlayerSkills` — OSRS-style skills system (16 skills, XP table, level-ups)
+5. `PlayerInventory` — 28-slot OSRS inventory (items stored as `{item, quantity}` dicts)
 
 ## Android / Mobile Conventions
 - **Input**: Always handle both `InputEventScreenTouch` and `InputEventMouseButton`. Map touch to the same logic as mouse click so we can debug on PC and deploy to Android.
@@ -147,6 +150,72 @@ func ensure_initialized() -> void:
 - `Main.gd` walks the scene tree and calls `ensure_initialized()` on all game objects as a fallback
 - The guard bool `_initialized` prevents double-initialization on PC where `_ready()` works
 
+### 8. GDScript features that cause SILENT parse failures on Android
+Scripts that fail to parse produce **NO error** — `_ready()` simply never fires. These features are confirmed to cause silent failures:
+
+```gdscript
+# BAD — signals with 3+ parameters may fail
+signal item_added(item, quantity, slot_idx)
+
+# GOOD — keep signals to 0-2 parameters
+signal inventory_changed()
+
+# BAD — := with Variant-returning functions (min, max, clamp, etc.)
+var x := min(a, b)
+
+# GOOD — use explicit var without :=
+var x = min(a, b)
+# or use if/else instead of min/max
+var x = a
+if b < a:
+    x = b
+
+# BAD — inferred typing with := can trigger parse failures
+var slot := _find_empty_slot()
+
+# GOOD — always use untyped var =
+var slot = _find_empty_slot()
+```
+
+**Additional parse-failure triggers:**
+- `const Array[String]` — use `var arr = [...]` instead
+- `signal foo(x: CustomType)` — untype all signal params
+- `static func` — use regular `func` instead
+- `@onready var x: CustomType` — use base types (`Node`, `Node3D`)
+- `var x: CustomType` — ANY variable typed with a custom `class_name` may fail
+- `class_name` on scripts over ~200 lines — keep scripts short OR remove `class_name`
+
+### 9. Hand-crafted .tscn files — UIDs must be valid or omitted
+```
+# BAD — human-readable UIDs cause load failures
+[gd_scene load_steps=2 format=3 uid="uid://inv_ui_scene"]
+
+# GOOD — omit uid entirely from hand-crafted .tscn files
+[gd_scene load_steps=2 format=3]
+```
+Godot UIDs use base62 hashes (e.g., `uid://b5c3k7m9x2`). Invalid UIDs cause `load()` to silently fail on Android.
+
+### 10. Guard autoload signal connections — scripts may not parse
+```gdscript
+# BAD — crashes if PlayerInventory script didn't parse
+PlayerInventory.inventory_changed.connect(_on_inventory_changed)
+
+# GOOD — check signal exists first
+var sig = PlayerInventory.get("inventory_changed")
+if sig:
+    PlayerInventory.inventory_changed.connect(_on_inventory_changed)
+```
+If an autoload's script fails to parse, it exists as a bare `Node` with no signals or methods. Accessing `.signal_name` directly will crash.
+
+### 11. Use `.call()` for cross-autoload method calls
+```gdscript
+# BAD — crashes if autoload script didn't parse
+PlayerInventory.add_item(item, qty)
+
+# GOOD — .call() returns null instead of crashing on missing methods
+PlayerInventory.call("add_item", item, qty)
+```
+
 ### Collision Layer Reference (used for type detection)
 | Layer | Value | Usage |
 |-------|-------|-------|
@@ -175,12 +244,14 @@ Raycast mask: `1 | 4 | 8` (excludes player layer)
 ## Coding Conventions
 - Use `snake_case` for variables and functions (GDScript standard).
 - Use `PascalCase` for class/node names.
-- Prefix signals with `on_` or use past tense (e.g., `item_added`, `skill_leveled_up`).
-- Keep scripts under 200 lines where possible — split into components.
+- Prefix signals with `on_` or use past tense (e.g., `inventory_changed`, `level_up`).
+- **Keep scripts under 200 lines** — scripts over ~200 lines may silently fail to parse on Android.
 - Use `@export` for inspector-configurable properties.
-- Use `class_name` to register custom types globally.
-- Always type-hint function parameters and return types.
-- **Android-safe method calls**: Use `.call("method", args)` instead of `has_method()` guards. Use `.get("property")` instead of `is Type` guards. See "Android Godot 4.3 Compatibility Rules" above.
+- **Avoid `class_name`** on game object scripts (player, enemies, interactables) — it causes cascade failures when scripts fail to parse. OK on Data resource scripts (`ItemData`, `WeaponData`, etc.) and StateMachine framework.
+- **Use `var x =` instead of `var x :=`** — inferred typing with `:=` can trigger Android parse failures, especially with Variant-returning functions.
+- **Keep signals to 0-2 parameters** — 3+ param signals may cause silent parse failures on Android.
+- Type-hint function params with **built-in types only** (`int`, `float`, `String`, `Node3D`, `Dictionary`, etc.). Never use custom `class_name` types in hints.
+- **Android-safe method calls**: Use `.call("method", args)` instead of `has_method()` guards. Use `.get("property")` instead of `is Type` guards. Use `.get("signal_name")` before `.connect()`. See "Android Godot 4.3 Compatibility Rules" above.
 
 ## Testing
 - Test on PC first using mouse input (maps 1:1 with touch).
