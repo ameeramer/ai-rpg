@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://Systems/player_inventory.gd" id="5"]
 [ext_resource type="Script" path="res://Systems/player_skills.gd" id="6"]
 [ext_resource type="Script" path="res://Systems/gathering_node.gd" id="7"]
+[ext_resource type="Script" path="res://Actors/Enemies/enemy_base.gd" id="8"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_1"]
 size = Vector2(50, 50)
@@ -23,25 +24,27 @@ vertices = PackedVector3Array(-25, 0, -25, -25, 0, 25, 25, 0, 25, 25, 0, -25)
 polygons = [PackedInt32Array(0, 1, 2, 3)]
 agent_radius = 0.4
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_trunk"]
-
-[sub_resource type="SphereMesh" id="SphereMesh_top"]
-
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_tree"]
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_trunk2"]
-
-[sub_resource type="SphereMesh" id="SphereMesh_top2"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_tree2"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_rock"]
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_rock"]
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_water"]
-
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_water"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_goblin"]
+radius = 0.4
+height = 1.4
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_skeleton"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_water"]
+transparency = 1
+albedo_color = Color(0.2, 0.5, 0.8, 0.6)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_water"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1")
@@ -94,14 +97,9 @@ required_skill = "Woodcutting"
 required_level = 1
 xp_reward = 25.0
 respawn_ticks = 15
-
-[node name="TreeTrunk" type="MeshInstance3D" parent="Tree1"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
-mesh = SubResource("CylinderMesh_trunk")
-
-[node name="TreeTop" type="MeshInstance3D" parent="Tree1"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 0)
-mesh = SubResource("SphereMesh_top")
+active_model_path = "res://Assets/Models/World/tree_normal.glb"
+depleted_model_path = "res://Assets/Models/World/tree_stump.glb"
+model_scale = Vector3(0.6, 0.6, 0.6)
 
 [node name="TreeCollision" type="CollisionShape3D" parent="Tree1"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
@@ -118,16 +116,49 @@ required_skill = "Woodcutting"
 required_level = 15
 xp_reward = 37.5
 respawn_ticks = 20
-
-[node name="TreeTrunk" type="MeshInstance3D" parent="Tree2"]
-transform = Transform3D(1.3, 0, 0, 0, 1.5, 0, 0, 0, 1.3, 0, 1.5, 0)
-mesh = SubResource("CylinderMesh_trunk2")
-
-[node name="TreeTop" type="MeshInstance3D" parent="Tree2"]
-transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, 4, 0)
-mesh = SubResource("SphereMesh_top2")
+active_model_path = "res://Assets/Models/World/tree_oak.glb"
+depleted_model_path = "res://Assets/Models/World/tree_stump.glb"
+model_scale = Vector3(0.7, 0.7, 0.7)
 
 [node name="TreeCollision" type="CollisionShape3D" parent="Tree2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("CylinderShape3D_tree2")
+
+[node name="Tree3" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 5)
+collision_layer = 8
+script = ExtResource("7")
+display_name = "Tree"
+interaction_verb = "Chop"
+ticks_per_action = 4
+required_skill = "Woodcutting"
+required_level = 1
+xp_reward = 25.0
+respawn_ticks = 15
+active_model_path = "res://Assets/Models/World/tree_normal.glb"
+depleted_model_path = "res://Assets/Models/World/tree_stump.glb"
+model_scale = Vector3(0.6, 0.6, 0.6)
+
+[node name="TreeCollision" type="CollisionShape3D" parent="Tree3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("CylinderShape3D_tree")
+
+[node name="Tree4" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 1)
+collision_layer = 8
+script = ExtResource("7")
+display_name = "Oak Tree"
+interaction_verb = "Chop"
+ticks_per_action = 5
+required_skill = "Woodcutting"
+required_level = 15
+xp_reward = 37.5
+respawn_ticks = 20
+active_model_path = "res://Assets/Models/World/tree_oak.glb"
+depleted_model_path = "res://Assets/Models/World/tree_stump.glb"
+model_scale = Vector3(0.7, 0.7, 0.7)
+
+[node name="TreeCollision" type="CollisionShape3D" parent="Tree4"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 shape = SubResource("CylinderShape3D_tree2")
 
@@ -142,12 +173,30 @@ required_skill = "Mining"
 required_level = 1
 xp_reward = 17.5
 respawn_ticks = 10
-
-[node name="RockMesh" type="MeshInstance3D" parent="Rock1"]
-transform = Transform3D(1, 0, 0, 0, 0.7, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_rock")
+active_model_path = "res://Assets/Models/World/rock_copper.glb"
+depleted_model_path = "res://Assets/Models/World/rock_depleted.glb"
+model_scale = Vector3(0.5, 0.5, 0.5)
 
 [node name="RockCollision" type="CollisionShape3D" parent="Rock1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_rock")
+
+[node name="Rock2" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, 6)
+collision_layer = 8
+script = ExtResource("7")
+display_name = "Copper Rock"
+interaction_verb = "Mine"
+ticks_per_action = 4
+required_skill = "Mining"
+required_level = 1
+xp_reward = 17.5
+respawn_ticks = 10
+active_model_path = "res://Assets/Models/World/rock_copper.glb"
+depleted_model_path = "res://Assets/Models/World/rock_depleted.glb"
+model_scale = Vector3(0.5, 0.5, 0.5)
+
+[node name="RockCollision" type="CollisionShape3D" parent="Rock2"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_rock")
 
@@ -162,13 +211,79 @@ required_skill = "Fishing"
 required_level = 1
 xp_reward = 20.0
 respawn_ticks = 8
+active_model_path = "res://Assets/Models/World/fishing_spot.glb"
+model_scale = Vector3(0.5, 0.5, 0.5)
 
 [node name="WaterMesh" type="MeshInstance3D" parent="FishingSpot"]
 transform = Transform3D(2, 0, 0, 0, 0.1, 0, 0, 0, 2, 0, 0.05, 0)
 mesh = SubResource("CylinderMesh_water")
+material_override = SubResource("StandardMaterial3D_water")
 
 [node name="WaterCollision" type="CollisionShape3D" parent="FishingSpot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
 shape = SubResource("CylinderShape3D_water")
+
+[node name="Goblin1" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -2)
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("8")
+display_name = "Goblin"
+max_hp = 5
+attack_damage = 2
+attack_speed_ticks = 4
+attack_range = 2.0
+aggro_range = 5.0
+combat_level = 2
+xp_reward = 25.0
+respawn_ticks = 50
+model_path = "res://Assets/Models/Enemies/goblin.glb"
+model_scale = Vector3(0.5, 0.5, 0.5)
+
+[node name="GoblinCollision" type="CollisionShape3D" parent="Goblin1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+shape = SubResource("CapsuleShape3D_goblin")
+
+[node name="Goblin2" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0, 0)
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("8")
+display_name = "Goblin"
+max_hp = 5
+attack_damage = 2
+attack_speed_ticks = 4
+attack_range = 2.0
+aggro_range = 5.0
+combat_level = 2
+xp_reward = 25.0
+respawn_ticks = 50
+model_path = "res://Assets/Models/Enemies/goblin.glb"
+model_scale = Vector3(0.5, 0.5, 0.5)
+
+[node name="GoblinCollision" type="CollisionShape3D" parent="Goblin2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+shape = SubResource("CapsuleShape3D_goblin")
+
+[node name="Skeleton1" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -8)
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("8")
+display_name = "Skeleton"
+max_hp = 15
+attack_damage = 4
+attack_speed_ticks = 5
+attack_range = 2.0
+aggro_range = 6.0
+combat_level = 10
+xp_reward = 60.0
+respawn_ticks = 80
+model_path = "res://Assets/Models/Enemies/skeleton.glb"
+model_scale = Vector3(0.5, 0.5, 0.5)
+
+[node name="SkeletonCollision" type="CollisionShape3D" parent="Skeleton1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_skeleton")
 
 [node name="HUD" parent="." instance=ExtResource("4")]

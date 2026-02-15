@@ -6,6 +6,9 @@ extends CharacterBody3D
 @export var move_speed: float = 4.0
 @export var interaction_range: float = 2.0
 
+const PLAYER_MODEL_PATH := "res://Assets/Models/Characters/player_character.glb"
+const PLAYER_MODEL_SCALE := Vector3(0.5, 0.5, 0.5)
+
 @onready var state_machine: StateMachine = $StateMachine
 @onready var nav_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
@@ -24,6 +27,9 @@ var max_hitpoints: int = 10
 func _ready() -> void:
 	FileLogger.log_msg("PlayerController._ready() start")
 
+	# Load 3D player model
+	_load_player_model()
+
 	# Connect to InputManager signals
 	InputManager.world_clicked.connect(_on_world_clicked)
 	InputManager.object_clicked.connect(_on_object_clicked)
@@ -36,6 +42,22 @@ func _ready() -> void:
 	# Add to player group for easy lookup
 	add_to_group("player")
 	FileLogger.log_msg("PlayerController._ready() done")
+
+
+func _load_player_model() -> void:
+	var scene: PackedScene = load(PLAYER_MODEL_PATH)
+	if not scene:
+		FileLogger.log_msg("Failed to load player model: " + PLAYER_MODEL_PATH)
+		return
+	# Remove the placeholder capsule mesh
+	var placeholder := model.get_node_or_null("PlayerMesh")
+	if placeholder:
+		placeholder.queue_free()
+	var instance := scene.instantiate()
+	instance.scale = PLAYER_MODEL_SCALE
+	instance.name = "PlayerModel"
+	model.add_child(instance)
+	FileLogger.log_msg("Player 3D model loaded")
 
 
 func _on_world_clicked(world_pos: Vector3, _normal: Vector3) -> void:
