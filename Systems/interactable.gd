@@ -37,21 +37,15 @@ func interact(player: Node3D) -> bool:
 		GameManager.log_action("You can't %s this right now." % interaction_verb.to_lower())
 		return false
 
-	# Check skill requirement — skills are on the player node directly
+	# Check skill requirement via autoload singleton
 	if required_skill != "":
-		var is_init = player.get("_initialized")
-		var levels_dict = player.get("skill_levels")
-		FileLogger.log_msg("interact: skill=%s init=%s levels=%s" % [required_skill, str(is_init), str(levels_dict != null)])
-		if is_init and levels_dict and levels_dict is Dictionary:
-			var level: int = levels_dict.get(required_skill, 1)
-			FileLogger.log_msg("interact: level=%d required=%d" % [level, required_level])
-			if level < required_level:
-				GameManager.log_action("You need level %d %s to %s this." % [
-					required_level, required_skill, interaction_verb.to_lower()
-				])
-				return false
-		else:
-			FileLogger.log_msg("interact: player not initialized — skipping skill check")
+		var level: int = PlayerSkills.get_level(required_skill)
+		FileLogger.log_msg("interact: skill=%s level=%d required=%d" % [required_skill, level, required_level])
+		if level < required_level:
+			GameManager.log_action("You need level %d %s to %s this." % [
+				required_level, required_skill, interaction_verb.to_lower()
+			])
+			return false
 
 	_ticks_remaining = ticks_per_action
 	GameManager.log_action("You begin to %s the %s." % [interaction_verb.to_lower(), display_name])
@@ -88,11 +82,10 @@ func _complete_action(player: Node3D) -> Dictionary:
 		if not drop.is_empty():
 			_give_item_to_player(player, drop["item"], drop["quantity"])
 
-	# Grant XP — use .call("add_xp") which emits signals and handles level-ups
+	# Grant XP via autoload singleton
 	if xp_reward > 0.0 and required_skill != "":
-		if player.get("_initialized"):
-			player.call("add_xp", required_skill, xp_reward)
-			FileLogger.log_msg("XP: %s +%.1f" % [required_skill, xp_reward])
+		PlayerSkills.add_xp(required_skill, xp_reward)
+		FileLogger.log_msg("XP: %s +%.1f" % [required_skill, xp_reward])
 
 	interaction_completed.emit(player)
 
@@ -107,14 +100,12 @@ func _complete_action(player: Node3D) -> Dictionary:
 	return {"completed": false}
 
 
-func _give_item_to_player(player: Node3D, item: Resource, quantity: int) -> void:
-	# Use .call("add_item") which emits signals and handles stacking
-	if player.get("_initialized"):
-		var added = player.call("add_item", item, quantity)
-		if added:
-			GameManager.log_action("You get some %s." % item.get_display_name())
-		else:
-			GameManager.log_action("Your inventory is full.")
+func _give_item_to_player(_player: Node3D, item: Resource, quantity: int) -> void:
+	var added = PlayerInventory.add_item(item, quantity)
+	if added:
+		GameManager.log_action("You get some %s." % item.get_display_name())
+	else:
+		GameManager.log_action("Your inventory is full.")
 
 
 func _should_deplete() -> bool:

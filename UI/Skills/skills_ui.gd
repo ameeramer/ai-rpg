@@ -1,12 +1,10 @@
 class_name SkillsUI
 extends VBoxContainer
 ## Displays all skills with their levels and XP progress bars.
+## Uses PlayerSkills autoload singleton for data.
 
-## Player node — skills data is embedded directly on PlayerController
-var _player: Node3D
 var _skill_rows: Dictionary = {}
 
-## Skill names — duplicated here to avoid class_name dependency issues on Android
 var SKILL_NAMES = [
 	"Attack", "Strength", "Defence", "Hitpoints",
 	"Ranged", "Prayer", "Magic",
@@ -16,14 +14,9 @@ var SKILL_NAMES = [
 ]
 
 
-## Accept Node3D — the player node has skills embedded directly
-func setup(player: Node3D) -> void:
-	_player = player
-	# Connect to signals on the player node
-	if _player.has_signal("xp_gained"):
-		_player.xp_gained.connect(_on_xp_gained)
-	if _player.has_signal("level_up"):
-		_player.level_up.connect(_on_level_up)
+func setup() -> void:
+	PlayerSkills.xp_gained.connect(_on_xp_gained)
+	PlayerSkills.level_up.connect(_on_level_up)
 	_build_ui()
 	refresh()
 
@@ -91,14 +84,6 @@ func _create_skill_row(skill_name: String, xp_bg: StyleBoxFlat, xp_fill: StyleBo
 
 
 func refresh() -> void:
-	if _player == null:
-		return
-
-	var levels_dict = _player.get("skill_levels")
-	var xp_dict = _player.get("skill_xp")
-	if levels_dict == null or xp_dict == null:
-		return
-
 	for skill_name in SKILL_NAMES:
 		if not _skill_rows.has(skill_name):
 			continue
@@ -106,14 +91,13 @@ func refresh() -> void:
 		var level_label: Label = row.get_node("LevelLabel")
 		var xp_bar: ProgressBar = row.get_node("XPBar")
 
-		var level: int = levels_dict.get(skill_name, 1)
+		var level: int = PlayerSkills.get_level(skill_name)
 		level_label.text = str(level)
 
-		# Calculate progress to next level
 		if level >= 99:
 			xp_bar.value = 1.0
 		else:
-			var current_xp: float = xp_dict.get(skill_name, 0.0)
+			var current_xp: float = PlayerSkills.get_xp(skill_name)
 			var current_level_xp := _xp_for_level(level)
 			var next_level_xp := _xp_for_level(level + 1)
 			xp_bar.value = (current_xp - current_level_xp) / (next_level_xp - current_level_xp)

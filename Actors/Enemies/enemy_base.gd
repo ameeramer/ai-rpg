@@ -233,13 +233,9 @@ func _die() -> void:
 
 	_drop_loot()
 
-	# Grant combat XP — use .call("add_combat_xp") which emits signals and handles level-ups
-	var players := get_tree().get_nodes_in_group("player")
-	if players.size() > 0:
-		var player: Node3D = players[0]
-		if player.get("_initialized"):
-			player.call("add_combat_xp", xp_reward)
-			FileLogger.log_msg("Combat XP: %.1f total (split Attack/HP)" % xp_reward)
+	# Grant combat XP via autoload singleton
+	PlayerSkills.add_combat_xp(xp_reward)
+	FileLogger.log_msg("Combat XP: %.1f total (split Attack/HP)" % xp_reward)
 
 	died.emit(self)
 
@@ -250,19 +246,15 @@ func _die() -> void:
 
 
 func _drop_loot() -> void:
-	var players := get_tree().get_nodes_in_group("player")
-	var player: Node3D = players[0] if players.size() > 0 else null
-
 	for entry in drop_table:
 		var drop := entry.roll()
 		if not drop.is_empty():
 			var item = drop["item"]
 			var qty: int = drop["quantity"]
 			GameManager.log_action("The %s drops: %s x%d" % [display_name, item.get_display_name(), qty])
-			if player and player.get("_initialized"):
-				var added = player.call("add_item", item, qty)
-				if not added:
-					GameManager.log_action("Your inventory is full!")
+			var added = PlayerInventory.add_item(item, qty)
+			if not added:
+				GameManager.log_action("Your inventory is full!")
 
 
 func _handle_respawn() -> void:

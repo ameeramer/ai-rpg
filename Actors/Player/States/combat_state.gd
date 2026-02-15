@@ -118,11 +118,7 @@ func _calculate_max_hit() -> int:
 	var strength_level: int = 1
 	var strength_bonus: int = 0
 
-	# Skills are on the player node directly
-	if player.get("_initialized"):
-		var levels_dict = player.get("skill_levels")
-		if levels_dict and levels_dict is Dictionary:
-			strength_level = levels_dict.get("Strength", 1)
+	strength_level = PlayerSkills.get_level("Strength")
 
 	var effective_strength := strength_level + 8
 	var max_hit := int(0.5 + effective_strength * (strength_bonus + 64) / 640.0)

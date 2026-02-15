@@ -249,16 +249,11 @@ func _create_generic_meshes() -> void:
 
 
 func _complete_action(player: Node3D) -> Dictionary:
-	# Roll for success based on level
+	# Roll for success based on level via autoload
 	var success_chance := base_success_chance
 	if required_skill != "":
-		# Skills are on the player node directly
-		if player.get("_initialized"):
-			var levels_dict = player.get("skill_levels")
-			var level: int = 1
-			if levels_dict and levels_dict is Dictionary:
-				level = levels_dict.get(required_skill, 1)
-			success_chance = min(0.95, base_success_chance + (level - required_level) * 0.02)
+		var level: int = PlayerSkills.get_level(required_skill)
+		success_chance = min(0.95, base_success_chance + (level - required_level) * 0.02)
 
 	if randf() > success_chance:
 		# Failed this tick, try again

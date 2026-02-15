@@ -1,12 +1,11 @@
 class_name InventoryUI
 extends GridContainer
 ## Renders the 28-slot inventory grid with OSRS-style slot buttons.
+## Uses PlayerInventory autoload singleton for data.
 
 const SLOT_SIZE := Vector2(88, 88)
 const MAX_SLOTS: int = 28
 
-## Player node — inventory data is embedded directly on PlayerController
-var _player: Node3D
 var _slot_buttons: Array = []
 
 
@@ -17,11 +16,8 @@ func _ready() -> void:
 	_create_slots()
 
 
-## Accept Node3D — the player node has inventory embedded directly
-func setup(player: Node3D) -> void:
-	_player = player
-	if _player.has_signal("inventory_changed"):
-		_player.inventory_changed.connect(refresh)
+func setup() -> void:
+	PlayerInventory.inventory_changed.connect(refresh)
 	refresh()
 
 
@@ -67,12 +63,7 @@ func _create_slots() -> void:
 
 
 func refresh() -> void:
-	if _player == null:
-		return
-
-	var inv_slots = _player.get("slots")
-	if inv_slots == null or not inv_slots is Array:
-		return
+	var inv_slots = PlayerInventory.slots
 
 	for i in range(MAX_SLOTS):
 		var btn := _slot_buttons[i]
@@ -98,11 +89,8 @@ func refresh() -> void:
 
 
 func _on_slot_pressed(slot_index: int) -> void:
-	if _player == null:
-		return
-
-	var inv_slots = _player.get("slots")
-	if inv_slots == null or slot_index >= inv_slots.size() or inv_slots[slot_index] == null:
+	var inv_slots = PlayerInventory.slots
+	if slot_index >= inv_slots.size() or inv_slots[slot_index] == null:
 		return
 
 	var item = inv_slots[slot_index]["item"]

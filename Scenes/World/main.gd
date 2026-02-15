@@ -1,7 +1,6 @@
 extends Node3D
 ## Main game scene — sets up the world, player, camera, and UI.
 
-## Use Node3D/Node — typed custom class vars may fail on Android (is check)
 @onready var player: Node3D = $Player
 @onready var camera_controller: Node3D = $CameraController
 @onready var hud: Node = $HUD
@@ -10,55 +9,46 @@ extends Node3D
 func _ready() -> void:
 	FileLogger.log_msg("Main._ready() start")
 
-	# Point camera at player — use .set() since camera_controller is typed as Node3D
 	camera_controller.set("target", player)
 	FileLogger.log_msg("Camera target set")
 
-	# Set up HUD with player reference — use .call() for Android safety
 	hud.call("setup", player)
 	FileLogger.log_msg("HUD setup done")
 
 	# Force-initialize the player — _ready() may not fire on Android
-	# Check if the script parsed by reading _initialized (null = script didn't parse)
 	var init_val = player.get("_initialized")
 	FileLogger.log_msg("Main: player _initialized = %s" % str(init_val))
 	if init_val == false:
-		# Script parsed but _ready() didn't fire — call ensure_initialized()
-		FileLogger.log_msg("Main: calling player.ensure_initialized()")
 		player.call("ensure_initialized")
-		FileLogger.log_msg("Main: player _initialized after call = %s" % str(player.get("_initialized")))
+		FileLogger.log_msg("Main: player initialized via ensure_initialized()")
 	elif init_val == null:
-		# Script didn't parse at all — cannot call any methods
 		FileLogger.log_msg("Main: WARNING — player script did NOT parse, cannot init")
 
-	# Explicitly initialize all enemies and interactables — _ready() may not fire on Android
+	# Force-initialize all enemies and interactables
 	_force_initialize_objects()
 
-	# Set up inventory UI inside the overlay panel
+	# Set up inventory UI — now uses PlayerInventory autoload, no player ref needed
 	var inventory_panel := hud.get_node_or_null("InventoryOverlay/VBox/InventoryPanel")
 	if inventory_panel:
 		var inv_ui := InventoryUI.new()
 		inv_ui.name = "InventoryGrid"
 		inventory_panel.add_child(inv_ui)
-		inv_ui.call("setup", player)
+		inv_ui.call("setup")
 	FileLogger.log_msg("Inventory UI done")
 
-	# Set up skills UI inside the scroll container
+	# Set up skills UI — now uses PlayerSkills autoload, no player ref needed
 	var skills_panel := hud.get_node_or_null("SkillsOverlay/VBox/SkillsScroll/SkillsPanel")
 	if skills_panel:
 		var skills_ui := SkillsUI.new()
 		skills_ui.name = "SkillsList"
 		skills_panel.add_child(skills_ui)
-		skills_ui.call("setup", player)
+		skills_ui.call("setup")
 	FileLogger.log_msg("Skills UI done")
 
 	FileLogger.log_msg("Main._ready() complete")
 	GameManager.log_action("Welcome to AI RPG! Tap to move, tap objects to interact.")
 
 
-## Force-initialize all game objects by collision layer.
-## On Android Godot 4.3, _ready() may not fire for scripts on PackedScene instances.
-## This walks the full scene tree and calls ensure_initialized() on matching objects.
 func _force_initialize_objects() -> void:
 	var enemies_count: int = 0
 	var interactables_count: int = 0
@@ -68,13 +58,9 @@ func _force_initialize_objects() -> void:
 		var layer = node.get("collision_layer")
 		if layer == null:
 			continue
-
-		# Enemy (layer 4)
 		if layer == 4:
 			node.call("ensure_initialized")
 			enemies_count += 1
-
-		# Interactable (layer 8)
 		elif layer == 8:
 			node.call("ensure_initialized")
 			interactables_count += 1

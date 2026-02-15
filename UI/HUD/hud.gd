@@ -15,40 +15,30 @@ extends CanvasLayer
 @onready var inv_close: Button = $InventoryOverlay/VBox/Header/CloseBtn
 @onready var skills_close: Button = $SkillsOverlay/VBox/Header/CloseBtn
 
-## Use Node3D — typed PlayerController param fails on Android (type check crash)
 var _player: Node3D
 var _debug_panel: Control
 var _current_panel: Control = null
 
 
 func _ready() -> void:
-	# Connect to GameManager for action log
 	GameManager.action_logged.connect(_on_action_logged)
 
-	# Connect toolbar buttons
 	inv_btn.pressed.connect(_toggle_inventory)
 	skills_btn.pressed.connect(_toggle_skills)
 	debug_btn.pressed.connect(_toggle_debug_log)
 
-	# Connect close buttons
 	inv_close.pressed.connect(_close_panels)
 	skills_close.pressed.connect(_close_panels)
 
-	# Touch blocker closes panels
 	touch_blocker.gui_input.connect(_on_blocker_input)
 
 
-## Accept Node3D — typed PlayerController param fails on Android (type check crash)
 func setup(player: Node3D) -> void:
 	_player = player
-
-	# Skills + inventory signals are on the player node directly
-	if player.has_signal("xp_gained"):
-		player.xp_gained.connect(_on_xp_gained)
-	if player.has_signal("level_up"):
-		player.level_up.connect(_on_level_up)
-	if player.has_signal("inventory_changed"):
-		player.inventory_changed.connect(_on_inventory_changed)
+	# Connect to autoload signals for XP/level/inventory
+	PlayerSkills.xp_gained.connect(_on_xp_gained)
+	PlayerSkills.level_up.connect(_on_level_up)
+	PlayerInventory.inventory_changed.connect(_on_inventory_changed)
 
 
 func _process(_delta: float) -> void:
