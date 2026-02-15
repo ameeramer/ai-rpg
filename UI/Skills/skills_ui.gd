@@ -2,16 +2,28 @@ class_name SkillsUI
 extends VBoxContainer
 ## Displays all skills with their levels and XP progress bars.
 
-## Use Node instead of PlayerSkills — `is PlayerSkills` fails on Android
-var _skills: Node
+## Player node — skills data is embedded directly on PlayerController
+var _player: Node3D
 var _skill_rows: Dictionary = {}
 
+## Skill names — duplicated here to avoid class_name dependency issues on Android
+const SKILL_NAMES: Array[String] = [
+	"Attack", "Strength", "Defence", "Hitpoints",
+	"Ranged", "Prayer", "Magic",
+	"Cooking", "Woodcutting", "Fishing", "Mining",
+	"Smithing", "Crafting", "Firemaking",
+	"Agility", "Thieving"
+]
 
-## Accept Node — typed PlayerSkills param fails on Android (type check crash)
-func setup(skills: Node) -> void:
-	_skills = skills
-	_skills.xp_gained.connect(_on_xp_gained)
-	_skills.level_up.connect(_on_level_up)
+
+## Accept Node3D — the player node has skills embedded directly
+func setup(player: Node3D) -> void:
+	_player = player
+	# Connect to signals on the player node
+	if _player.has_signal("xp_gained"):
+		_player.xp_gained.connect(_on_xp_gained)
+	if _player.has_signal("level_up"):
+		_player.level_up.connect(_on_level_up)
 	_build_ui()
 	refresh()
 
@@ -36,7 +48,7 @@ func _build_ui() -> void:
 	xp_fill.corner_radius_bottom_right = 2
 	xp_fill.corner_radius_bottom_left = 2
 
-	for skill_name in PlayerSkills.SKILL_NAMES:
+	for skill_name in SKILL_NAMES:
 		var row := _create_skill_row(skill_name, xp_bg, xp_fill)
 		add_child(row)
 		_skill_rows[skill_name] = row
@@ -79,18 +91,39 @@ func _create_skill_row(skill_name: String, xp_bg: StyleBoxFlat, xp_fill: StyleBo
 
 
 func refresh() -> void:
-	if _skills == null:
+	if _player == null:
 		return
 
-	for skill_name in PlayerSkills.SKILL_NAMES:
+	var levels_dict = _player.get("skill_levels")
+	var xp_dict = _player.get("skill_xp")
+	if levels_dict == null or xp_dict == null:
+		return
+
+	for skill_name in SKILL_NAMES:
 		if not _skill_rows.has(skill_name):
 			continue
 		var row: HBoxContainer = _skill_rows[skill_name]
 		var level_label: Label = row.get_node("LevelLabel")
 		var xp_bar: ProgressBar = row.get_node("XPBar")
 
-		level_label.text = str(_skills.get_level(skill_name))
-		xp_bar.value = _skills.get_level_progress(skill_name)
+		var level: int = levels_dict.get(skill_name, 1)
+		level_label.text = str(level)
+
+		# Calculate progress to next level
+		if level >= 99:
+			xp_bar.value = 1.0
+		else:
+			var current_xp: float = xp_dict.get(skill_name, 0.0)
+			var current_level_xp := _xp_for_level(level)
+			var next_level_xp := _xp_for_level(level + 1)
+			xp_bar.value = (current_xp - current_level_xp) / (next_level_xp - current_level_xp)
+
+
+static func _xp_for_level(level: int) -> float:
+	var total: float = 0.0
+	for i in range(1, level):
+		total += floorf(i + 300.0 * pow(2.0, i / 7.0))
+	return floorf(total / 4.0)
 
 
 func _on_xp_gained(_skill_name: String, _amount: float, _total: float) -> void:

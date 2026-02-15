@@ -21,21 +21,10 @@ func _ready() -> void:
 	# Explicitly initialize all enemies and interactables — _ready() may not fire on Android
 	_force_initialize_objects()
 
-	# Defer subsystem init + UI setup to next frame so freshly-created
-	# PlayerSkills/PlayerInventory nodes have their scripts fully bound.
-	# On Android, .call() on a node that just had set_script() in the same frame crashes.
-	call_deferred("_deferred_init")
-
-	FileLogger.log_msg("Main._ready() complete (deferred init queued)")
-	GameManager.log_action("Welcome to AI RPG! Tap to move, tap objects to interact.")
-
-
-## Called one frame after _ready() — subsystem scripts are now callable.
-func _deferred_init() -> void:
-	FileLogger.log_msg("Main._deferred_init() start")
-
-	# Force-initialize player subsystems
-	_force_initialize_player_subsystems()
+	# Skills + inventory are embedded in PlayerController — no child nodes needed.
+	# PlayerController._ready() initializes them before Main._ready() runs.
+	var is_init = player.get("_initialized")
+	FileLogger.log_msg("Player initialized: %s" % str(is_init))
 
 	# Set up inventory UI inside the overlay panel
 	var inventory_panel := hud.get_node_or_null("InventoryOverlay/VBox/InventoryPanel")
@@ -43,9 +32,7 @@ func _deferred_init() -> void:
 		var inv_ui := InventoryUI.new()
 		inv_ui.name = "InventoryGrid"
 		inventory_panel.add_child(inv_ui)
-		var player_inv := player.get_node_or_null("PlayerInventory")
-		if player_inv:
-			inv_ui.call("setup", player_inv)
+		inv_ui.call("setup", player)
 	FileLogger.log_msg("Inventory UI done")
 
 	# Set up skills UI inside the scroll container
@@ -54,41 +41,11 @@ func _deferred_init() -> void:
 		var skills_ui := SkillsUI.new()
 		skills_ui.name = "SkillsList"
 		skills_panel.add_child(skills_ui)
-		var player_skills := player.get_node_or_null("PlayerSkills")
-		if player_skills:
-			skills_ui.call("setup", player_skills)
+		skills_ui.call("setup", player)
 	FileLogger.log_msg("Skills UI done")
 
-	FileLogger.log_msg("Main._deferred_init() complete")
-
-
-## Force-initialize player subsystems (inventory, skills).
-## PlayerController._ready() should have already set up scripts via _ensure_subsystem.
-## This is a safety net — only call ensure_initialized if script is actually loaded.
-func _force_initialize_player_subsystems() -> void:
-	var inv := player.get_node_or_null("PlayerInventory")
-	if inv:
-		var is_init = inv.get("_initialized")
-		if is_init:
-			FileLogger.log_msg("PlayerInventory already initialized")
-		else:
-			inv.call("ensure_initialized")
-			FileLogger.log_msg("PlayerInventory force-initialized from Main (init=%s)" % str(inv.get("_initialized")))
-	else:
-		FileLogger.log_msg("PlayerInventory node missing")
-
-	var skills := player.get_node_or_null("PlayerSkills")
-	if skills:
-		var is_init = skills.get("_initialized")
-		if is_init:
-			FileLogger.log_msg("PlayerSkills already initialized")
-		else:
-			skills.call("ensure_initialized")
-			FileLogger.log_msg("PlayerSkills force-initialized from Main (init=%s)" % str(skills.get("_initialized")))
-	else:
-		FileLogger.log_msg("PlayerSkills node missing")
-
-	FileLogger.log_msg("Player subsystems check complete")
+	FileLogger.log_msg("Main._ready() complete")
+	GameManager.log_action("Welcome to AI RPG! Tap to move, tap objects to interact.")
 
 
 ## Force-initialize all game objects by collision layer.

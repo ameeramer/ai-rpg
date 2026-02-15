@@ -1,7 +1,7 @@
 class_name PlayerController
 extends CharacterBody3D
 ## Main player controller. Uses a StateMachine for behavior.
-## Child nodes: StateMachine, NavigationAgent3D, CollisionShape3D, AnimationPlayer
+## Skills + inventory are embedded directly — set_script() does NOT work on Android.
 
 @export var move_speed: float = 4.0
 @export var interaction_range: float = 3.0
@@ -20,6 +20,36 @@ var is_moving: bool = false
 var hitpoints: int = 10
 var max_hitpoints: int = 10
 
+# ── Skills data (embedded — set_script() doesn't work on Android) ──
+
+const SKILL_NAMES: Array[String] = [
+	"Attack", "Strength", "Defence", "Hitpoints",
+	"Ranged", "Prayer", "Magic",
+	"Cooking", "Woodcutting", "Fishing", "Mining",
+	"Smithing", "Crafting", "Firemaking",
+	"Agility", "Thieving"
+]
+
+var skill_xp: Dictionary = {}
+var skill_levels: Dictionary = {}
+
+signal xp_gained(skill_name: String, amount: float, total_xp: float)
+signal level_up(skill_name: String, new_level: int)
+
+# ── Inventory data (embedded) ──
+
+const MAX_SLOTS: int = 28
+
+signal item_added(item: ItemData, quantity: int, slot: int)
+signal item_removed(item: ItemData, quantity: int, slot: int)
+signal inventory_changed()
+signal inventory_full()
+
+## Each slot is {"item": ItemData, "quantity": int} or null
+var slots: Array = []
+
+var _initialized: bool = false
+
 
 func _ready() -> void:
 	FileLogger.log_msg("PlayerController._ready() start")
@@ -36,40 +66,220 @@ func _ready() -> void:
 	# Add to player group for easy lookup
 	add_to_group("player")
 
-	# Ensure PlayerSkills and PlayerInventory nodes exist with scripts loaded.
-	# On Android, inline script attachment in .tscn may silently fail.
-	# Creating them programmatically in the player's own _ready() is reliable.
-	_ensure_subsystem("PlayerSkills", "res://Systems/player_skills.gd")
-	_ensure_subsystem("PlayerInventory", "res://Systems/player_inventory.gd")
+	# Initialize skills + inventory directly — no child nodes needed
+	_init_skills()
+	_init_inventory()
+	_initialized = true
+	FileLogger.log_msg("PlayerController init done: %d skills, %d slots" % [skill_levels.size(), slots.size()])
 
 	FileLogger.log_msg("PlayerController._ready() done")
 
 
-## Ensure a child subsystem node exists with its script properly loaded.
-## On Android, nodes defined in .tscn with inline scripts are permanently broken —
-## get_script() returns non-null but methods are NEVER callable, even after set_script().
-## Fix: REMOVE any existing .tscn-defined node and create a fresh one from scratch.
-func _ensure_subsystem(node_name: String, script_path: String) -> void:
-	var scr = load(script_path)
-	if scr == null:
-		FileLogger.log_error("Failed to load script: %s" % script_path)
+# ── Skills ──
+
+func _init_skills() -> void:
+	for skill in SKILL_NAMES:
+		if skill == "Hitpoints":
+			skill_xp[skill] = _xp_for_level(10)
+			skill_levels[skill] = 10
+		else:
+			skill_xp[skill] = 0.0
+			skill_levels[skill] = 1
+
+
+func get_level(skill_name: String) -> int:
+	return skill_levels.get(skill_name, 1)
+
+
+func get_xp(skill_name: String) -> float:
+	return skill_xp.get(skill_name, 0.0)
+
+
+func get_xp_to_next_level(skill_name: String) -> float:
+	var current_level := get_level(skill_name)
+	if current_level >= 99:
+		return 0.0
+	return _xp_for_level(current_level + 1) - get_xp(skill_name)
+
+
+func get_level_progress(skill_name: String) -> float:
+	var current_level := get_level(skill_name)
+	if current_level >= 99:
+		return 1.0
+	var current_level_xp := _xp_for_level(current_level)
+	var next_level_xp := _xp_for_level(current_level + 1)
+	return (get_xp(skill_name) - current_level_xp) / (next_level_xp - current_level_xp)
+
+
+func add_xp(skill_name: String, amount: float) -> void:
+	if not skill_xp.has(skill_name):
 		return
+	skill_xp[skill_name] += amount
+	xp_gained.emit(skill_name, amount, skill_xp[skill_name])
+	var new_level := _level_for_xp(skill_xp[skill_name])
+	if new_level > skill_levels[skill_name]:
+		skill_levels[skill_name] = new_level
+		level_up.emit(skill_name, new_level)
+		GameManager.log_action("Congratulations! Your %s level is now %d!" % [skill_name, new_level])
+		if skill_name == "Hitpoints":
+			max_hitpoints = new_level
+			hitpoints = max_hitpoints
 
-	# Remove any existing node — it may be "tainted" from .tscn inline script failure
-	var existing := get_node_or_null(node_name)
-	if existing:
-		FileLogger.log_msg("Removing existing %s node (may be tainted)" % node_name)
-		remove_child(existing)
-		existing.queue_free()
 
-	# Create a completely fresh node — set script BEFORE add_child so that
-	# _ready() fires WITH the script already attached
-	var node := Node.new()
-	node.name = node_name
-	node.set_script(scr)
-	add_child(node)
-	FileLogger.log_msg("Created fresh subsystem: %s (script=%s)" % [node_name, str(node.get_script() != null)])
+func add_combat_xp(total_xp: float) -> void:
+	add_xp("Attack", total_xp * 0.75)
+	add_xp("Hitpoints", total_xp * 0.25)
 
+
+func get_combat_level() -> int:
+	var base := 0.25 * (get_level("Defence") + get_level("Hitpoints") + floorf(get_level("Prayer") / 2.0))
+	var melee := 0.325 * (get_level("Attack") + get_level("Strength"))
+	var ranged := 0.325 * (floorf(get_level("Ranged") / 2.0) + get_level("Ranged"))
+	var magic := 0.325 * (floorf(get_level("Magic") / 2.0) + get_level("Magic"))
+	return int(base + max(melee, max(ranged, magic)))
+
+
+static func _xp_for_level(level: int) -> float:
+	var total: float = 0.0
+	for i in range(1, level):
+		total += floorf(i + 300.0 * pow(2.0, i / 7.0))
+	return floorf(total / 4.0)
+
+
+static func _level_for_xp(xp: float) -> int:
+	for level in range(99, 0, -1):
+		if xp >= _xp_for_level(level):
+			return level
+	return 1
+
+
+# ── Inventory ──
+
+func _init_inventory() -> void:
+	slots.resize(MAX_SLOTS)
+	for i in range(MAX_SLOTS):
+		slots[i] = null
+
+
+func add_item(item: ItemData, quantity: int = 1) -> bool:
+	if item == null or quantity <= 0:
+		return false
+	if item.is_stackable:
+		for i in range(MAX_SLOTS):
+			if slots[i] != null and slots[i]["item"].id == item.id:
+				slots[i]["quantity"] += quantity
+				item_added.emit(item, quantity, i)
+				inventory_changed.emit()
+				return true
+	if item.is_stackable:
+		var slot := _find_empty_slot()
+		if slot == -1:
+			inventory_full.emit()
+			return false
+		slots[slot] = {"item": item, "quantity": quantity}
+		item_added.emit(item, quantity, slot)
+		inventory_changed.emit()
+		return true
+	else:
+		var added_count := 0
+		for _q in range(quantity):
+			var slot := _find_empty_slot()
+			if slot == -1:
+				if added_count == 0:
+					inventory_full.emit()
+					return false
+				inventory_changed.emit()
+				return true
+			slots[slot] = {"item": item, "quantity": 1}
+			item_added.emit(item, 1, slot)
+			added_count += 1
+		inventory_changed.emit()
+		return true
+
+
+func remove_item_at(slot: int, quantity: int = 1) -> Dictionary:
+	if slot < 0 or slot >= MAX_SLOTS or slots[slot] == null:
+		return {}
+	var slot_data: Dictionary = slots[slot]
+	var removed_qty := min(quantity, slot_data["quantity"])
+	slot_data["quantity"] -= removed_qty
+	if slot_data["quantity"] <= 0:
+		slots[slot] = null
+	item_removed.emit(slot_data["item"], removed_qty, slot)
+	inventory_changed.emit()
+	return {"item": slot_data["item"], "quantity": removed_qty}
+
+
+func remove_item_by_id(item_id: int, quantity: int = 1) -> bool:
+	var remaining := quantity
+	for i in range(MAX_SLOTS):
+		if remaining <= 0:
+			break
+		if slots[i] != null and slots[i]["item"].id == item_id:
+			var can_remove := min(remaining, slots[i]["quantity"])
+			slots[i]["quantity"] -= can_remove
+			remaining -= can_remove
+			if slots[i]["quantity"] <= 0:
+				slots[i] = null
+	if remaining < quantity:
+		inventory_changed.emit()
+		return remaining == 0
+	return false
+
+
+func get_slot(slot: int) -> Dictionary:
+	if slot < 0 or slot >= MAX_SLOTS or slots[slot] == null:
+		return {}
+	return slots[slot]
+
+
+func has_item(item_id: int, quantity: int = 1) -> bool:
+	var total := 0
+	for slot in slots:
+		if slot != null and slot["item"].id == item_id:
+			total += slot["quantity"]
+			if total >= quantity:
+				return true
+	return false
+
+
+func count_item(item_id: int) -> int:
+	var total := 0
+	for slot in slots:
+		if slot != null and slot["item"].id == item_id:
+			total += slot["quantity"]
+	return total
+
+
+func swap_slots(from: int, to: int) -> void:
+	if from < 0 or from >= MAX_SLOTS or to < 0 or to >= MAX_SLOTS:
+		return
+	var temp = slots[from]
+	slots[from] = slots[to]
+	slots[to] = temp
+	inventory_changed.emit()
+
+
+func get_used_slots() -> int:
+	var count := 0
+	for slot in slots:
+		if slot != null:
+			count += 1
+	return count
+
+
+func is_full() -> bool:
+	return get_used_slots() >= MAX_SLOTS
+
+
+func _find_empty_slot() -> int:
+	for i in range(MAX_SLOTS):
+		if slots[i] == null:
+			return i
+	return -1
+
+
+# ── Movement & combat ──
 
 func _on_world_clicked(world_pos: Vector3, _normal: Vector3) -> void:
 	if is_dead_state():
@@ -89,7 +299,6 @@ func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
 	var obj_layer: int = object.get("collision_layer") if object.get("collision_layer") != null else 0
 	var dist := global_position.distance_to(object.global_position)
 
-	# Enemy (collision layer 4) -> combat
 	if obj_layer == 4:
 		var is_dead = object.get("_is_dead")
 		if is_dead != null and is_dead:
@@ -104,13 +313,10 @@ func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
 			})
 		return
 
-	# Interactable (collision layer 8)
 	if obj_layer == 8:
-		# Depleted -> just walk there
 		if object.get("_is_depleted"):
 			state_machine.transition_to("Moving", {"target": object.global_position})
 			return
-		# Active -> interact or walk then interact
 		if dist <= interaction_range:
 			state_machine.transition_to("Interacting", {"target": object})
 		else:
@@ -126,17 +332,14 @@ func move_toward_target(delta: float) -> void:
 	if nav_agent.is_navigation_finished():
 		is_moving = false
 		return
-
 	var next_pos := nav_agent.get_next_path_position()
 	var direction := (next_pos - global_position).normalized()
 	direction.y = 0
-
 	if direction.length() > 0.01:
 		var look_target := global_position + direction
 		look_target.y = global_position.y
 		if look_target.distance_to(global_position) > 0.01:
 			look_at(look_target, Vector3.UP)
-
 	velocity = direction * move_speed
 	move_and_slide()
 	is_moving = true
@@ -212,7 +415,6 @@ func play_attack_animation() -> void:
 func play_damage_flash() -> void:
 	if not model:
 		return
-	# Collect original colors first
 	var parts: Array[Dictionary] = []
 	for child in model.get_children():
 		if child is MeshInstance3D and child.material_override is StandardMaterial3D:

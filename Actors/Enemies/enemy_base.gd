@@ -233,13 +233,13 @@ func _die() -> void:
 
 	_drop_loot()
 
-	# Grant XP to nearby player — use .call() instead of has_method (fails on Android)
+	# Grant combat XP — use .call("add_combat_xp") which emits signals and handles level-ups
 	var players := get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		var player: Node3D = players[0]
-		var skills := player.get_node_or_null("PlayerSkills")
-		if skills and skills.get("_initialized"):
-			skills.call("add_combat_xp", xp_reward)
+		if player.get("_initialized"):
+			player.call("add_combat_xp", xp_reward)
+			FileLogger.log_msg("Combat XP: %.1f total (split Attack/HP)" % xp_reward)
 
 	died.emit(self)
 
@@ -259,12 +259,10 @@ func _drop_loot() -> void:
 			var item: ItemData = drop["item"]
 			var qty: int = drop["quantity"]
 			GameManager.log_action("The %s drops: %s x%d" % [display_name, item.get_display_name(), qty])
-			if player:
-				var inventory := player.get_node_or_null("PlayerInventory")
-				if inventory and inventory.get("_initialized"):
-					var added = inventory.call("add_item", item, qty)
-					if added == false:
-						GameManager.log_action("Your inventory is full!")
+			if player and player.get("_initialized"):
+				var added = player.call("add_item", item, qty)
+				if not added:
+					GameManager.log_action("Your inventory is full!")
 
 
 func _handle_respawn() -> void:

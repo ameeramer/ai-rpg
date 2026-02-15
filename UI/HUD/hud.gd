@@ -42,15 +42,13 @@ func _ready() -> void:
 func setup(player: Node3D) -> void:
 	_player = player
 
-	# Don't use `as PlayerSkills` / `as PlayerInventory` — type casts fail on Android
-	var skills := player.get_node_or_null("PlayerSkills")
-	if skills:
-		skills.xp_gained.connect(_on_xp_gained)
-		skills.level_up.connect(_on_level_up)
-
-	var inventory := player.get_node_or_null("PlayerInventory")
-	if inventory:
-		inventory.inventory_changed.connect(_on_inventory_changed)
+	# Skills + inventory signals are on the player node directly
+	if player.has_signal("xp_gained"):
+		player.xp_gained.connect(_on_xp_gained)
+	if player.has_signal("level_up"):
+		player.level_up.connect(_on_level_up)
+	if player.has_signal("inventory_changed"):
+		player.inventory_changed.connect(_on_inventory_changed)
 
 
 func _process(_delta: float) -> void:

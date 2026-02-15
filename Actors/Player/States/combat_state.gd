@@ -114,10 +114,9 @@ func _calculate_max_hit() -> int:
 	var strength_level: int = 1
 	var strength_bonus: int = 0
 
-	var skills_node := player.get_node_or_null("PlayerSkills")
-	if skills_node and skills_node.get("_initialized"):
-		# Use .get() for property access — .call() may be no-op on Android
-		var levels_dict = skills_node.get("skill_levels")
+	# Skills are on the player node directly
+	if player.get("_initialized"):
+		var levels_dict = player.get("skill_levels")
 		if levels_dict and levels_dict is Dictionary:
 			strength_level = levels_dict.get("Strength", 1)
 

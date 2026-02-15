@@ -3,9 +3,10 @@ extends GridContainer
 ## Renders the 28-slot inventory grid with OSRS-style slot buttons.
 
 const SLOT_SIZE := Vector2(88, 88)
+const MAX_SLOTS: int = 28
 
-## Use Node instead of PlayerInventory — `is PlayerInventory` fails on Android
-var _inventory: Node
+## Player node — inventory data is embedded directly on PlayerController
+var _player: Node3D
 var _slot_buttons: Array[Button] = []
 
 
@@ -16,10 +17,11 @@ func _ready() -> void:
 	_create_slots()
 
 
-## Accept Node — typed PlayerInventory param fails on Android (type check crash)
-func setup(inventory: Node) -> void:
-	_inventory = inventory
-	_inventory.inventory_changed.connect(refresh)
+## Accept Node3D — the player node has inventory embedded directly
+func setup(player: Node3D) -> void:
+	_player = player
+	if _player.has_signal("inventory_changed"):
+		_player.inventory_changed.connect(refresh)
 	refresh()
 
 
@@ -48,7 +50,7 @@ func _create_slots() -> void:
 	slot_hover.corner_radius_bottom_right = 3
 	slot_hover.corner_radius_bottom_left = 3
 
-	for i in range(PlayerInventory.MAX_SLOTS):
+	for i in range(MAX_SLOTS):
 		var btn := Button.new()
 		btn.custom_minimum_size = SLOT_SIZE
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -65,14 +67,18 @@ func _create_slots() -> void:
 
 
 func refresh() -> void:
-	if _inventory == null:
+	if _player == null:
 		return
 
-	for i in range(PlayerInventory.MAX_SLOTS):
-		var slot_data := _inventory.get_slot(i)
-		var btn := _slot_buttons[i]
+	var inv_slots = _player.get("slots")
+	if inv_slots == null or not inv_slots is Array:
+		return
 
-		if slot_data.is_empty():
+	for i in range(MAX_SLOTS):
+		var btn := _slot_buttons[i]
+		var slot_data = inv_slots[i] if i < inv_slots.size() else null
+
+		if slot_data == null:
 			btn.text = ""
 			btn.icon = null
 			btn.tooltip_text = "Empty"
@@ -85,7 +91,6 @@ func refresh() -> void:
 				btn.icon = item.icon
 				btn.text = str(qty) if qty > 1 else ""
 			else:
-				# Show item name (up to 6 chars)
 				var display := item.item_name.substr(0, 6)
 				if qty > 1:
 					display += "\nx" + str(qty)
@@ -93,12 +98,12 @@ func refresh() -> void:
 
 
 func _on_slot_pressed(slot_index: int) -> void:
-	if _inventory == null:
+	if _player == null:
 		return
 
-	var slot_data := _inventory.get_slot(slot_index)
-	if slot_data.is_empty():
+	var inv_slots = _player.get("slots")
+	if inv_slots == null or slot_index >= inv_slots.size() or inv_slots[slot_index] == null:
 		return
 
-	var item: ItemData = slot_data["item"]
+	var item: ItemData = inv_slots[slot_index]["item"]
 	GameManager.log_action("Selected: %s" % item.get_display_name())
