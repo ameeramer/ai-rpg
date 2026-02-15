@@ -4,8 +4,8 @@
 [ext_resource type="PackedScene" path="res://Assets/Models/Characters/player_character.glb" id="npc_model"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_npc"]
-radius = 0.4
-height = 1.8
+radius = 0.8
+height = 2.0
 
 [sub_resource type="StandardMaterial3D" id="npc_tunic"]
 albedo_color = Color(0.2, 0.5, 0.8, 1)

@@ -87,6 +87,7 @@ func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
 			return
 		_interact_or_walk("Interacting", object, dist)
 	elif obj_layer == 16:
+		FileLogger.log_msg("NPC click: %s dist=%.1f range=%.1f" % [object.name, dist, interaction_range])
 		_interact_or_walk("Talking", object, dist)
 
 func _interact_or_walk(state_name: String, object: Node3D, dist: float) -> void:
@@ -150,15 +151,12 @@ func _show_hitsplat(amount: int) -> void:
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	label.outline_size = 10
-	label.outline_modulate = Color(0, 0, 0)
 	label.modulate = Color(1, 0.15, 0.15) if amount > 0 else Color(0.6, 0.6, 0.6)
 	label.position.y = 2.2
 	add_child(label)
 	var tween = create_tween()
-	tween.set_parallel(true)
 	tween.tween_property(label, "position:y", 3.5, 0.8)
 	tween.tween_property(label, "modulate:a", 0.0, 0.8)
-	tween.set_parallel(false)
 	tween.tween_callback(label.queue_free)
 
 func heal(amount: int) -> void:

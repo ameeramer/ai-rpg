@@ -31,13 +31,14 @@ func set_camera(camera: Camera3D) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Handle mouse click (PC debug)
-	if event is InputEventMouseButton:
-		_handle_mouse_button(event as InputEventMouseButton)
-
 	# Handle touch input (Android)
-	elif event is InputEventScreenTouch:
+	if event is InputEventScreenTouch:
 		_handle_screen_touch(event as InputEventScreenTouch)
+		return
+
+	# Handle mouse click (PC only — skip emulated mouse events on touchscreen devices)
+	if event is InputEventMouseButton and not DisplayServer.is_touchscreen_available():
+		_handle_mouse_button(event as InputEventMouseButton)
 
 	# Handle scroll wheel zoom (PC)
 	if event.is_action_pressed("camera_zoom_in"):

@@ -20,49 +20,35 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	# Title
-	_title_label = Label.new()
-	_title_label.add_theme_font_size_override("font_size", 24)
-	_title_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))
-	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(_title_label)
-	# Coins display
-	_coins_label = Label.new()
-	_coins_label.add_theme_font_size_override("font_size", 20)
-	_coins_label.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
-	_coins_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(_coins_label)
-	# Shop section header
-	var shop_header = Label.new()
-	shop_header.text = "-- Shop Stock --"
-	shop_header.add_theme_font_size_override("font_size", 18)
-	shop_header.add_theme_color_override("font_color", Color(0.7, 0.65, 0.5))
-	shop_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(shop_header)
-	# Shop grid
+	_title_label = _add_label(24, Color(0.3, 1.0, 0.3))
+	_coins_label = _add_label(20, Color(1, 0.85, 0.3))
+	_add_label(18, Color(0.7, 0.65, 0.5)).text = "-- Shop Stock --"
 	var shop_scroll = ScrollContainer.new()
 	shop_scroll.custom_minimum_size = Vector2(0, 160)
 	add_child(shop_scroll)
-	_shop_grid = GridContainer.new()
-	_shop_grid.columns = 4
-	_shop_grid.add_theme_constant_override("h_separation", 6)
-	_shop_grid.add_theme_constant_override("v_separation", 6)
+	_shop_grid = _make_grid()
 	shop_scroll.add_child(_shop_grid)
-	# Player inventory section
-	var inv_header = Label.new()
-	inv_header.text = "-- Your Items (tap to sell) --"
-	inv_header.add_theme_font_size_override("font_size", 18)
-	inv_header.add_theme_color_override("font_color", Color(0.7, 0.65, 0.5))
-	inv_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(inv_header)
+	_add_label(18, Color(0.7, 0.65, 0.5)).text = "-- Your Items (tap to sell) --"
 	var inv_scroll = ScrollContainer.new()
 	inv_scroll.custom_minimum_size = Vector2(0, 160)
 	add_child(inv_scroll)
-	_player_grid = GridContainer.new()
-	_player_grid.columns = 4
-	_player_grid.add_theme_constant_override("h_separation", 6)
-	_player_grid.add_theme_constant_override("v_separation", 6)
+	_player_grid = _make_grid()
 	inv_scroll.add_child(_player_grid)
+
+func _add_label(size: int, color: Color) -> Label:
+	var lbl = Label.new()
+	lbl.add_theme_font_size_override("font_size", size)
+	lbl.add_theme_color_override("font_color", color)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(lbl)
+	return lbl
+
+func _make_grid() -> GridContainer:
+	var g = GridContainer.new()
+	g.columns = 4
+	g.add_theme_constant_override("h_separation", 6)
+	g.add_theme_constant_override("v_separation", 6)
+	return g
 
 
 func open_shop(npc_name: String, stock: Array) -> void:
@@ -192,13 +178,7 @@ func _on_sell(inv_slot: int) -> void:
 func _make_slot_style() -> StyleBoxFlat:
 	var s = StyleBoxFlat.new()
 	s.bg_color = Color(0.18, 0.15, 0.12, 0.9)
-	s.border_width_left = 1
-	s.border_width_top = 1
-	s.border_width_right = 1
-	s.border_width_bottom = 1
 	s.border_color = Color(0.35, 0.3, 0.2, 0.8)
-	s.corner_radius_top_left = 3
-	s.corner_radius_top_right = 3
-	s.corner_radius_bottom_right = 3
-	s.corner_radius_bottom_left = 3
+	s.set_border_width_all(1)
+	s.set_corner_radius_all(3)
 	return s

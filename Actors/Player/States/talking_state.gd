@@ -10,6 +10,7 @@ func on_enter(msg: Dictionary = {}) -> void:
 		player = owner
 	_target = msg.get("target", null)
 	if _target == null:
+		FileLogger.log_msg("Talking: no target, -> Idle")
 		state_machine.transition_to("Idle")
 		return
 	# Stop movement
@@ -24,14 +25,17 @@ func on_enter(msg: Dictionary = {}) -> void:
 	var npc_name = _target.get("display_name")
 	if npc_name == null:
 		npc_name = _target.name
+	FileLogger.log_msg("State -> Talking to %s" % npc_name)
 	var is_merchant = _target.call("is_merchant")
 	if is_merchant:
 		var stock = _target.call("get_shop_stock")
+		FileLogger.log_msg("Talking: opening shop for %s (%d items)" % [npc_name, stock.size() if stock else 0])
 		player.call("open_shop", npc_name, stock)
 	else:
 		var lines = _target.call("get_dialogue")
 		if lines == null or lines.size() == 0:
 			lines = ["..."]
+		FileLogger.log_msg("Talking: opening dialogue for %s (%d lines)" % [npc_name, lines.size()])
 		player.call("open_dialogue", npc_name, lines)
 
 
