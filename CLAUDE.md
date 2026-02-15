@@ -60,6 +60,111 @@ res://
 - **Performance**: Target 60fps on mid-range Android. Use low-poly models, baked lighting where possible, and LOD.
 - **Screen Orientation**: Landscape only.
 
+## CRITICAL: Android Godot 4.3 Compatibility Rules
+
+These rules are **mandatory** for all code that runs on Android. Violations will cause silent failures (no errors, just broken behavior).
+
+### 1. NEVER use `has_method()` — it silently returns `false` on Android
+```gdscript
+# BAD — has_method() returns false even when the method exists
+if target.has_method("take_damage"):
+    target.take_damage(damage)
+
+# GOOD — call directly via .call()
+target.call("take_damage", damage)
+
+# GOOD — or just call it directly if you're sure of the type
+target.take_damage(damage)
+```
+
+### 2. NEVER use `is CustomType` type checks — they silently fail
+```gdscript
+# BAD — `is EnemyBase` returns false on Android
+if collider is EnemyBase:
+    collider.take_damage(damage)
+
+# GOOD — detect by collision_layer integer value
+var layer: int = collider.get("collision_layer")
+if layer == 4:  # Enemy layer
+    collider.call("take_damage", damage)
+```
+
+### 3. NEVER use `is_in_group()` / `get_groups()` for detection — groups appear empty
+```gdscript
+# BAD — groups are empty on Android
+if node.is_in_group("enemies"):
+    ...
+
+# GOOD — use collision_layer values
+if node.get("collision_layer") == 4:
+    ...
+```
+
+### 4. Use `.get("property")` instead of direct property access guarded by type checks
+```gdscript
+# BAD — relies on `is` check which fails
+if target is EnemyBase:
+    var name = target.display_name
+
+# GOOD — use .get() which works regardless
+var name = target.get("display_name")
+if name == null:
+    name = target.name
+```
+
+### 5. Meshes MUST be defined as `sub_resource` in `.tscn` files
+- Programmatic meshes created in `_ready()` do **NOT** render on Android
+- Always define mesh geometry as `[sub_resource]` entries in the `.tscn` file
+- Code can reference existing meshes via `get_node_or_null()`, but must not create new ones
+
+### 6. Scripts MUST be in PackedScene `.tscn` files (not inline in parent scenes)
+```
+# BAD — inline script in parent .tscn (script never executes on Android)
+[node name="Goblin" type="CharacterBody3D" parent="GoblinCamp"]
+script = ExtResource("enemy_base")
+
+# GOOD — separate PackedScene with script, instanced in parent
+[node name="Goblin1" parent="GoblinCamp" instance=ExtResource("goblin")]
+```
+- Always create a separate `.tscn` PackedScene file (e.g., `Goblin.tscn`) with the script attached to the root node
+- Instance it in the parent scene via `instance=ExtResource(...)`
+- Override per-instance properties (transform, stats, drop_table) in the parent scene
+
+### 7. Use `ensure_initialized()` pattern — `_ready()` may not fire
+```gdscript
+var _initialized: bool = false
+
+func _ready() -> void:
+    ensure_initialized()
+
+func ensure_initialized() -> void:
+    if _initialized:
+        return
+    _initialized = true
+    # ... actual initialization code ...
+```
+- Even with PackedScene instances, `_ready()` may not fire on Android
+- `Main.gd` walks the scene tree and calls `ensure_initialized()` on all game objects as a fallback
+- The guard bool `_initialized` prevents double-initialization on PC where `_ready()` works
+
+### Collision Layer Reference (used for type detection)
+| Layer | Value | Usage |
+|-------|-------|-------|
+| 1 | 1 | World/Ground |
+| 2 | 2 | Player |
+| 3 | 4 | Enemies |
+| 4 | 8 | Interactables |
+
+Raycast mask: `1 | 4 | 8` (excludes player layer)
+
+### UI Sizing for Mobile Touch Targets
+- Toolbar buttons: min 140x72px, font size 24
+- HP bar: 280x56px, font size 24
+- Inventory slots: 88x88px, font size 18
+- Skills rows: height 42px, fonts 20/22
+- Overlay panels: 600-640px wide/tall
+- Action log font: 20
+
 ## OSRS-Style Game Mechanics
 - **Game Tick**: 0.6 seconds. All actions (combat hits, skill ticks, movement steps) align to game ticks.
 - **Skills**: Attack, Strength, Defence, Hitpoints, Ranged, Prayer, Magic, Cooking, Woodcutting, Fishing, Mining, Smithing, Crafting, Firemaking, Agility, Thieving. XP table follows OSRS formula.
@@ -75,6 +180,7 @@ res://
 - Use `@export` for inspector-configurable properties.
 - Use `class_name` to register custom types globally.
 - Always type-hint function parameters and return types.
+- **Android-safe method calls**: Use `.call("method", args)` instead of `has_method()` guards. Use `.get("property")` instead of `is Type` guards. See "Android Godot 4.3 Compatibility Rules" above.
 
 ## Testing
 - Test on PC first using mouse input (maps 1:1 with touch).
