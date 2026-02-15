@@ -6,7 +6,7 @@ extends CharacterBody3D
 @export var move_speed: float = 4.0
 @export var interaction_range: float = 3.0
 
-@onready var state_machine: StateMachine = $StateMachine
+@onready var state_machine: Node = $StateMachine
 @onready var nav_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var anim_player: AnimationPlayer = $AnimationPlayer
 @onready var model: Node3D = $Model

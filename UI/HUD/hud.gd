@@ -17,7 +17,7 @@ extends CanvasLayer
 
 ## Use Node3D — typed PlayerController param fails on Android (type check crash)
 var _player: Node3D
-var _debug_panel: DebugLogPanel
+var _debug_panel: Control
 var _current_panel: Control = null
 
 

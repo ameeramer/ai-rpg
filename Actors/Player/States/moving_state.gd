@@ -1,13 +1,15 @@
 extends State
 ## Player Moving state — pathfinding to a target position.
 
-@onready var player: PlayerController = owner as PlayerController
+var player: Node3D = null
 
 var _interact_on_arrive: bool = false
 var _interact_target: Node3D = null
 
 
 func on_enter(msg: Dictionary = {}) -> void:
+	if player == null:
+		player = owner
 	_interact_on_arrive = msg.get("interact_on_arrive", false)
 	_interact_target = msg.get("interact_target", null)
 
@@ -17,6 +19,8 @@ func on_enter(msg: Dictionary = {}) -> void:
 
 
 func on_physics_update(delta: float) -> void:
+	if player == null:
+		player = owner
 	if player.is_at_target():
 		_arrive()
 		return
@@ -31,6 +35,8 @@ func on_physics_update(delta: float) -> void:
 
 
 func on_exit() -> void:
+	if player == null:
+		player = owner
 	player.velocity = Vector3.ZERO
 
 

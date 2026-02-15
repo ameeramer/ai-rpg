@@ -1,16 +1,18 @@
 extends State
 ## Player Dead state — shows death message and respawns after a delay.
 
-@onready var player: PlayerController = owner as PlayerController
+var player: Node3D = null
 
 var _respawn_ticks: int = 0
 const RESPAWN_DELAY_TICKS: int = 5  # ~3 seconds
 
 var _tick_connected: bool = false
-var _original_colors: Array[Dictionary] = []
+var _original_colors: Array = []
 
 
 func on_enter(_msg: Dictionary = {}) -> void:
+	if player == null:
+		player = owner
 	FileLogger.log_msg("State -> Dead")
 	player.is_moving = false
 	player.velocity = Vector3.ZERO
@@ -23,7 +25,7 @@ func on_enter(_msg: Dictionary = {}) -> void:
 	if player.model:
 		for child in player.model.get_children():
 			if child is MeshInstance3D and child.material_override is StandardMaterial3D:
-				var mat: StandardMaterial3D = child.material_override
+				var mat = child.material_override
 				_original_colors.append({"mat": mat, "color": mat.albedo_color})
 				mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 				mat.albedo_color.a = 0.3
@@ -46,7 +48,7 @@ func on_exit() -> void:
 
 	# Restore opacity and original colors
 	for entry in _original_colors:
-		var mat: StandardMaterial3D = entry["mat"]
+		var mat = entry["mat"]
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
 		mat.albedo_color = entry["color"]
 	_original_colors.clear()

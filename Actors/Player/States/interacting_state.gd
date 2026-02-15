@@ -3,13 +3,15 @@ extends State
 ## Handles repeating actions (e.g., chopping tree tick by tick).
 ## NOTE: has_method() fails on Android Godot 4.3 — use .call() directly.
 
-@onready var player: PlayerController = owner as PlayerController
+var player: Node3D = null
 
 var _target: Node3D = null
 var _tick_connected: bool = false
 
 
 func on_enter(msg: Dictionary = {}) -> void:
+	if player == null:
+		player = owner
 	_target = msg.get("target", null)
 	_tick_connected = false
 
@@ -53,8 +55,6 @@ func on_enter(msg: Dictionary = {}) -> void:
 	player.is_moving = false
 
 	# Start interaction — call directly, skip has_method (fails on Android)
-	# IMPORTANT: .call() returns Variant which may be null on Android even when
-	# the method returns true. Capture as untyped Variant and check explicitly.
 	var result = _target.call("interact", player)
 	FileLogger.log_msg("Interacting: interact('%s') result=%s type=%d" % [_target.name, str(result), typeof(result)])
 	if result == false:
@@ -108,10 +108,8 @@ func _on_game_tick(_tick: int) -> void:
 		return
 
 	# Tick the interaction — call directly, skip has_method
-	# .call() returns Variant; may be null on Android if return value is lost
 	var tick_result = _target.call("interaction_tick", player)
 	if tick_result is Dictionary and tick_result.get("completed", false):
 		state_machine.transition_to("Idle")
 	elif tick_result == null:
-		# If .call() returned null, method may have failed — stay in state
 		FileLogger.log_msg("Interacting: interaction_tick returned null")

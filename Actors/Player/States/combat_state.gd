@@ -2,7 +2,7 @@ extends State
 ## Player Combat state — OSRS-style tick-based auto-attack.
 ## NOTE: has_method() fails on Android Godot 4.3 — use .call() directly.
 
-@onready var player: PlayerController = owner as PlayerController
+var player: Node3D = null
 
 var _target: Node3D = null
 var _ticks_since_attack: int = 0
@@ -19,6 +19,8 @@ func _is_target_dead() -> bool:
 
 
 func on_enter(msg: Dictionary = {}) -> void:
+	if player == null:
+		player = owner
 	_target = msg.get("target", null)
 	_ticks_since_attack = _attack_speed_ticks  # Attack immediately on first tick
 	_tick_connected = false
@@ -50,6 +52,8 @@ func on_exit() -> void:
 
 
 func on_physics_update(delta: float) -> void:
+	if player == null:
+		player = owner
 	if _target == null or not is_instance_valid(_target):
 		state_machine.transition_to("Idle")
 		return
