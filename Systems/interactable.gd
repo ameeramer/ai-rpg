@@ -27,10 +27,10 @@ var _is_depleted: bool = false
 var _respawn_counter: int = 0
 
 
-func interact(player: Node3D) -> void:
+func interact(player: Node3D) -> bool:
 	if not is_active or _is_depleted:
 		GameManager.log_action("You can't %s this right now." % interaction_verb.to_lower())
-		return
+		return false
 
 	# Check skill requirement
 	if required_skill != "":
@@ -41,11 +41,12 @@ func interact(player: Node3D) -> void:
 				GameManager.log_action("You need level %d %s to %s this." % [
 					required_level, required_skill, interaction_verb.to_lower()
 				])
-				return
+				return false
 
 	_ticks_remaining = ticks_per_action
 	GameManager.log_action("You begin to %s the %s." % [interaction_verb.to_lower(), display_name])
 	interaction_started.emit(player)
+	return true
 
 
 func is_repeating() -> bool:

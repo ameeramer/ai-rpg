@@ -13,6 +13,7 @@ func on_enter(msg: Dictionary = {}) -> void:
 
 	var target: Vector3 = msg.get("target", player.global_position)
 	player.set_nav_target(target)
+	FileLogger.log_msg("State -> Moving to %s%s" % [str(target), " (then interact)" if _interact_on_arrive else ""])
 
 	if player.anim_player and player.anim_player.has_animation("walk"):
 		player.anim_player.play("walk")
