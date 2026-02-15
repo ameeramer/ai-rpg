@@ -12,6 +12,7 @@ max_stack = 1
 weight = 0.5
 value = 5
 category = "Food"
+model_path = "res://Assets/Models/Food/cooked_shrimps.glb"
 heal_amount = 3
 eat_ticks = 3
 raw_item_id = 317

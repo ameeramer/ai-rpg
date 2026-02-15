@@ -12,6 +12,7 @@ max_stack = 1
 weight = 2.2
 value = 91
 category = "Weapon"
+model_path = "res://Assets/Models/Weapons/iron_sword.glb"
 is_equippable = true
 attack_damage = 8
 attack_speed = 2.4

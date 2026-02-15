@@ -12,3 +12,4 @@ max_stack = 1
 weight = 2.0
 value = 4
 category = "Resource"
+model_path = "res://Assets/Models/Items/oak_logs.glb"
