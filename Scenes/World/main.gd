@@ -1,9 +1,10 @@
 extends Node3D
 ## Main game scene — sets up the world, player, camera, and UI.
 
-@onready var player: PlayerController = $Player
-@onready var camera_controller: CameraController = $CameraController
-@onready var hud: CanvasLayer = $HUD
+## Use Node3D/Node — typed custom class vars may fail on Android (is check)
+@onready var player: Node3D = $Player
+@onready var camera_controller: Node3D = $CameraController
+@onready var hud: Node = $HUD
 
 
 func _ready() -> void:
@@ -12,12 +13,12 @@ func _ready() -> void:
 	# Force-initialize player subsystems FIRST — scripts may not fire on Android
 	_force_initialize_player_subsystems()
 
-	# Point camera at player
-	camera_controller.target = player
+	# Point camera at player — use .set() since camera_controller is typed as Node3D
+	camera_controller.set("target", player)
 	FileLogger.log_msg("Camera target set")
 
-	# Set up HUD with player reference
-	hud.setup(player)
+	# Set up HUD with player reference — use .call() for Android safety
+	hud.call("setup", player)
 	FileLogger.log_msg("HUD setup done")
 
 	# Set up inventory UI inside the overlay panel

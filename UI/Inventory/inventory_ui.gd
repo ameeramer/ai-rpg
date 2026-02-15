@@ -4,7 +4,8 @@ extends GridContainer
 
 const SLOT_SIZE := Vector2(88, 88)
 
-var _inventory: PlayerInventory
+## Use Node instead of PlayerInventory — `is PlayerInventory` fails on Android
+var _inventory: Node
 var _slot_buttons: Array[Button] = []
 
 
@@ -15,7 +16,8 @@ func _ready() -> void:
 	_create_slots()
 
 
-func setup(inventory: PlayerInventory) -> void:
+## Accept Node — typed PlayerInventory param fails on Android (type check crash)
+func setup(inventory: Node) -> void:
 	_inventory = inventory
 	_inventory.inventory_changed.connect(refresh)
 	refresh()

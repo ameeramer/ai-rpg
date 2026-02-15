@@ -15,7 +15,8 @@ extends CanvasLayer
 @onready var inv_close: Button = $InventoryOverlay/VBox/Header/CloseBtn
 @onready var skills_close: Button = $SkillsOverlay/VBox/Header/CloseBtn
 
-var _player: PlayerController
+## Use Node3D — typed PlayerController param fails on Android (type check crash)
+var _player: Node3D
 var _debug_panel: DebugLogPanel
 var _current_panel: Control = null
 
@@ -37,7 +38,8 @@ func _ready() -> void:
 	touch_blocker.gui_input.connect(_on_blocker_input)
 
 
-func setup(player: PlayerController) -> void:
+## Accept Node3D — typed PlayerController param fails on Android (type check crash)
+func setup(player: Node3D) -> void:
 	_player = player
 
 	# Don't use `as PlayerSkills` / `as PlayerInventory` — type casts fail on Android
@@ -65,10 +67,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _update_hp_bar() -> void:
 	if hp_bar and _player:
-		hp_bar.max_value = _player.max_hitpoints
-		hp_bar.value = _player.hitpoints
-	if hp_label and _player:
-		hp_label.text = "HP: %d / %d" % [_player.hitpoints, _player.max_hitpoints]
+		var max_hp = _player.get("max_hitpoints")
+		var hp = _player.get("hitpoints")
+		if max_hp != null and hp != null:
+			hp_bar.max_value = max_hp
+			hp_bar.value = hp
+			if hp_label:
+				hp_label.text = "HP: %d / %d" % [hp, max_hp]
 
 
 func _toggle_inventory() -> void:

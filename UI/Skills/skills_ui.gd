@@ -2,11 +2,13 @@ class_name SkillsUI
 extends VBoxContainer
 ## Displays all skills with their levels and XP progress bars.
 
-var _skills: PlayerSkills
+## Use Node instead of PlayerSkills — `is PlayerSkills` fails on Android
+var _skills: Node
 var _skill_rows: Dictionary = {}
 
 
-func setup(skills: PlayerSkills) -> void:
+## Accept Node — typed PlayerSkills param fails on Android (type check crash)
+func setup(skills: Node) -> void:
 	_skills = skills
 	_skills.xp_gained.connect(_on_xp_gained)
 	_skills.level_up.connect(_on_level_up)

@@ -32,6 +32,7 @@ func _ready() -> void:
 
 
 func interact(player: Node3D) -> bool:
+	FileLogger.log_msg("interact(%s) is_active=%s _is_depleted=%s" % [display_name, str(is_active), str(_is_depleted)])
 	if not is_active or _is_depleted:
 		GameManager.log_action("You can't %s this right now." % interaction_verb.to_lower())
 		return false
@@ -39,10 +40,12 @@ func interact(player: Node3D) -> bool:
 	# Check skill requirement
 	if required_skill != "":
 		var skills_node := player.get_node_or_null("PlayerSkills")
+		FileLogger.log_msg("interact: required_skill=%s skills_node=%s" % [required_skill, str(skills_node)])
 		if skills_node:
 			# Capture as untyped Variant — typed .call() may lose return value on Android
 			var level_result = skills_node.call("get_level", required_skill)
 			var level: int = level_result if level_result != null else 1
+			FileLogger.log_msg("interact: level_result=%s level=%d required=%d" % [str(level_result), level, required_level])
 			if level < required_level:
 				GameManager.log_action("You need level %d %s to %s this." % [
 					required_level, required_skill, interaction_verb.to_lower()
