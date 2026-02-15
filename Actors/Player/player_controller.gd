@@ -22,7 +22,7 @@ var max_hitpoints: int = 10
 
 # ── Skills data (embedded — set_script() doesn't work on Android) ──
 
-const SKILL_NAMES: Array[String] = [
+var SKILL_NAMES = [
 	"Attack", "Strength", "Defence", "Hitpoints",
 	"Ranged", "Prayer", "Magic",
 	"Cooking", "Woodcutting", "Fishing", "Mining",
@@ -33,19 +33,19 @@ const SKILL_NAMES: Array[String] = [
 var skill_xp: Dictionary = {}
 var skill_levels: Dictionary = {}
 
-signal xp_gained(skill_name: String, amount: float, total_xp: float)
-signal level_up(skill_name: String, new_level: int)
+signal xp_gained(skill_name, amount, total_xp)
+signal level_up(skill_name, new_level)
 
 # ── Inventory data (embedded) ──
 
-const MAX_SLOTS: int = 28
+var MAX_SLOTS: int = 28
 
-signal item_added(item: ItemData, quantity: int, slot: int)
-signal item_removed(item: ItemData, quantity: int, slot: int)
+signal item_added(item, quantity, slot_idx)
+signal item_removed(item, quantity, slot_idx)
 signal inventory_changed()
 signal inventory_full()
 
-## Each slot is {"item": ItemData, "quantity": int} or null
+## Each slot is {"item": Resource, "quantity": int} or null
 var slots: Array = []
 
 var _initialized: bool = false
@@ -156,14 +156,14 @@ func get_combat_level() -> int:
 	return int(base + max(melee, max(ranged, magic)))
 
 
-static func _xp_for_level(level: int) -> float:
+func _xp_for_level(level: int) -> float:
 	var total: float = 0.0
 	for i in range(1, level):
 		total += floorf(i + 300.0 * pow(2.0, i / 7.0))
 	return floorf(total / 4.0)
 
 
-static func _level_for_xp(xp: float) -> int:
+func _level_for_xp(xp: float) -> int:
 	for level in range(99, 0, -1):
 		if xp >= _xp_for_level(level):
 			return level
@@ -178,7 +178,7 @@ func _init_inventory() -> void:
 		slots[i] = null
 
 
-func add_item(item: ItemData, quantity: int = 1) -> bool:
+func add_item(item, quantity: int = 1) -> bool:
 	if item == null or quantity <= 0:
 		return false
 	if item.is_stackable:
@@ -432,7 +432,7 @@ func play_attack_animation() -> void:
 func play_damage_flash() -> void:
 	if not model:
 		return
-	var parts: Array[Dictionary] = []
+	var parts: Array = []
 	for child in model.get_children():
 		if child is MeshInstance3D and child.material_override is StandardMaterial3D:
 			parts.append({"mat": child.material_override, "color": child.material_override.albedo_color})
