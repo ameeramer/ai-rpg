@@ -262,9 +262,9 @@ func _drop_loot() -> void:
 			if player:
 				var inventory := player.get_node_or_null("PlayerInventory")
 				if inventory:
-					# Use .call() instead of has_method — has_method fails on Android
-					var added: bool = inventory.call("add_item", item, qty)
-					if not added:
+					# Capture as untyped Variant — typed .call() may lose return value on Android
+					var added = inventory.call("add_item", item, qty)
+					if added == false:
 						GameManager.log_action("Your inventory is full!")
 
 

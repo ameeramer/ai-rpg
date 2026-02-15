@@ -40,7 +40,9 @@ func interact(player: Node3D) -> bool:
 	if required_skill != "":
 		var skills_node := player.get_node_or_null("PlayerSkills")
 		if skills_node:
-			var level: int = skills_node.call("get_level", required_skill)
+			# Capture as untyped Variant — typed .call() may lose return value on Android
+			var level_result = skills_node.call("get_level", required_skill)
+			var level: int = level_result if level_result != null else 1
 			if level < required_level:
 				GameManager.log_action("You need level %d %s to %s this." % [
 					required_level, required_skill, interaction_verb.to_lower()
@@ -104,11 +106,12 @@ func _complete_action(player: Node3D) -> Dictionary:
 func _give_item_to_player(player: Node3D, item: ItemData, quantity: int) -> void:
 	var inventory := player.get_node_or_null("PlayerInventory")
 	if inventory:
-		var added: bool = inventory.call("add_item", item, quantity)
-		if added:
-			GameManager.log_action("You get some %s." % item.get_display_name())
-		else:
+		# Capture as untyped Variant — typed .call() may lose return value on Android
+		var added = inventory.call("add_item", item, quantity)
+		if added == false:
 			GameManager.log_action("Your inventory is full.")
+		else:
+			GameManager.log_action("You get some %s." % item.get_display_name())
 
 
 func _should_deplete() -> bool:

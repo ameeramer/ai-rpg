@@ -26,8 +26,20 @@ var skill_xp: Dictionary = {}
 ## Cached levels
 var skill_levels: Dictionary = {}
 
+var _initialized: bool = false
+
 
 func _ready() -> void:
+	ensure_initialized()
+
+
+## Idempotent initialization — safe to call multiple times.
+## On Android, _ready() may not fire for scripts, so Main.gd
+## calls this explicitly as a fallback.
+func ensure_initialized() -> void:
+	if _initialized:
+		return
+	_initialized = true
 	# Initialize all skills at level 1 (0 XP), Hitpoints at level 10
 	for skill in SKILL_NAMES:
 		if skill == "Hitpoints":
@@ -36,6 +48,7 @@ func _ready() -> void:
 		else:
 			skill_xp[skill] = 0.0
 			skill_levels[skill] = 1
+	FileLogger.log_msg("PlayerSkills.initialized: %d skills" % skill_levels.size())
 
 
 ## Get current level for a skill.

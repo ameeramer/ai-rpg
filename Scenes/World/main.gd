@@ -9,6 +9,9 @@ extends Node3D
 func _ready() -> void:
 	FileLogger.log_msg("Main._ready() start")
 
+	# Force-initialize player subsystems FIRST — scripts may not fire on Android
+	_force_initialize_player_subsystems()
+
 	# Point camera at player
 	camera_controller.target = player
 	FileLogger.log_msg("Camera target set")
@@ -23,9 +26,9 @@ func _ready() -> void:
 		var inv_ui := InventoryUI.new()
 		inv_ui.name = "InventoryGrid"
 		inventory_panel.add_child(inv_ui)
-		var player_inv := player.get_node_or_null("PlayerInventory") as PlayerInventory
+		var player_inv := player.get_node_or_null("PlayerInventory")
 		if player_inv:
-			inv_ui.setup(player_inv)
+			inv_ui.call("setup", player_inv)
 	FileLogger.log_msg("Inventory UI done")
 
 	# Set up skills UI inside the scroll container
@@ -34,9 +37,9 @@ func _ready() -> void:
 		var skills_ui := SkillsUI.new()
 		skills_ui.name = "SkillsList"
 		skills_panel.add_child(skills_ui)
-		var player_skills := player.get_node_or_null("PlayerSkills") as PlayerSkills
+		var player_skills := player.get_node_or_null("PlayerSkills")
 		if player_skills:
-			skills_ui.setup(player_skills)
+			skills_ui.call("setup", player_skills)
 	FileLogger.log_msg("Skills UI done")
 
 	# Explicitly initialize all enemies and interactables — _ready() may not fire on Android
@@ -44,6 +47,18 @@ func _ready() -> void:
 
 	FileLogger.log_msg("Main._ready() complete")
 	GameManager.log_action("Welcome to AI RPG! Tap to move, tap objects to interact.")
+
+
+## Force-initialize player subsystems (inventory, skills).
+## On Android, scripts attached via instance= in Main.tscn may not run _ready().
+func _force_initialize_player_subsystems() -> void:
+	var inv := player.get_node_or_null("PlayerInventory")
+	if inv:
+		inv.call("ensure_initialized")
+	var skills := player.get_node_or_null("PlayerSkills")
+	if skills:
+		skills.call("ensure_initialized")
+	FileLogger.log_msg("Player subsystems force-initialized")
 
 
 ## Force-initialize all game objects by collision layer.

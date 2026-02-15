@@ -53,22 +53,23 @@ func on_enter(msg: Dictionary = {}) -> void:
 	player.is_moving = false
 
 	# Start interaction — call directly, skip has_method (fails on Android)
-	FileLogger.log_msg("Interacting: starting interaction with '%s'" % (_target.name))
-	var success: bool = _target.call("interact", player)
-	if not success:
-		FileLogger.log_msg("Interacting: interact() returned false, returning to Idle")
+	# IMPORTANT: .call() returns Variant which may be null on Android even when
+	# the method returns true. Capture as untyped Variant and check explicitly.
+	var result = _target.call("interact", player)
+	FileLogger.log_msg("Interacting: interact('%s') result=%s type=%d" % [_target.name, str(result), typeof(result)])
+	if result == false:
 		state_machine.transition_to("Idle")
 		return
 
-	# Repeating actions — call directly, all interactables have is_repeating()
-	var is_repeating: bool = _target.call("is_repeating")
-	if is_repeating:
+	# Repeating actions — all gathering nodes repeat
+	var repeating = _target.call("is_repeating")
+	if repeating == null or repeating == true:
 		GameManager.game_tick.connect(_on_game_tick)
 		_tick_connected = true
 
 	if player.anim_player:
-		var anim_name: String = _target.call("get_animation_name")
-		if player.anim_player.has_animation(anim_name):
+		var anim_name = _target.call("get_animation_name")
+		if anim_name and player.anim_player.has_animation(anim_name):
 			player.anim_player.play(anim_name)
 
 
@@ -107,6 +108,10 @@ func _on_game_tick(_tick: int) -> void:
 		return
 
 	# Tick the interaction — call directly, skip has_method
-	var result: Dictionary = _target.call("interaction_tick", player)
-	if result.get("completed", false):
+	# .call() returns Variant; may be null on Android if return value is lost
+	var tick_result = _target.call("interaction_tick", player)
+	if tick_result is Dictionary and tick_result.get("completed", false):
 		state_machine.transition_to("Idle")
+	elif tick_result == null:
+		# If .call() returned null, method may have failed — stay in state
+		FileLogger.log_msg("Interacting: interaction_tick returned null")

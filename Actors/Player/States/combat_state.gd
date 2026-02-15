@@ -116,7 +116,10 @@ func _calculate_max_hit() -> int:
 
 	var skills_node := player.get_node_or_null("PlayerSkills")
 	if skills_node:
-		strength_level = skills_node.call("get_level", "Strength")
+		# Capture as untyped Variant — typed .call() may lose return value on Android
+		var level_result = skills_node.call("get_level", "Strength")
+		if level_result != null:
+			strength_level = level_result
 
 	var effective_strength := strength_level + 8
 	var max_hit := int(0.5 + effective_strength * (strength_bonus + 64) / 640.0)

@@ -40,12 +40,13 @@ func _ready() -> void:
 func setup(player: PlayerController) -> void:
 	_player = player
 
-	var skills := player.get_node_or_null("PlayerSkills") as PlayerSkills
+	# Don't use `as PlayerSkills` / `as PlayerInventory` — type casts fail on Android
+	var skills := player.get_node_or_null("PlayerSkills")
 	if skills:
 		skills.xp_gained.connect(_on_xp_gained)
 		skills.level_up.connect(_on_level_up)
 
-	var inventory := player.get_node_or_null("PlayerInventory") as PlayerInventory
+	var inventory := player.get_node_or_null("PlayerInventory")
 	if inventory:
 		inventory.inventory_changed.connect(_on_inventory_changed)
 

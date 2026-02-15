@@ -4,8 +4,8 @@
 [ext_resource type="PackedScene" path="res://Actors/Player/Player.tscn" id="2"]
 [ext_resource type="Script" path="res://Systems/camera_controller.gd" id="3"]
 [ext_resource type="PackedScene" path="res://UI/HUD/HUD.tscn" id="4"]
-[ext_resource type="Script" path="res://Systems/player_inventory.gd" id="5"]
-[ext_resource type="Script" path="res://Systems/player_skills.gd" id="6"]
+[ext_resource type="PackedScene" path="res://Systems/PlayerInventory.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://Systems/PlayerSkills.tscn" id="6"]
 [ext_resource type="PackedScene" path="res://Scenes/World/Tree.tscn" id="tree"]
 [ext_resource type="PackedScene" path="res://Scenes/World/OakTree.tscn" id="oak"]
 [ext_resource type="PackedScene" path="res://Scenes/World/CopperRock.tscn" id="rock"]
@@ -86,11 +86,9 @@ navigation_mesh = SubResource("NavigationMesh_1")
 [node name="Player" parent="." instance=ExtResource("2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 2)
 
-[node name="PlayerInventory" type="Node" parent="Player"]
-script = ExtResource("5")
+[node name="PlayerInventory" parent="Player" instance=ExtResource("5")]
 
-[node name="PlayerSkills" type="Node" parent="Player"]
-script = ExtResource("6")
+[node name="PlayerSkills" parent="Player" instance=ExtResource("6")]
 
 [node name="CameraController" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)

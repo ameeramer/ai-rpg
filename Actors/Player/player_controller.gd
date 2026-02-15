@@ -47,9 +47,7 @@ func _on_world_clicked(world_pos: Vector3, _normal: Vector3) -> void:
 
 
 func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
-	FileLogger.log_msg("_on_object_clicked: object=%s valid=%s" % [object.name if object else "null", str(is_instance_valid(object))])
 	if is_dead_state():
-		FileLogger.log_msg("_on_object_clicked: player is dead, ignoring")
 		return
 
 	target_object = object
@@ -57,7 +55,6 @@ func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
 
 	var obj_layer: int = object.get("collision_layer") if object.get("collision_layer") != null else 0
 	var dist := global_position.distance_to(object.global_position)
-	FileLogger.log_msg("_on_object_clicked: layer=%d name=%s dist=%.1f range=%.1f" % [obj_layer, object.name, dist, interaction_range])
 
 	# Enemy (collision layer 4) -> combat
 	if obj_layer == 4:
@@ -78,24 +75,18 @@ func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
 	if obj_layer == 8:
 		# Depleted -> just walk there
 		if object.get("_is_depleted"):
-			FileLogger.log_msg("_on_object_clicked: depleted, walking to it")
 			state_machine.transition_to("Moving", {"target": object.global_position})
 			return
 		# Active -> interact or walk then interact
 		if dist <= interaction_range:
-			FileLogger.log_msg("_on_object_clicked: in range, transitioning to Interacting")
 			state_machine.transition_to("Interacting", {"target": object})
 		else:
-			FileLogger.log_msg("_on_object_clicked: out of range, transitioning to Moving (then interact)")
 			state_machine.transition_to("Moving", {
 				"target": object.global_position,
 				"interact_on_arrive": true,
 				"interact_target": object
 			})
 		return
-
-	# Unknown layer — treat as ground click
-	FileLogger.log_msg("_on_object_clicked: unknown layer %d, ignoring" % obj_layer)
 
 
 func move_toward_target(delta: float) -> void:

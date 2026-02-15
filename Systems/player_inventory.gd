@@ -12,11 +12,24 @@ signal inventory_full()
 ## Each slot is {"item": ItemData, "quantity": int} or null
 var slots: Array = []
 
+var _initialized: bool = false
+
 
 func _ready() -> void:
+	ensure_initialized()
+
+
+## Idempotent initialization — safe to call multiple times.
+## On Android, _ready() may not fire for scripts, so Main.gd
+## calls this explicitly as a fallback.
+func ensure_initialized() -> void:
+	if _initialized:
+		return
+	_initialized = true
 	slots.resize(MAX_SLOTS)
 	for i in range(MAX_SLOTS):
 		slots[i] = null
+	FileLogger.log_msg("PlayerInventory.initialized: %d slots" % MAX_SLOTS)
 
 
 ## Add an item to the inventory. Returns true if successful.
