@@ -11,7 +11,7 @@ extends CharacterBody3D
 @export var aggro_range: float = 0.0  # 0 = passive, >0 = aggressive within range
 @export var combat_level: int = 1
 @export var xp_reward: float = 40.0  # Total combat XP on kill
-@export var drop_table: Array[DropTableEntry] = []
+@export var drop_table: Array = []
 @export var respawn_ticks: int = 50  # ~30 seconds
 
 signal died(enemy)
@@ -256,7 +256,7 @@ func _drop_loot() -> void:
 	for entry in drop_table:
 		var drop := entry.roll()
 		if not drop.is_empty():
-			var item: ItemData = drop["item"]
+			var item = drop["item"]
 			var qty: int = drop["quantity"]
 			GameManager.log_action("The %s drops: %s x%d" % [display_name, item.get_display_name(), qty])
 			if player and player.get("_initialized"):

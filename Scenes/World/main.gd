@@ -19,7 +19,12 @@ func _ready() -> void:
 	FileLogger.log_msg("HUD setup done")
 
 	# Force-initialize the player — _ready() may not fire on Android
-	player.call("ensure_initialized")
+	FileLogger.log_msg("Main: about to init player")
+	var has_ensure = player.get("_initialized")
+	FileLogger.log_msg("Main: player _initialized before call = %s" % str(has_ensure))
+	if has_ensure == null or has_ensure == false:
+		# Script may not have parsed — try calling ensure_initialized
+		player.call("ensure_initialized")
 	var is_init = player.get("_initialized")
 	FileLogger.log_msg("Player initialized: %s" % str(is_init))
 
@@ -27,7 +32,9 @@ func _ready() -> void:
 	_force_initialize_objects()
 
 	# Set up inventory UI inside the overlay panel
+	FileLogger.log_msg("Main: setting up inventory UI")
 	var inventory_panel := hud.get_node_or_null("InventoryOverlay/VBox/InventoryPanel")
+	FileLogger.log_msg("Main: inventory_panel = %s" % str(inventory_panel != null))
 	if inventory_panel:
 		var inv_ui := InventoryUI.new()
 		inv_ui.name = "InventoryGrid"
@@ -36,7 +43,9 @@ func _ready() -> void:
 	FileLogger.log_msg("Inventory UI done")
 
 	# Set up skills UI inside the scroll container
+	FileLogger.log_msg("Main: setting up skills UI")
 	var skills_panel := hud.get_node_or_null("SkillsOverlay/VBox/SkillsScroll/SkillsPanel")
+	FileLogger.log_msg("Main: skills_panel = %s" % str(skills_panel != null))
 	if skills_panel:
 		var skills_ui := SkillsUI.new()
 		skills_ui.name = "SkillsList"
@@ -74,8 +83,8 @@ func _force_initialize_objects() -> void:
 	FileLogger.log_msg("Force-initialized %d enemies, %d interactables" % [enemies_count, interactables_count])
 
 
-func _get_all_descendants(node: Node) -> Array[Node]:
-	var result: Array[Node] = []
+func _get_all_descendants(node: Node) -> Array:
+	var result: Array = []
 	for child in node.get_children():
 		result.append(child)
 		result.append_array(_get_all_descendants(child))

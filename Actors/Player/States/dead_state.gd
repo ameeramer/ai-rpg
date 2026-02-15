@@ -7,7 +7,7 @@ var _respawn_ticks: int = 0
 const RESPAWN_DELAY_TICKS: int = 5  # ~3 seconds
 
 var _tick_connected: bool = false
-var _original_colors: Array[Dictionary] = []
+var _original_colors: Array = []
 
 
 func on_enter(_msg: Dictionary = {}) -> void:

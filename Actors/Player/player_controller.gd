@@ -177,7 +177,7 @@ func _init_inventory() -> void:
 		slots[i] = null
 
 
-func add_item(item: ItemData, quantity: int = 1) -> bool:
+func add_item(item, quantity: int = 1) -> bool:
 	if item == null or quantity <= 0:
 		return false
 	if item.is_stackable:
@@ -431,7 +431,7 @@ func play_attack_animation() -> void:
 func play_damage_flash() -> void:
 	if not model:
 		return
-	var parts: Array[Dictionary] = []
+	var parts: Array = []
 	for child in model.get_children():
 		if child is MeshInstance3D and child.material_override is StandardMaterial3D:
 			parts.append({"mat": child.material_override, "color": child.material_override.albedo_color})

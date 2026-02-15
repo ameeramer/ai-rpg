@@ -83,7 +83,7 @@ func refresh() -> void:
 			btn.icon = null
 			btn.tooltip_text = "Empty"
 		else:
-			var item: ItemData = slot_data["item"]
+			var item = slot_data["item"]
 			var qty: int = slot_data["quantity"]
 			btn.tooltip_text = item.get_display_name()
 
@@ -105,5 +105,5 @@ func _on_slot_pressed(slot_index: int) -> void:
 	if inv_slots == null or slot_index >= inv_slots.size() or inv_slots[slot_index] == null:
 		return
 
-	var item: ItemData = inv_slots[slot_index]["item"]
+	var item = inv_slots[slot_index]["item"]
 	GameManager.log_action("Selected: %s" % item.get_display_name())
