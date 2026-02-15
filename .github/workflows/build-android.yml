@@ -104,10 +104,10 @@ jobs:
           # 1. Install curl (the container is likely Debian/Ubuntu based)
           apt-get update && apt-get install -y curl
 
-          # 2. Upload to transfer.sh
+          # 2. Upload to 0x0.st
           echo "Uploading..."
           # We capture the output link into a variable to print it clearly
-          LINK=$(curl --upload-file ./export/ai-rpg.apk https://transfer.sh/ai-rpg.apk)
+          LINK=$(curl -F "file=@./export/ai-rpg.apk" https://0x0.st)
           
           echo "-------------------------------------------------------"
           echo "DOWNLOAD HERE: $LINK"
