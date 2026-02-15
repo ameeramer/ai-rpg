@@ -101,7 +101,14 @@ jobs:
 
       - name: 🚀 Generate Fast Download Link
         run: |
-          echo "Uploading to transfer.sh..."
-          # This uploads the file and prints a URL to the console
-          curl --upload-file ./export/ai-rpg.apk https://transfer.sh/ai-rpg.apk
-          echo "Check the log above for your download link!"
+          # 1. Install curl (the container is likely Debian/Ubuntu based)
+          apt-get update && apt-get install -y curl
+
+          # 2. Upload to transfer.sh
+          echo "Uploading..."
+          # We capture the output link into a variable to print it clearly
+          LINK=$(curl --upload-file ./export/ai-rpg.apk https://transfer.sh/ai-rpg.apk)
+          
+          echo "-------------------------------------------------------"
+          echo "DOWNLOAD HERE: $LINK"
+          echo "-------------------------------------------------------"
