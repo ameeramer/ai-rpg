@@ -95,66 +95,58 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 	var hit_normal: Vector3 = result["normal"]
 	var collider: Node3D = result["collider"]
 
-	# Check if we hit an enemy (layer 3, value 4)
-	if collider.get_collision_layer_value(3) or _has_enemy_parent(collider):
-		var enemy := _find_enemy(collider)
-		if enemy:
-			if is_context:
-				object_context.emit(enemy, screen_pos)
-			else:
-				object_clicked.emit(enemy, hit_position)
-			return
+	FileLogger.log_msg("Raycast hit: %s (class: %s, layer: %d) at %s" % [
+		collider.name, collider.get_class(), collider.get("collision_layer") if collider.get("collision_layer") != null else -1, str(hit_position)])
 
-	# Check if we hit an interactable object (layer 4, value 8)
-	if collider.get_collision_layer_value(4) or _has_interactable_parent(collider):
-		var interactable := _find_interactable(collider)
-		if interactable:
-			if is_context:
-				object_context.emit(interactable, screen_pos)
-			else:
-				object_clicked.emit(interactable, hit_position)
-			return
+	# Check if collider or any ancestor is an EnemyBase
+	var enemy := _find_enemy(collider)
+	if enemy:
+		var ename: String = enemy.get("display_name") if enemy.get("display_name") else enemy.name
+		FileLogger.log_msg("Detected enemy: %s" % ename)
+		if is_context:
+			object_context.emit(enemy, screen_pos)
+		else:
+			object_clicked.emit(enemy, hit_position)
+		return
+
+	# Check if collider or any ancestor is an Interactable
+	var interactable := _find_interactable(collider)
+	if interactable:
+		var iname: String = interactable.get("display_name") if interactable.get("display_name") else interactable.name
+		FileLogger.log_msg("Detected interactable: %s" % iname)
+		if is_context:
+			object_context.emit(interactable, screen_pos)
+		else:
+			object_clicked.emit(interactable, hit_position)
+		return
 
 	# Otherwise it's a ground click — move there
+	FileLogger.log_msg("Ground click at %s (collider: %s)" % [str(hit_position), collider.name])
 	if not is_context:
 		world_clicked.emit(hit_position, hit_normal)
 
 
-func _has_interactable_parent(node: Node) -> bool:
-	var parent := node.get_parent()
-	while parent:
-		if parent.has_method("interact"):
-			return true
-		parent = parent.get_parent()
-	return false
-
-
 func _find_interactable(node: Node) -> Node3D:
-	if node.has_method("interact"):
+	# Check the node itself
+	if node is Interactable or node.has_method("interact"):
 		return node as Node3D
-	var parent := node.get_parent()
-	while parent:
-		if parent.has_method("interact"):
-			return parent as Node3D
-		parent = parent.get_parent()
+	# Walk up the tree
+	var current := node.get_parent()
+	while current:
+		if current is Interactable or current.has_method("interact"):
+			return current as Node3D
+		current = current.get_parent()
 	return null
 
 
-func _has_enemy_parent(node: Node) -> bool:
-	var parent := node.get_parent()
-	while parent:
-		if parent is EnemyBase:
-			return true
-		parent = parent.get_parent()
-	return false
-
-
 func _find_enemy(node: Node) -> Node3D:
-	if node is EnemyBase:
+	# Check the node itself
+	if node is EnemyBase or (node.has_method("is_dead") and node.has_method("take_damage") and node is CharacterBody3D):
 		return node as Node3D
-	var parent := node.get_parent()
-	while parent:
-		if parent is EnemyBase:
-			return parent as Node3D
-		parent = parent.get_parent()
+	# Walk up the tree
+	var current := node.get_parent()
+	while current:
+		if current is EnemyBase or (current.has_method("is_dead") and current.has_method("take_damage") and current is CharacterBody3D):
+			return current as Node3D
+		current = current.get_parent()
 	return null
