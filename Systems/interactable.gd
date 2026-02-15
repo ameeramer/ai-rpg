@@ -40,20 +40,26 @@ func interact(player: Node3D) -> bool:
 	# Check skill requirement
 	if required_skill != "":
 		var skills_node := player.get_node_or_null("PlayerSkills")
-		var has_script = skills_node.get_script() if skills_node else null
-		FileLogger.log_msg("interact: required_skill=%s skills_node=%s has_script=%s" % [required_skill, str(skills_node), str(has_script != null)])
-		if skills_node and has_script:
-			# Capture as untyped Variant — typed .call() may lose return value on Android
-			var level_result = skills_node.call("get_level", required_skill)
-			var level: int = level_result if level_result != null else 1
-			FileLogger.log_msg("interact: level_result=%s level=%d required=%d" % [str(level_result), level, required_level])
+		var has_scr = skills_node.get_script() if skills_node else null
+		var is_init = skills_node.get("_initialized") if skills_node else null
+		FileLogger.log_msg("interact: skill=%s node=%s script=%s init=%s" % [required_skill, str(skills_node != null), str(has_scr != null), str(is_init)])
+		if skills_node and has_scr and is_init:
+			# Script loaded and initialized — safe to read skill data directly
+			var levels_dict = skills_node.get("skill_levels")
+			FileLogger.log_msg("interact: skill_levels=%s" % str(levels_dict))
+			var level: int = 1
+			if levels_dict and levels_dict is Dictionary:
+				level = levels_dict.get(required_skill, 1)
+			FileLogger.log_msg("interact: level=%d required=%d" % [level, required_level])
 			if level < required_level:
 				GameManager.log_action("You need level %d %s to %s this." % [
 					required_level, required_skill, interaction_verb.to_lower()
 				])
 				return false
-		elif skills_node and not has_script:
-			FileLogger.log_msg("interact: skills_node exists but script not loaded — skipping level check")
+		elif skills_node and has_scr and not is_init:
+			FileLogger.log_msg("interact: skills has script but NOT initialized — skipping check")
+		elif skills_node and not has_scr:
+			FileLogger.log_msg("interact: skills node exists but NO script — skipping check")
 
 	_ticks_remaining = ticks_per_action
 	GameManager.log_action("You begin to %s the %s." % [interaction_verb.to_lower(), display_name])
@@ -90,10 +96,10 @@ func _complete_action(player: Node3D) -> Dictionary:
 		if not drop.is_empty():
 			_give_item_to_player(player, drop["item"], drop["quantity"])
 
-	# Grant XP
+	# Grant XP — guard with _initialized, not get_script()
 	if xp_reward > 0.0 and required_skill != "":
 		var skills_node := player.get_node_or_null("PlayerSkills")
-		if skills_node and skills_node.get_script():
+		if skills_node and skills_node.get("_initialized"):
 			skills_node.call("add_xp", required_skill, xp_reward)
 
 	interaction_completed.emit(player)
@@ -111,8 +117,7 @@ func _complete_action(player: Node3D) -> Dictionary:
 
 func _give_item_to_player(player: Node3D, item: ItemData, quantity: int) -> void:
 	var inventory := player.get_node_or_null("PlayerInventory")
-	if inventory and inventory.get_script():
-		# Capture as untyped Variant — typed .call() may lose return value on Android
+	if inventory and inventory.get("_initialized"):
 		var added = inventory.call("add_item", item, quantity)
 		if added == false:
 			GameManager.log_action("Your inventory is full.")

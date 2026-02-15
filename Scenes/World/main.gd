@@ -10,9 +10,6 @@ extends Node3D
 func _ready() -> void:
 	FileLogger.log_msg("Main._ready() start")
 
-	# Force-initialize player subsystems FIRST — scripts may not fire on Android
-	_force_initialize_player_subsystems()
-
 	# Point camera at player — use .set() since camera_controller is typed as Node3D
 	camera_controller.set("target", player)
 	FileLogger.log_msg("Camera target set")
@@ -20,6 +17,25 @@ func _ready() -> void:
 	# Set up HUD with player reference — use .call() for Android safety
 	hud.call("setup", player)
 	FileLogger.log_msg("HUD setup done")
+
+	# Explicitly initialize all enemies and interactables — _ready() may not fire on Android
+	_force_initialize_objects()
+
+	# Defer subsystem init + UI setup to next frame so freshly-created
+	# PlayerSkills/PlayerInventory nodes have their scripts fully bound.
+	# On Android, .call() on a node that just had set_script() in the same frame crashes.
+	call_deferred("_deferred_init")
+
+	FileLogger.log_msg("Main._ready() complete (deferred init queued)")
+	GameManager.log_action("Welcome to AI RPG! Tap to move, tap objects to interact.")
+
+
+## Called one frame after _ready() — subsystem scripts are now callable.
+func _deferred_init() -> void:
+	FileLogger.log_msg("Main._deferred_init() start")
+
+	# Force-initialize player subsystems
+	_force_initialize_player_subsystems()
 
 	# Set up inventory UI inside the overlay panel
 	var inventory_panel := hud.get_node_or_null("InventoryOverlay/VBox/InventoryPanel")
@@ -43,11 +59,7 @@ func _ready() -> void:
 			skills_ui.call("setup", player_skills)
 	FileLogger.log_msg("Skills UI done")
 
-	# Explicitly initialize all enemies and interactables — _ready() may not fire on Android
-	_force_initialize_objects()
-
-	FileLogger.log_msg("Main._ready() complete")
-	GameManager.log_action("Welcome to AI RPG! Tap to move, tap objects to interact.")
+	FileLogger.log_msg("Main._deferred_init() complete")
 
 
 ## Force-initialize player subsystems (inventory, skills).
@@ -55,20 +67,28 @@ func _ready() -> void:
 ## This is a safety net — only call ensure_initialized if script is actually loaded.
 func _force_initialize_player_subsystems() -> void:
 	var inv := player.get_node_or_null("PlayerInventory")
-	if inv and inv.get_script() != null:
-		inv.call("ensure_initialized")
-		FileLogger.log_msg("PlayerInventory force-initialized from Main")
+	if inv:
+		var is_init = inv.get("_initialized")
+		if is_init:
+			FileLogger.log_msg("PlayerInventory already initialized")
+		else:
+			inv.call("ensure_initialized")
+			FileLogger.log_msg("PlayerInventory force-initialized from Main (init=%s)" % str(inv.get("_initialized")))
 	else:
-		FileLogger.log_msg("PlayerInventory missing or no script")
+		FileLogger.log_msg("PlayerInventory node missing")
 
 	var skills := player.get_node_or_null("PlayerSkills")
-	if skills and skills.get_script() != null:
-		skills.call("ensure_initialized")
-		FileLogger.log_msg("PlayerSkills force-initialized from Main")
+	if skills:
+		var is_init = skills.get("_initialized")
+		if is_init:
+			FileLogger.log_msg("PlayerSkills already initialized")
+		else:
+			skills.call("ensure_initialized")
+			FileLogger.log_msg("PlayerSkills force-initialized from Main (init=%s)" % str(skills.get("_initialized")))
 	else:
-		FileLogger.log_msg("PlayerSkills missing or no script")
+		FileLogger.log_msg("PlayerSkills node missing")
 
-	FileLogger.log_msg("Player subsystems force-initialized")
+	FileLogger.log_msg("Player subsystems check complete")
 
 
 ## Force-initialize all game objects by collision layer.

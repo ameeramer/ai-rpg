@@ -253,10 +253,12 @@ func _complete_action(player: Node3D) -> Dictionary:
 	var success_chance := base_success_chance
 	if required_skill != "":
 		var skills_node := player.get_node_or_null("PlayerSkills")
-		if skills_node and skills_node.get_script():
-			# Capture as untyped Variant — typed .call() may lose return value on Android
-			var level_result = skills_node.call("get_level", required_skill)
-			var level: int = level_result if level_result != null else 1
+		if skills_node and skills_node.get("_initialized"):
+			# Use .get() for property access — .call() may be no-op on Android
+			var levels_dict = skills_node.get("skill_levels")
+			var level: int = 1
+			if levels_dict and levels_dict is Dictionary:
+				level = levels_dict.get(required_skill, 1)
 			# Higher level = better chance, capped at 95%
 			success_chance = min(0.95, base_success_chance + (level - required_level) * 0.02)
 

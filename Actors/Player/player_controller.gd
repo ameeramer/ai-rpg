@@ -46,29 +46,29 @@ func _ready() -> void:
 
 
 ## Ensure a child subsystem node exists with its script properly loaded.
-## On Android, inline script attachment in .tscn files silently fails —
-## get_script() returns the script but methods are NOT callable.
-## ALWAYS force set_script() to make methods work.
+## On Android, nodes defined in .tscn with inline scripts are permanently broken —
+## get_script() returns non-null but methods are NEVER callable, even after set_script().
+## Fix: REMOVE any existing .tscn-defined node and create a fresh one from scratch.
 func _ensure_subsystem(node_name: String, script_path: String) -> void:
 	var scr = load(script_path)
 	if scr == null:
 		FileLogger.log_error("Failed to load script: %s" % script_path)
 		return
 
-	var node := get_node_or_null(node_name)
-	if node == null:
-		node = Node.new()
-		node.name = node_name
-		add_child(node)
-		FileLogger.log_msg("Created subsystem node: %s" % node_name)
+	# Remove any existing node — it may be "tainted" from .tscn inline script failure
+	var existing := get_node_or_null(node_name)
+	if existing:
+		FileLogger.log_msg("Removing existing %s node (may be tainted)" % node_name)
+		remove_child(existing)
+		existing.queue_free()
 
-	# ALWAYS force set_script — on Android, even when get_script() returns
-	# the correct script object, methods may not be callable until re-set
+	# Create a completely fresh node — set script BEFORE add_child so that
+	# _ready() fires WITH the script already attached
+	var node := Node.new()
+	node.name = node_name
 	node.set_script(scr)
-	FileLogger.log_msg("Force-set script on subsystem: %s" % node_name)
-
-	# Force-initialize — now methods should be callable
-	node.call("ensure_initialized")
+	add_child(node)
+	FileLogger.log_msg("Created fresh subsystem: %s (script=%s)" % [node_name, str(node.get_script() != null)])
 
 
 func _on_world_clicked(world_pos: Vector3, _normal: Vector3) -> void:

@@ -238,7 +238,7 @@ func _die() -> void:
 	if players.size() > 0:
 		var player: Node3D = players[0]
 		var skills := player.get_node_or_null("PlayerSkills")
-		if skills and skills.get_script():
+		if skills and skills.get("_initialized"):
 			skills.call("add_combat_xp", xp_reward)
 
 	died.emit(self)
@@ -261,8 +261,7 @@ func _drop_loot() -> void:
 			GameManager.log_action("The %s drops: %s x%d" % [display_name, item.get_display_name(), qty])
 			if player:
 				var inventory := player.get_node_or_null("PlayerInventory")
-				if inventory and inventory.get_script():
-					# Capture as untyped Variant — typed .call() may lose return value on Android
+				if inventory and inventory.get("_initialized"):
 					var added = inventory.call("add_item", item, qty)
 					if added == false:
 						GameManager.log_action("Your inventory is full!")
