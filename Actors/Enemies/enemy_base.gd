@@ -12,6 +12,8 @@ extends CharacterBody3D
 @export var xp_reward: float = 40.0  # Total combat XP on kill
 @export var drop_table: Array[DropTableEntry] = []
 @export var respawn_ticks: int = 50  # ~30 seconds
+@export_file("*.glb") var model_path: String = ""
+@export var model_scale: Vector3 = Vector3.ONE
 
 signal died(enemy: EnemyBase)
 signal took_damage(amount: int, current_hp: int)
@@ -30,8 +32,22 @@ func _ready() -> void:
 	collision_layer = 4  # Layer 3: Enemies
 	collision_mask = 3   # Collide with world + player
 
+	_load_model()
+
 	GameManager.game_tick.connect(_on_game_tick)
 	add_to_group("enemies")
+
+
+func _load_model() -> void:
+	if model_path == "":
+		return
+	var scene: PackedScene = load(model_path)
+	if not scene:
+		return
+	var instance := scene.instantiate()
+	instance.scale = model_scale
+	instance.name = "EnemyModel"
+	add_child(instance)
 
 
 func take_damage(amount: int) -> void:

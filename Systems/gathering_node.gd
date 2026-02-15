@@ -10,6 +10,13 @@ extends Interactable
 ## Chance of success per tick (0.0 to 1.0). Higher skill = higher chance.
 @export var base_success_chance: float = 0.5
 
+## Path to the active 3D model (.glb)
+@export_file("*.glb") var active_model_path: String = ""
+## Path to the depleted 3D model (.glb)
+@export_file("*.glb") var depleted_model_path: String = ""
+## Scale applied to loaded models
+@export var model_scale: Vector3 = Vector3.ONE
+
 var _gathers_remaining: int = 0
 var _active_mesh: Node3D
 var _depleted_mesh: Node3D
@@ -19,13 +26,49 @@ func _ready() -> void:
 	collision_layer = 8  # Layer 4: Interactables
 	_gathers_remaining = randi_range(min_gathers, max_gathers)
 
-	# Look for mesh variants
-	_active_mesh = get_node_or_null("ActiveMesh")
-	_depleted_mesh = get_node_or_null("DepletedMesh")
+	# Load 3D models if paths are set
+	_load_models()
+
+	# Fall back to looking for existing mesh variants
+	if not _active_mesh:
+		_active_mesh = get_node_or_null("ActiveMesh")
+	if not _depleted_mesh:
+		_depleted_mesh = get_node_or_null("DepletedMesh")
 	if _depleted_mesh:
 		_depleted_mesh.visible = false
 
 	respawned.connect(_on_respawned)
+
+
+func _load_models() -> void:
+	if active_model_path != "":
+		var scene: PackedScene = load(active_model_path)
+		if scene:
+			_active_mesh = Node3D.new()
+			_active_mesh.name = "ActiveMesh"
+			var instance := scene.instantiate()
+			instance.scale = model_scale
+			_active_mesh.add_child(instance)
+			add_child(_active_mesh)
+			# Remove old primitive meshes
+			_remove_primitive_meshes()
+
+	if depleted_model_path != "":
+		var scene: PackedScene = load(depleted_model_path)
+		if scene:
+			_depleted_mesh = Node3D.new()
+			_depleted_mesh.name = "DepletedMesh"
+			var instance := scene.instantiate()
+			instance.scale = model_scale
+			_depleted_mesh.add_child(instance)
+			add_child(_depleted_mesh)
+			_depleted_mesh.visible = false
+
+
+func _remove_primitive_meshes() -> void:
+	for child in get_children():
+		if child is MeshInstance3D and child != _active_mesh and child != _depleted_mesh:
+			child.queue_free()
 
 
 func _complete_action(player: Node3D) -> Dictionary:
