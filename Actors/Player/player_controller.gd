@@ -6,9 +6,9 @@ extends CharacterBody3D
 @export var move_speed: float = 4.0
 @export var interaction_range: float = 3.0
 
-@onready var state_machine: StateMachine = $StateMachine
-@onready var nav_agent: NavigationAgent3D = $NavigationAgent3D
-@onready var anim_player: AnimationPlayer = $AnimationPlayer
+@onready var state_machine: Node = $StateMachine
+@onready var nav_agent: Node = $NavigationAgent3D
+@onready var anim_player: Node = $AnimationPlayer
 @onready var model: Node3D = $Model
 
 ## Current target for interaction (set by InputManager signals)
@@ -22,7 +22,7 @@ var max_hitpoints: int = 10
 
 # ── Skills data (embedded — set_script() doesn't work on Android) ──
 
-const SKILL_NAMES: Array[String] = [
+var SKILL_NAMES: Array = [
 	"Attack", "Strength", "Defence", "Hitpoints",
 	"Ranged", "Prayer", "Magic",
 	"Cooking", "Woodcutting", "Fishing", "Mining",
@@ -33,15 +33,15 @@ const SKILL_NAMES: Array[String] = [
 var skill_xp: Dictionary = {}
 var skill_levels: Dictionary = {}
 
-signal xp_gained(skill_name: String, amount: float, total_xp: float)
-signal level_up(skill_name: String, new_level: int)
+signal xp_gained(skill_name, amount, total_xp)
+signal level_up(skill_name, new_level)
 
 # ── Inventory data (embedded) ──
 
-const MAX_SLOTS: int = 28
+var MAX_SLOTS: int = 28
 
-signal item_added(item: ItemData, quantity: int, slot: int)
-signal item_removed(item: ItemData, quantity: int, slot: int)
+signal item_added(item, quantity, slot)
+signal item_removed(item, quantity, slot)
 signal inventory_changed()
 signal inventory_full()
 
@@ -53,15 +53,34 @@ var _initialized: bool = false
 
 func _ready() -> void:
 	FileLogger.log_msg("PlayerController._ready() start")
+	ensure_initialized()
+	FileLogger.log_msg("PlayerController._ready() done")
+
+
+func ensure_initialized() -> void:
+	if _initialized:
+		return
+	_initialized = true
+	FileLogger.log_msg("PlayerController.ensure_initialized() running")
 
 	# Connect to InputManager signals
-	InputManager.world_clicked.connect(_on_world_clicked)
-	InputManager.object_clicked.connect(_on_object_clicked)
+	if not InputManager.world_clicked.is_connected(_on_world_clicked):
+		InputManager.world_clicked.connect(_on_world_clicked)
+	if not InputManager.object_clicked.is_connected(_on_object_clicked):
+		InputManager.object_clicked.connect(_on_object_clicked)
 
 	# Configure navigation agent
-	nav_agent.path_desired_distance = 0.5
-	nav_agent.target_desired_distance = 0.5
-	nav_agent.max_speed = move_speed
+	nav_agent = get_node_or_null("NavigationAgent3D")
+	if nav_agent:
+		nav_agent.path_desired_distance = 0.5
+		nav_agent.target_desired_distance = 0.5
+		nav_agent.max_speed = move_speed
+
+	# Resolve @onready nodes manually (may be null if _ready didn't fire)
+	if state_machine == null:
+		state_machine = get_node_or_null("StateMachine")
+	if model == null:
+		model = get_node_or_null("Model")
 
 	# Add to player group for easy lookup
 	add_to_group("player")
@@ -69,10 +88,7 @@ func _ready() -> void:
 	# Initialize skills + inventory directly — no child nodes needed
 	_init_skills()
 	_init_inventory()
-	_initialized = true
 	FileLogger.log_msg("PlayerController init done: %d skills, %d slots" % [skill_levels.size(), slots.size()])
-
-	FileLogger.log_msg("PlayerController._ready() done")
 
 
 # ── Skills ──
@@ -139,14 +155,14 @@ func get_combat_level() -> int:
 	return int(base + max(melee, max(ranged, magic)))
 
 
-static func _xp_for_level(level: int) -> float:
+func _xp_for_level(level: int) -> float:
 	var total: float = 0.0
 	for i in range(1, level):
 		total += floorf(i + 300.0 * pow(2.0, i / 7.0))
 	return floorf(total / 4.0)
 
 
-static func _level_for_xp(xp: float) -> int:
+func _level_for_xp(xp: float) -> int:
 	for level in range(99, 0, -1):
 		if xp >= _xp_for_level(level):
 			return level

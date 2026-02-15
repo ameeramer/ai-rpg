@@ -18,13 +18,13 @@ func _ready() -> void:
 	hud.call("setup", player)
 	FileLogger.log_msg("HUD setup done")
 
-	# Explicitly initialize all enemies and interactables — _ready() may not fire on Android
-	_force_initialize_objects()
-
-	# Skills + inventory are embedded in PlayerController — no child nodes needed.
-	# PlayerController._ready() initializes them before Main._ready() runs.
+	# Force-initialize the player — _ready() may not fire on Android
+	player.call("ensure_initialized")
 	var is_init = player.get("_initialized")
 	FileLogger.log_msg("Player initialized: %s" % str(is_init))
+
+	# Explicitly initialize all enemies and interactables — _ready() may not fire on Android
+	_force_initialize_objects()
 
 	# Set up inventory UI inside the overlay panel
 	var inventory_panel := hud.get_node_or_null("InventoryOverlay/VBox/InventoryPanel")

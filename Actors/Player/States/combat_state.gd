@@ -2,7 +2,7 @@ extends State
 ## Player Combat state — OSRS-style tick-based auto-attack.
 ## NOTE: has_method() fails on Android Godot 4.3 — use .call() directly.
 
-@onready var player: PlayerController = owner as PlayerController
+@onready var player: Node3D = owner as Node3D
 
 var _target: Node3D = null
 var _ticks_since_attack: int = 0

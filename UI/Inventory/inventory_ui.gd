@@ -2,12 +2,12 @@ class_name InventoryUI
 extends GridContainer
 ## Renders the 28-slot inventory grid with OSRS-style slot buttons.
 
-const SLOT_SIZE := Vector2(88, 88)
-const MAX_SLOTS: int = 28
+var SLOT_SIZE := Vector2(88, 88)
+var MAX_SLOTS: int = 28
 
 ## Player node — inventory data is embedded directly on PlayerController
 var _player: Node3D
-var _slot_buttons: Array[Button] = []
+var _slot_buttons: Array = []
 
 
 func _ready() -> void:

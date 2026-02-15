@@ -1,7 +1,7 @@
 extends State
 ## Player Dead state — shows death message and respawns after a delay.
 
-@onready var player: PlayerController = owner as PlayerController
+@onready var player: Node3D = owner as Node3D
 
 var _respawn_ticks: int = 0
 const RESPAWN_DELAY_TICKS: int = 5  # ~3 seconds

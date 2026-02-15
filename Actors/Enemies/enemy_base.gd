@@ -14,8 +14,8 @@ extends CharacterBody3D
 @export var drop_table: Array[DropTableEntry] = []
 @export var respawn_ticks: int = 50  # ~30 seconds
 
-signal died(enemy: EnemyBase)
-signal took_damage(amount: int, current_hp: int)
+signal died(enemy)
+signal took_damage(amount, current_hp)
 
 var hp: int = 0
 var _target: Node3D = null
