@@ -26,11 +26,19 @@ func on_enter(msg: Dictionary = {}) -> void:
 		return
 
 	# Check if target can be interacted with before committing
-	if _target.get("_is_depleted") or not _target.get("is_active", true):
-		var tname: String = _target.get("display_name") if _target.get("display_name") else _target.name
-		var verb: String = _target.get("interaction_verb") if _target.get("interaction_verb") else "use"
-		FileLogger.log_msg("Interacting: target '%s' is depleted/inactive, returning to Idle" % tname)
-		GameManager.log_action("You can't %s this right now." % verb.to_lower())
+	var is_depleted_val = _target.get("_is_depleted")
+	var is_active_val = _target.get("is_active")
+	if is_active_val == null:
+		is_active_val = true
+	if is_depleted_val or not is_active_val:
+		var tname = _target.get("display_name")
+		if tname == null:
+			tname = _target.name
+		var verb = _target.get("interaction_verb")
+		if verb == null:
+			verb = "use"
+		FileLogger.log_msg("Interacting: target '%s' is depleted/inactive, returning to Idle" % str(tname))
+		GameManager.log_action("You can't %s this right now." % str(verb).to_lower())
 		state_machine.transition_to("Idle")
 		return
 
