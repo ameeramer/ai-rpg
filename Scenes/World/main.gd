@@ -7,11 +7,15 @@ extends Node3D
 
 
 func _ready() -> void:
+	FileLogger.log_msg("Main._ready() start")
+
 	# Point camera at player
 	camera_controller.target = player
+	FileLogger.log_msg("Camera target set")
 
 	# Set up HUD with player reference
 	hud.setup(player)
+	FileLogger.log_msg("HUD setup done")
 
 	# Set up inventory UI
 	var inventory_panel := hud.get_node_or_null("MainContainer/SidePanel/InventoryPanel")
@@ -22,6 +26,7 @@ func _ready() -> void:
 		var player_inv := player.get_node_or_null("PlayerInventory") as PlayerInventory
 		if player_inv:
 			inv_ui.setup(player_inv)
+	FileLogger.log_msg("Inventory UI done")
 
 	# Set up skills UI
 	var skills_panel := hud.get_node_or_null("MainContainer/SidePanel/SkillsPanel")
@@ -32,6 +37,7 @@ func _ready() -> void:
 		var player_skills := player.get_node_or_null("PlayerSkills") as PlayerSkills
 		if player_skills:
 			skills_ui.setup(player_skills)
+	FileLogger.log_msg("Skills UI done")
 
 	# Connect tab buttons
 	var inv_tab := hud.get_node_or_null("MainContainer/SidePanel/TabButtons/InventoryTab")
@@ -41,4 +47,5 @@ func _ready() -> void:
 	if skills_tab:
 		skills_tab.pressed.connect(func(): hud._toggle_skills())
 
+	FileLogger.log_msg("Main._ready() complete")
 	GameManager.log_action("Welcome to AI RPG! Click to move, click objects to interact.")

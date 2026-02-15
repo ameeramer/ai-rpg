@@ -9,8 +9,10 @@ extends CanvasLayer
 @onready var skills_panel: Control = $MainContainer/SidePanel/SkillsPanel
 @onready var action_log: RichTextLabel = $MainContainer/BottomBar/ActionLog
 @onready var minimap: Control = $MainContainer/TopBar/Minimap
+@onready var debug_btn: Button = $MainContainer/TopBar/DebugBtn
 
 var _player: PlayerController
+var _debug_panel: DebugLogPanel
 
 
 func _ready() -> void:
@@ -20,6 +22,10 @@ func _ready() -> void:
 
 	# Connect to GameManager for action log
 	GameManager.action_logged.connect(_on_action_logged)
+
+	# Connect debug button
+	if debug_btn:
+		debug_btn.pressed.connect(_toggle_debug_log)
 
 
 func setup(player: PlayerController) -> void:
@@ -89,3 +95,17 @@ func _on_level_up(skill_name: String, new_level: int) -> void:
 func _on_inventory_changed() -> void:
 	# Inventory UI will handle its own refresh via signals
 	pass
+
+
+func _toggle_debug_log() -> void:
+	if _debug_panel and is_instance_valid(_debug_panel):
+		_debug_panel.visible = not _debug_panel.visible
+		if _debug_panel.visible:
+			_debug_panel._load_logs()
+	else:
+		_debug_panel = DebugLogPanel.new()
+		_debug_panel.name = "DebugLogPanel"
+		_debug_panel.anchors_preset = Control.PRESET_FULL_RECT
+		_debug_panel.anchor_right = 1.0
+		_debug_panel.anchor_bottom = 1.0
+		add_child(_debug_panel)

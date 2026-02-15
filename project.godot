@@ -6,12 +6,13 @@
 
 config/name="AI RPG"
 config/description="Single-player OSRS-style mobile RPG"
-run/main_scene="res://Scenes/World/Main.tscn"
-config/features=PackedStringArray("4.3", "Forward Plus")
+run/main_scene="res://Scenes/Boot/Boot.tscn"
+config/features=PackedStringArray("4.3", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
 
+FileLogger="*res://Systems/file_logger.gd"
 GameManager="*res://Systems/game_manager.gd"
 InputManager="*res://Systems/input_manager.gd"
 
@@ -71,5 +72,6 @@ pointing/emulate_mouse_from_touch=true
 [rendering]
 
 renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
 textures/vram_compression/import_etc2_astc=true
-anti_aliasing/quality/msaa_3d=1
+environment/defaults/default_clear_color=Color(0.39, 0.65, 0.92, 1)

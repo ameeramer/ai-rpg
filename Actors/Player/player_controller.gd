@@ -22,6 +22,8 @@ var max_hitpoints: int = 10
 
 
 func _ready() -> void:
+	FileLogger.log_msg("PlayerController._ready() start")
+
 	# Connect to InputManager signals
 	InputManager.world_clicked.connect(_on_world_clicked)
 	InputManager.object_clicked.connect(_on_object_clicked)
@@ -33,6 +35,7 @@ func _ready() -> void:
 
 	# Add to player group for easy lookup
 	add_to_group("player")
+	FileLogger.log_msg("PlayerController._ready() done")
 
 
 func _on_world_clicked(world_pos: Vector3, _normal: Vector3) -> void:

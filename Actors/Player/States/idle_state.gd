@@ -5,6 +5,7 @@ extends State
 
 
 func on_enter(_msg: Dictionary = {}) -> void:
+	FileLogger.log_msg("State -> Idle")
 	player.is_moving = false
 	player.velocity = Vector3.ZERO
 	if player.anim_player and player.anim_player.has_animation("idle"):

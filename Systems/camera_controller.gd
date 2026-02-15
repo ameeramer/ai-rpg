@@ -18,6 +18,7 @@ var _target_zoom: float
 
 
 func _ready() -> void:
+	FileLogger.log_msg("CameraController._ready() start")
 	_current_zoom = default_zoom
 	_target_zoom = default_zoom
 
@@ -30,6 +31,10 @@ func _ready() -> void:
 	# Register this camera with the InputManager
 	if camera:
 		InputManager.set_camera(camera)
+		FileLogger.log_msg("Camera registered with InputManager")
+	else:
+		FileLogger.log_error("Camera3D child node not found!")
+	FileLogger.log_msg("CameraController._ready() done")
 
 
 func _process(delta: float) -> void:

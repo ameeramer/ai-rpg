@@ -11,6 +11,14 @@ var _tick_connection: Callable
 func on_enter(msg: Dictionary = {}) -> void:
 	_target = msg.get("target", null)
 	if _target == null or not _target.has_method("interact"):
+		FileLogger.log_msg("Interacting: no valid target, returning to Idle")
+		state_machine.transition_to("Idle")
+		return
+
+	# Check if target can be interacted with before committing
+	if _target is Interactable and (not _target.is_active or _target._is_depleted):
+		FileLogger.log_msg("Interacting: target '%s' is depleted/inactive, returning to Idle" % _target.display_name)
+		GameManager.log_action("You can't %s this right now." % _target.interaction_verb.to_lower())
 		state_machine.transition_to("Idle")
 		return
 
@@ -21,7 +29,12 @@ func on_enter(msg: Dictionary = {}) -> void:
 		player.look_at(look_pos, Vector3.UP)
 
 	# Start interaction
-	_target.interact(player)
+	FileLogger.log_msg("Interacting: starting interaction with '%s'" % (_target.name))
+	var success: bool = _target.interact(player)
+	if not success:
+		FileLogger.log_msg("Interacting: interact() returned false, returning to Idle")
+		state_machine.transition_to("Idle")
+		return
 
 	# If it's a repeating action, connect to game tick
 	if _target.has_method("is_repeating") and _target.is_repeating():
@@ -37,6 +50,7 @@ func on_enter(msg: Dictionary = {}) -> void:
 
 
 func on_exit() -> void:
+	FileLogger.log_msg("Interacting: exiting state")
 	if _tick_connection.is_valid() and GameManager.game_tick.is_connected(_tick_connection):
 		GameManager.game_tick.disconnect(_tick_connection)
 
