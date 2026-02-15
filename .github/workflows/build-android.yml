@@ -98,3 +98,10 @@ jobs:
           path: export/ai-rpg.apk
           retention-days: 14
           if-no-files-found: error
+
+      - name: 🚀 Generate Fast Download Link
+        run: |
+          echo "Uploading to transfer.sh..."
+          # This uploads the file and prints a URL to the console
+          curl --upload-file ./export/ai-rpg.apk https://transfer.sh/ai-rpg.apk
+          echo "Check the log above for your download link!"
