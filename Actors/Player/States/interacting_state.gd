@@ -1,24 +1,48 @@
 extends State
 ## Player Interacting state — performing an action on an interactable object.
 ## Handles repeating actions (e.g., chopping tree tick by tick).
+## NOTE: has_method() fails on Android Godot 4.3 — use .call() directly.
 
-@onready var player: PlayerController = owner as PlayerController
+var player: Node3D = null
 
 var _target: Node3D = null
-var _tick_connection: Callable
+var _tick_connected: bool = false
 
 
 func on_enter(msg: Dictionary = {}) -> void:
+	if player == null:
+		player = owner
 	_target = msg.get("target", null)
-	if _target == null or not _target.has_method("interact"):
+	_tick_connected = false
+
+	if _target == null:
 		FileLogger.log_msg("Interacting: no valid target, returning to Idle")
 		state_machine.transition_to("Idle")
 		return
 
+	# Validate this is an interactable (layer 8) — don't use has_method on Android
+	var target_layer = _target.get("collision_layer")
+	if target_layer == null:
+		target_layer = 0
+	if target_layer != 8:
+		FileLogger.log_msg("Interacting: target '%s' layer=%s not interactable, returning to Idle" % [_target.name, str(target_layer)])
+		state_machine.transition_to("Idle")
+		return
+
 	# Check if target can be interacted with before committing
-	if _target is Interactable and (not _target.is_active or _target._is_depleted):
-		FileLogger.log_msg("Interacting: target '%s' is depleted/inactive, returning to Idle" % _target.display_name)
-		GameManager.log_action("You can't %s this right now." % _target.interaction_verb.to_lower())
+	var is_depleted_val = _target.get("_is_depleted")
+	var is_active_val = _target.get("is_active")
+	if is_active_val == null:
+		is_active_val = true
+	if is_depleted_val or not is_active_val:
+		var tname = _target.get("display_name")
+		if tname == null:
+			tname = _target.name
+		var verb = _target.get("interaction_verb")
+		if verb == null:
+			verb = "use"
+		FileLogger.log_msg("Interacting: target '%s' is depleted/inactive, returning to Idle" % str(tname))
+		GameManager.log_action("You can't %s this right now." % str(verb).to_lower())
 		state_machine.transition_to("Idle")
 		return
 
@@ -28,40 +52,52 @@ func on_enter(msg: Dictionary = {}) -> void:
 	if look_pos.distance_to(player.global_position) > 0.01:
 		player.look_at(look_pos, Vector3.UP)
 
-	# Start interaction
-	FileLogger.log_msg("Interacting: starting interaction with '%s'" % (_target.name))
-	var success: bool = _target.interact(player)
-	if not success:
-		FileLogger.log_msg("Interacting: interact() returned false, returning to Idle")
+	# Stop movement
+	player.velocity = Vector3.ZERO
+	player.is_moving = false
+
+	# Start interaction — call directly, skip has_method (fails on Android)
+	var result = _target.call("interact", player)
+	FileLogger.log_msg("Interacting: interact('%s') result=%s type=%d" % [_target.name, str(result), typeof(result)])
+	# Check for false using not — covers false, null, and 0
+	if not result:
+		FileLogger.log_msg("Interacting: interact returned falsy, going Idle")
 		state_machine.transition_to("Idle")
 		return
 
-	# If it's a repeating action, connect to game tick
-	if _target.has_method("is_repeating") and _target.is_repeating():
-		_tick_connection = _on_game_tick
-		GameManager.game_tick.connect(_tick_connection)
-
-	if player.anim_player:
-		var anim_name: String = "interact"
-		if _target.has_method("get_animation_name"):
-			anim_name = _target.get_animation_name()
-		if player.anim_player.has_animation(anim_name):
-			player.anim_player.play(anim_name)
+	FileLogger.log_msg("Interacting: interact succeeded, connecting game_tick")
+	# Repeating actions — all gathering nodes repeat
+	GameManager.game_tick.connect(_on_game_tick)
+	_tick_connected = true
 
 
 func on_exit() -> void:
 	FileLogger.log_msg("Interacting: exiting state")
-	if _tick_connection.is_valid() and GameManager.game_tick.is_connected(_tick_connection):
-		GameManager.game_tick.disconnect(_tick_connection)
+	if _tick_connected and GameManager.game_tick.is_connected(_on_game_tick):
+		GameManager.game_tick.disconnect(_on_game_tick)
+		_tick_connected = false
 
-	if _target and _target.has_method("stop_interaction"):
-		_target.stop_interaction(player)
+	if _target and is_instance_valid(_target):
+		_target.call("stop_interaction", player)
 
 	_target = null
 
 
-func _on_game_tick(_tick: int) -> void:
+func on_physics_update(_delta: float) -> void:
 	if _target == null or not is_instance_valid(_target):
+		state_machine.transition_to("Idle")
+		return
+	if _target.get("_is_depleted"):
+		state_machine.transition_to("Idle")
+		return
+
+
+func _on_game_tick(_tick) -> void:
+	if _target == null or not is_instance_valid(_target):
+		state_machine.transition_to("Idle")
+		return
+
+	if _target.get("_is_depleted"):
 		state_machine.transition_to("Idle")
 		return
 
@@ -69,8 +105,10 @@ func _on_game_tick(_tick: int) -> void:
 		state_machine.transition_to("Idle")
 		return
 
-	# Tick the interaction
-	if _target.has_method("interaction_tick"):
-		var result: Dictionary = _target.interaction_tick(player)
-		if result.get("completed", false):
-			state_machine.transition_to("Idle")
+	# Tick the interaction — call directly, skip has_method
+	var tick_result = _target.call("interaction_tick", player)
+	FileLogger.log_msg("Interacting: tick result=%s" % str(tick_result))
+	if typeof(tick_result) == TYPE_DICTIONARY and tick_result.get("completed", false):
+		state_machine.transition_to("Idle")
+	elif tick_result == null:
+		FileLogger.log_msg("Interacting: interaction_tick returned null")

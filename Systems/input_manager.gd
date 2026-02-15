@@ -3,17 +3,16 @@ extends Node
 ## Converts all input into world-space actions.
 
 ## Emitted when the player taps/clicks a point in the 3D world.
-## position: Vector3 world position, normal: Vector3 surface normal
-signal world_clicked(position: Vector3, normal: Vector3)
+signal world_clicked(position, normal)
 
 ## Emitted when the player taps/clicks on a Node3D (e.g., an enemy, tree, NPC).
-signal object_clicked(object: Node3D, position: Vector3)
+signal object_clicked(object, position)
 
 ## Emitted when the player long-presses / right-clicks an object (context menu).
-signal object_context(object: Node3D, screen_position: Vector2)
+signal object_context(object, screen_position)
 
 ## Emitted on pinch zoom (mobile) or scroll wheel (PC).
-signal zoom_changed(delta: float)
+signal zoom_changed(delta)
 
 ## Ray length for raycasting from camera
 const RAY_LENGTH: float = 1000.0
@@ -81,6 +80,8 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
+	# Exclude player layer (2) from raycast — only hit world(1), enemies(4), interactables(8)
+	query.collision_mask = 1 | 4 | 8
 
 	var result := space_state.intersect_ray(query)
 	if result.is_empty():
@@ -90,38 +91,29 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 	var hit_normal: Vector3 = result["normal"]
 	var collider: Node3D = result["collider"]
 
-	# Check if we hit an interactable object (on layer 4)
-	if collider.get_collision_layer_value(4) or _has_interactable_parent(collider):
-		var interactable := _find_interactable(collider)
-		if interactable:
-			if is_context:
-				object_context.emit(interactable, screen_pos)
-			else:
-				object_clicked.emit(interactable, hit_position)
-			return
+	# Detect by collision_layer value — proven reliable on Android
+	# Layer values: 1=world, 2=player, 4=enemies, 8=interactables
+	var layer: int = collider.get("collision_layer") if collider.get("collision_layer") != null else 0
+
+	if layer == 4:
+		# Enemy — collision layer 4
+		FileLogger.log_msg("Detected enemy: %s (layer %d)" % [collider.name, layer])
+		if is_context:
+			object_context.emit(collider, screen_pos)
+		else:
+			object_clicked.emit(collider, hit_position)
+		return
+
+	if layer == 8:
+		# Interactable — collision layer 8
+		FileLogger.log_msg("Detected interactable: %s (layer %d)" % [collider.name, layer])
+		if is_context:
+			object_context.emit(collider, screen_pos)
+		else:
+			object_clicked.emit(collider, hit_position)
+		return
 
 	# Otherwise it's a ground click — move there
+	FileLogger.log_msg("Ground click at %s (collider: %s, layer: %d)" % [str(hit_position), collider.name, layer])
 	if not is_context:
 		world_clicked.emit(hit_position, hit_normal)
-
-
-func _has_interactable_parent(node: Node) -> bool:
-	var parent := node.get_parent()
-	while parent:
-		if parent.has_method("interact"):
-			return true
-		parent = parent.get_parent()
-	return false
-
-
-func _find_interactable(node: Node) -> Node3D:
-	# Check self first
-	if node.has_method("interact"):
-		return node as Node3D
-	# Walk up to find the interactable parent
-	var parent := node.get_parent()
-	while parent:
-		if parent.has_method("interact"):
-			return parent as Node3D
-		parent = parent.get_parent()
-	return null

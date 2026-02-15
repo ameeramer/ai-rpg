@@ -15,6 +15,8 @@ config/icon="res://icon.svg"
 FileLogger="*res://Systems/file_logger.gd"
 GameManager="*res://Systems/game_manager.gd"
 InputManager="*res://Systems/input_manager.gd"
+PlayerSkills="*res://Systems/player_skills.gd"
+PlayerInventory="*res://Systems/player_inventory.gd"
 
 [display]
 

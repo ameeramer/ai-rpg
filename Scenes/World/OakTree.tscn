@@ -1,0 +1,68 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://Systems/interactable.gd" id="1"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_oak"]
+radius = 1.0
+height = 5.0
+
+[sub_resource type="StandardMaterial3D" id="mat_trunk"]
+shading_mode = 0
+albedo_color = Color(0.45, 0.3, 0.15, 1)
+
+[sub_resource type="CylinderMesh" id="mesh_oak_trunk"]
+top_radius = 0.35
+bottom_radius = 0.45
+height = 3.5
+
+[sub_resource type="StandardMaterial3D" id="mat_oak_canopy"]
+shading_mode = 0
+albedo_color = Color(0.12, 0.42, 0.08, 1)
+
+[sub_resource type="SphereMesh" id="mesh_oak_canopy"]
+radius = 2.2
+height = 4.0
+
+[sub_resource type="StandardMaterial3D" id="mat_stump"]
+shading_mode = 0
+albedo_color = Color(0.4, 0.28, 0.12, 1)
+
+[sub_resource type="CylinderMesh" id="mesh_stump"]
+top_radius = 0.4
+bottom_radius = 0.45
+height = 0.5
+
+[node name="OakTree" type="StaticBody3D"]
+collision_layer = 8
+script = ExtResource("1")
+display_name = "Oak Tree"
+interaction_verb = "Chop"
+ticks_per_action = 6
+required_skill = "Woodcutting"
+required_level = 15
+xp_reward = 37.5
+respawn_ticks = 20
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+shape = SubResource("CylinderShape3D_oak")
+
+[node name="ActiveMesh" type="Node3D" parent="."]
+
+[node name="Trunk" type="MeshInstance3D" parent="ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+mesh = SubResource("mesh_oak_trunk")
+material_override = SubResource("mat_trunk")
+
+[node name="Canopy" type="MeshInstance3D" parent="ActiveMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.82, 0)
+mesh = SubResource("mesh_oak_canopy")
+material_override = SubResource("mat_oak_canopy")
+
+[node name="DepletedMesh" type="Node3D" parent="."]
+visible = false
+
+[node name="Stump" type="MeshInstance3D" parent="DepletedMesh"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("mesh_stump")
+material_override = SubResource("mat_stump")

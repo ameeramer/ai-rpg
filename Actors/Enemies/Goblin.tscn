@@ -1,0 +1,51 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://Actors/Enemies/enemy_base.gd" id="1"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_goblin"]
+radius = 0.5
+height = 1.6
+
+[sub_resource type="StandardMaterial3D" id="mat_goblin"]
+shading_mode = 0
+albedo_color = Color(0.3, 0.55, 0.2, 1)
+
+[sub_resource type="CapsuleMesh" id="mesh_goblin"]
+radius = 0.4
+height = 1.4
+
+[sub_resource type="StandardMaterial3D" id="mat_goblin_head"]
+shading_mode = 0
+albedo_color = Color(0.35, 0.6, 0.25, 1)
+
+[sub_resource type="SphereMesh" id="mesh_goblin_head"]
+radius = 0.25
+height = 0.5
+
+[node name="Goblin" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1")
+display_name = "Goblin"
+max_hp = 5
+attack_damage = 2
+attack_speed_ticks = 4
+attack_range = 2.0
+aggro_range = 5.0
+combat_level = 2
+xp_reward = 25.0
+respawn_ticks = 50
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape3D_goblin")
+
+[node name="EnemyMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+mesh = SubResource("mesh_goblin")
+material_override = SubResource("mat_goblin")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+mesh = SubResource("mesh_goblin_head")
+material_override = SubResource("mat_goblin_head")

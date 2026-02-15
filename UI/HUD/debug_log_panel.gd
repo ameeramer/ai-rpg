@@ -1,6 +1,6 @@
-class_name DebugLogPanel
 extends PanelContainer
 ## Full-screen overlay that displays all FileLogger logs with a copy button.
+## NO class_name — instantiated via PackedScene on Android.
 
 var _text_edit: TextEdit
 var _copy_btn: Button

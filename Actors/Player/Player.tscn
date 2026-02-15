@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://Actors/Player/player_controller.gd" id="1"]
 [ext_resource type="Script" path="res://Systems/StateMachine/state_machine.gd" id="2"]
@@ -6,14 +6,41 @@
 [ext_resource type="Script" path="res://Actors/Player/States/moving_state.gd" id="4"]
 [ext_resource type="Script" path="res://Actors/Player/States/interacting_state.gd" id="5"]
 [ext_resource type="Script" path="res://Actors/Player/States/combat_state.gd" id="6"]
+[ext_resource type="Script" path="res://Actors/Player/States/dead_state.gd" id="7"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.4
 height = 1.8
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_1"]
-radius = 0.35
-height = 1.6
+[sub_resource type="StandardMaterial3D" id="mat_body"]
+shading_mode = 0
+albedo_color = Color(0.15, 0.35, 0.75, 1)
+
+[sub_resource type="CapsuleMesh" id="mesh_body"]
+radius = 0.3
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="mat_head"]
+shading_mode = 0
+albedo_color = Color(0.85, 0.7, 0.55, 1)
+
+[sub_resource type="SphereMesh" id="mesh_head"]
+radius = 0.25
+height = 0.5
+
+[sub_resource type="StandardMaterial3D" id="mat_legs"]
+shading_mode = 0
+albedo_color = Color(0.3, 0.25, 0.18, 1)
+
+[sub_resource type="BoxMesh" id="mesh_legs"]
+size = Vector3(0.5, 0.5, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="mat_arms"]
+shading_mode = 0
+albedo_color = Color(0.15, 0.35, 0.75, 1)
+
+[sub_resource type="BoxMesh" id="mesh_arms"]
+size = Vector3(0.9, 0.2, 0.2)
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
@@ -26,9 +53,25 @@ shape = SubResource("CapsuleShape3D_1")
 
 [node name="Model" type="Node3D" parent="."]
 
-[node name="PlayerMesh" type="MeshInstance3D" parent="Model"]
+[node name="Legs" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("mesh_legs")
+material_override = SubResource("mat_legs")
+
+[node name="Body" type="MeshInstance3D" parent="Model"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-mesh = SubResource("CapsuleMesh_1")
+mesh = SubResource("mesh_body")
+material_override = SubResource("mat_body")
+
+[node name="Arms" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+mesh = SubResource("mesh_arms")
+material_override = SubResource("mat_arms")
+
+[node name="Head" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+mesh = SubResource("mesh_head")
+material_override = SubResource("mat_head")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 path_desired_distance = 0.5
@@ -52,3 +95,7 @@ script = ExtResource("5")
 
 [node name="Combat" type="Node" parent="StateMachine"]
 script = ExtResource("6")
+
+[node name="Dead" type="Node" parent="StateMachine"]
+script = ExtResource("7")
+

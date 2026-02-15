@@ -1,128 +1,238 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://UI/HUD/hud.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp"]
+bg_color = Color(0.5, 0.08, 0.08, 0.9)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.15, 0.7, 0.1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_toolbar"]
+bg_color = Color(0.1, 0.08, 0.06, 0.95)
+border_width_top = 3
+border_color = Color(0.45, 0.38, 0.25, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_overlay"]
+bg_color = Color(0.1, 0.08, 0.06, 0.95)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.55, 0.45, 0.28, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_log"]
+bg_color = Color(0.05, 0.04, 0.03, 0.85)
+border_width_top = 1
+border_color = Color(0.3, 0.25, 0.18, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
+bg_color = Color(0.18, 0.15, 0.1, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.5, 0.42, 0.28, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1")
 
-[node name="MainContainer" type="MarginContainer" parent="."]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
-
-[node name="TopBar" type="HBoxContainer" parent="MainContainer"]
-layout_mode = 2
-size_flags_vertical = 0
-custom_minimum_size = Vector2(0, 48)
+[node name="TopLeft" type="MarginContainer" parent="."]
+anchors_preset = 0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 300.0
+offset_bottom = 72.0
 mouse_filter = 2
 
-[node name="HPBar" type="ProgressBar" parent="MainContainer/TopBar"]
+[node name="HPBar" type="ProgressBar" parent="TopLeft"]
 layout_mode = 2
-custom_minimum_size = Vector2(150, 32)
-size_flags_vertical = 4
+custom_minimum_size = Vector2(280, 56)
+theme_override_styles/background = SubResource("StyleBoxFlat_hp")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 max_value = 10.0
 value = 10.0
 show_percentage = false
 
-[node name="HPLabel" type="Label" parent="MainContainer/TopBar/HPBar"]
+[node name="HPLabel" type="Label" parent="TopLeft/HPBar"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = "10 / 10"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 24
+text = "HP: 10 / 10"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="PrayerBar" type="ProgressBar" parent="MainContainer/TopBar"]
-layout_mode = 2
-custom_minimum_size = Vector2(150, 32)
-size_flags_vertical = 4
-max_value = 1.0
-value = 1.0
-show_percentage = false
-
-[node name="PrayerLabel" type="Label" parent="MainContainer/TopBar/PrayerBar"]
-layout_mode = 1
-anchors_preset = 15
+[node name="ActionLogContainer" type="PanelContainer" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = -170.0
+offset_bottom = -90.0
 grow_horizontal = 2
-grow_vertical = 2
-text = "1 / 1"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="DebugBtn" type="Button" parent="MainContainer/TopBar"]
-layout_mode = 2
-custom_minimum_size = Vector2(48, 48)
-text = "DBG"
-
-[node name="Spacer" type="Control" parent="MainContainer/TopBar"]
-layout_mode = 2
-size_flags_horizontal = 3
+grow_vertical = 0
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_log")
 
-[node name="Minimap" type="Control" parent="MainContainer/TopBar"]
+[node name="ActionLog" type="RichTextLabel" parent="ActionLogContainer"]
 layout_mode = 2
-custom_minimum_size = Vector2(150, 150)
-
-[node name="MinimapBG" type="ColorRect" parent="MainContainer/TopBar/Minimap"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.1, 0.1, 0.1, 0.7)
-
-[node name="SidePanel" type="VBoxContainer" parent="MainContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-size_flags_vertical = 3
-custom_minimum_size = Vector2(220, 0)
-mouse_filter = 2
-
-[node name="TabButtons" type="HBoxContainer" parent="MainContainer/SidePanel"]
-layout_mode = 2
-mouse_filter = 2
-
-[node name="InventoryTab" type="Button" parent="MainContainer/SidePanel/TabButtons"]
-layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 40)
-text = "Inventory"
-
-[node name="SkillsTab" type="Button" parent="MainContainer/SidePanel/TabButtons"]
-layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 40)
-text = "Skills"
-
-[node name="InventoryPanel" type="Panel" parent="MainContainer/SidePanel"]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="SkillsPanel" type="Panel" parent="MainContainer/SidePanel"]
-visible = false
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="BottomBar" type="PanelContainer" parent="MainContainer"]
-layout_mode = 2
-size_flags_vertical = 8
-custom_minimum_size = Vector2(0, 100)
-
-[node name="ActionLog" type="RichTextLabel" parent="MainContainer/BottomBar"]
-layout_mode = 2
+theme_override_colors/default_color = Color(0.9, 0.85, 0.7, 1)
+theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
 text = "Welcome to AI RPG."
 scroll_following = true
+
+[node name="BottomToolbar" type="PanelContainer" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -88.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_toolbar")
+
+[node name="ButtonRow" type="HBoxContainer" parent="BottomToolbar"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="InventoryBtn" type="Button" parent="BottomToolbar/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 72)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+text = "Bag"
+
+[node name="SkillsBtn" type="Button" parent="BottomToolbar/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 72)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+text = "Skills"
+
+[node name="DebugBtn" type="Button" parent="BottomToolbar/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 72)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+text = "DBG"
+
+[node name="TouchBlocker" type="ColorRect" parent="."]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.45)
+
+[node name="InventoryOverlay" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -300.0
+offset_right = 320.0
+offset_bottom = 300.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
+
+[node name="VBox" type="VBoxContainer" parent="InventoryOverlay"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Header" type="HBoxContainer" parent="InventoryOverlay/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 52)
+
+[node name="Title" type="Label" parent="InventoryOverlay/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 28
+text = "Inventory"
+vertical_alignment = 1
+
+[node name="CloseBtn" type="Button" parent="InventoryOverlay/VBox/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(56, 48)
+theme_override_font_sizes/font_size = 26
+text = "X"
+
+[node name="InventoryPanel" type="Panel" parent="InventoryOverlay/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SkillsOverlay" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -320.0
+offset_right = 300.0
+offset_bottom = 320.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
+
+[node name="VBox" type="VBoxContainer" parent="SkillsOverlay"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Header" type="HBoxContainer" parent="SkillsOverlay/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 52)
+
+[node name="Title" type="Label" parent="SkillsOverlay/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 28
+text = "Skills"
+vertical_alignment = 1
+
+[node name="CloseBtn" type="Button" parent="SkillsOverlay/VBox/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(56, 48)
+theme_override_font_sizes/font_size = 26
+text = "X"
+
+[node name="SkillsScroll" type="ScrollContainer" parent="SkillsOverlay/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SkillsPanel" type="VBoxContainer" parent="SkillsOverlay/VBox/SkillsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
