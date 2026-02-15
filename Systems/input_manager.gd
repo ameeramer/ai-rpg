@@ -80,12 +80,8 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
-
-	# Exclude the player so clicks go through to objects behind them
-	var players := _camera.get_tree().get_nodes_in_group("player")
-	for p in players:
-		if p is CollisionObject3D:
-			query.exclude.append(p.get_rid())
+	# Exclude player layer (2) from raycast — only hit world(1), enemies(4), interactables(8)
+	query.collision_mask = 1 | 4 | 8
 
 	var result := space_state.intersect_ray(query)
 	if result.is_empty():
@@ -95,25 +91,26 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 	var hit_normal: Vector3 = result["normal"]
 	var collider: Node3D = result["collider"]
 
-	FileLogger.log_msg("Raycast hit: %s (class: %s, layer: %d) at %s" % [
-		collider.name, collider.get_class(), collider.get("collision_layer") if collider.get("collision_layer") != null else -1, str(hit_position)])
+	FileLogger.log_msg("Raycast hit: %s (class: %s, layer: %d, groups: %s) at %s" % [
+		collider.name, collider.get_class(),
+		collider.get("collision_layer") if collider.get("collision_layer") != null else -1,
+		str(collider.get_groups()),
+		str(hit_position)])
 
-	# Check if collider or any ancestor is an EnemyBase
-	var enemy := _find_enemy(collider)
+	# Check if collider or any ancestor is an enemy (using group "enemies")
+	var enemy := _find_in_group(collider, "enemies")
 	if enemy:
-		var ename: String = enemy.get("display_name") if enemy.get("display_name") else enemy.name
-		FileLogger.log_msg("Detected enemy: %s" % ename)
+		FileLogger.log_msg("Detected enemy: %s" % enemy.name)
 		if is_context:
 			object_context.emit(enemy, screen_pos)
 		else:
 			object_clicked.emit(enemy, hit_position)
 		return
 
-	# Check if collider or any ancestor is an Interactable
-	var interactable := _find_interactable(collider)
+	# Check if collider or any ancestor is an interactable (using group "interactables")
+	var interactable := _find_in_group(collider, "interactables")
 	if interactable:
-		var iname: String = interactable.get("display_name") if interactable.get("display_name") else interactable.name
-		FileLogger.log_msg("Detected interactable: %s" % iname)
+		FileLogger.log_msg("Detected interactable: %s" % interactable.name)
 		if is_context:
 			object_context.emit(interactable, screen_pos)
 		else:
@@ -126,27 +123,11 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 		world_clicked.emit(hit_position, hit_normal)
 
 
-func _find_interactable(node: Node) -> Node3D:
-	# Check the node itself
-	if node is Interactable or node.has_method("interact"):
-		return node as Node3D
-	# Walk up the tree
-	var current := node.get_parent()
+## Walk up the node tree from the hit collider to find an ancestor in the given group.
+func _find_in_group(node: Node, group_name: String) -> Node3D:
+	var current: Node = node
 	while current:
-		if current is Interactable or current.has_method("interact"):
-			return current as Node3D
-		current = current.get_parent()
-	return null
-
-
-func _find_enemy(node: Node) -> Node3D:
-	# Check the node itself
-	if node is EnemyBase or (node.has_method("is_dead") and node.has_method("take_damage") and node is CharacterBody3D):
-		return node as Node3D
-	# Walk up the tree
-	var current := node.get_parent()
-	while current:
-		if current is EnemyBase or (current.has_method("is_dead") and current.has_method("take_damage") and current is CharacterBody3D):
+		if current.is_in_group(group_name):
 			return current as Node3D
 		current = current.get_parent()
 	return null

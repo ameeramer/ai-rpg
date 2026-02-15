@@ -27,6 +27,10 @@ var _is_depleted: bool = false
 var _respawn_counter: int = 0
 
 
+func _ready() -> void:
+	add_to_group("interactables")
+
+
 func interact(player: Node3D) -> bool:
 	if not is_active or _is_depleted:
 		GameManager.log_action("You can't %s this right now." % interaction_verb.to_lower())

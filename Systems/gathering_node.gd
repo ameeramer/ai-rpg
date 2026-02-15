@@ -16,6 +16,7 @@ var _depleted_mesh: Node3D
 
 
 func _ready() -> void:
+	super._ready()
 	collision_layer = 8  # Layer 4: Interactables
 	_gathers_remaining = randi_range(min_gathers, max_gathers)
 
