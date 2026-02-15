@@ -1,11 +1,18 @@
 name: Build Android APK
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
+# Permission needed to create/edit Releases
+permissions:
+  contents: write
+
 env:
   GODOT_VERSION: "4.3"
+  HOME: /root
 
 jobs:
   build-apk:
@@ -19,96 +26,75 @@ jobs:
         with:
           lfs: true
 
-      - name: Setup export templates
-        run: |
-          # GitHub Actions sets HOME=/github/home inside containers,
-          # but barichello/godot-ci installs templates under /root/.
-          # Copy templates to where Godot will actually look for them.
-          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
-          mkdir -p "$TEMPLATE_DIR"
-          cp /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/* \
-             "$TEMPLATE_DIR/" 2>/dev/null || true
-          echo "Templates directory contents:"
-          ls -la "$TEMPLATE_DIR/" || echo "No templates found!"
+      - name: Cache Godot Import
+        uses: actions/cache@v4
+        with:
+          path: .godot/imported
+          key: godot-import-${{ runner.os }}-${{ hashFiles('project.godot', '**/*.import') }}
 
       - name: Setup Java SDK
         run: |
-          # Find the Java installation path available in the container
-          JAVA_HOME_PATH=$(dirname $(dirname $(readlink -f $(which javac 2>/dev/null || which java 2>/dev/null))))
-          echo "Detected JAVA_HOME: $JAVA_HOME_PATH"
-          echo "JAVA_HOME=$JAVA_HOME_PATH" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))" >> $GITHUB_ENV
 
-      - name: Setup Android SDK and keystore
+      - name: Setup Android Keystore
         run: |
-          # Create a debug keystore for CI builds
-          mkdir -p "$HOME/.android"
+          mkdir -p $HOME/.android
           keytool -genkey -v \
-            -keystore "$HOME/.android/debug.keystore" \
+            -keystore $HOME/.android/debug.keystore \
             -storepass android \
             -alias androiddebugkey \
             -keypass android \
             -keyalg RSA \
             -keysize 2048 \
             -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US" \
-            2>/dev/null
+            -dname "CN=Android Debug,O=Android,C=US"
 
-          # Find Android SDK path
-          ANDROID_SDK=""
-          for path in /usr/lib/android-sdk /opt/android-sdk "$ANDROID_HOME" "$ANDROID_SDK_ROOT"; do
-            if [ -d "$path" ]; then
-              ANDROID_SDK="$path"
-              break
-            fi
-          done
-          echo "Detected Android SDK: $ANDROID_SDK"
-
-          # Configure Godot editor settings for Android export
-          mkdir -p "$HOME/.config/godot"
-          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+      - name: Configure Editor Settings
+        run: |
+          mkdir -p $HOME/.config/godot
+          cat > $HOME/.config/godot/editor_settings-4.tres <<EOF
           [gd_resource type="EditorSettings" format=3]
-
           [resource]
-          export/android/android_sdk_path = "$ANDROID_SDK"
-          export/android/java_sdk_path = "$JAVA_HOME"
+          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
           export/android/debug_keystore = "$HOME/.android/debug.keystore"
           export/android/debug_keystore_user = "androiddebugkey"
           export/android/debug_keystore_pass = "android"
           EOF
 
-          echo "Editor settings:"
-          cat "$HOME/.config/godot/editor_settings-4.tres"
-
       - name: Import project
-        run: |
-          godot --headless --import 2>&1 || true
-          sleep 2
+        run: godot --headless --import --verbose 2>&1 || true
 
       - name: Create export directory
         run: mkdir -p export
 
       - name: Build APK
-        run: |
-          godot --headless --export-debug "Android" export/ai-rpg.apk 2>&1
+        run: godot --headless --export-debug "Android" export/ai-rpg.apk 2>&1
 
-      - name: Upload APK artifact
+      # --- DELIVERY METHODS ---
+
+      # Method A: FAST RELEASE (Use for Main AND PRs)
+      # This puts the APK on GitHub Releases (AWS CloudFront CDN) - Maximum Speed.
+      - name: Update Release
+        uses: softprops/action-gh-release@v1
+        if: success()
+        with:
+          # If main branch -> tag is 'nightly'
+          # If PR -> tag is 'pr-build'
+          tag_name: ${{ github.ref == 'refs/heads/main' && 'nightly' || 'pr-build' }}
+          name: ${{ github.ref == 'refs/heads/main' && 'Nightly Build' || 'Latest PR Build' }}
+          body: |
+            Build triggered by: ${{ github.event_name }}
+            Ref: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+          files: export/ai-rpg.apk
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Method B: Standard Artifact (Backup)
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ai-rpg-android
           path: export/ai-rpg.apk
-          retention-days: 14
-          if-no-files-found: error
-
-      - name: 🚀 Generate Fast Download Link
-        run: |
-          # 1. Install curl (the container is likely Debian/Ubuntu based)
-          apt-get update && apt-get install -y curl
-
-          # 2. Upload to 0x0.st
-          echo "Uploading..."
-          # We capture the output link into a variable to print it clearly
-          LINK=$(curl -F "file=@./export/ai-rpg.apk" https://0x0.st)
-          
-          echo "-------------------------------------------------------"
-          echo "DOWNLOAD HERE: $LINK"
-          echo "-------------------------------------------------------"
+          retention-days: 7
