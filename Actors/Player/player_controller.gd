@@ -53,9 +53,10 @@ func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
 	target_object = object
 	target_position = object.global_position
 
-	# Enemy -> combat
-	if object is EnemyBase:
-		if object.is_dead():
+	# Enemy (collision layer 4) -> combat
+	var obj_layer: int = object.get("collision_layer") if object.get("collision_layer") != null else 0
+	if obj_layer == 4:
+		if object.has_method("is_dead") and object.is_dead():
 			return
 		var distance := global_position.distance_to(object.global_position)
 		if distance <= interaction_range:
@@ -69,11 +70,11 @@ func _on_object_clicked(object: Node3D, _hit_pos: Vector3) -> void:
 		return
 
 	# Depleted interactable -> just walk there
-	if object is Interactable and (not object.is_active or object._is_depleted):
+	if obj_layer == 8 and object.get("_is_depleted"):
 		state_machine.transition_to("Moving", {"target": object.global_position})
 		return
 
-	# Interactable object
+	# Interactable object (collision layer 8)
 	var distance := global_position.distance_to(object.global_position)
 	if distance <= interaction_range:
 		state_machine.transition_to("Interacting", {"target": object})

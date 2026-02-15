@@ -91,43 +91,29 @@ func _do_raycast(screen_pos: Vector2, is_context: bool) -> void:
 	var hit_normal: Vector3 = result["normal"]
 	var collider: Node3D = result["collider"]
 
-	FileLogger.log_msg("Raycast hit: %s (class: %s, layer: %d, groups: %s) at %s" % [
-		collider.name, collider.get_class(),
-		collider.get("collision_layer") if collider.get("collision_layer") != null else -1,
-		str(collider.get_groups()),
-		str(hit_position)])
+	# Detect by collision_layer value — proven reliable on Android
+	# Layer values: 1=world, 2=player, 4=enemies, 8=interactables
+	var layer: int = collider.get("collision_layer") if collider.get("collision_layer") != null else 0
 
-	# Check if collider or any ancestor is an enemy (using group "enemies")
-	var enemy := _find_in_group(collider, "enemies")
-	if enemy:
-		FileLogger.log_msg("Detected enemy: %s" % enemy.name)
+	if layer == 4:
+		# Enemy — collision layer 4
+		FileLogger.log_msg("Detected enemy: %s (layer %d)" % [collider.name, layer])
 		if is_context:
-			object_context.emit(enemy, screen_pos)
+			object_context.emit(collider, screen_pos)
 		else:
-			object_clicked.emit(enemy, hit_position)
+			object_clicked.emit(collider, hit_position)
 		return
 
-	# Check if collider or any ancestor is an interactable (using group "interactables")
-	var interactable := _find_in_group(collider, "interactables")
-	if interactable:
-		FileLogger.log_msg("Detected interactable: %s" % interactable.name)
+	if layer == 8:
+		# Interactable — collision layer 8
+		FileLogger.log_msg("Detected interactable: %s (layer %d)" % [collider.name, layer])
 		if is_context:
-			object_context.emit(interactable, screen_pos)
+			object_context.emit(collider, screen_pos)
 		else:
-			object_clicked.emit(interactable, hit_position)
+			object_clicked.emit(collider, hit_position)
 		return
 
 	# Otherwise it's a ground click — move there
-	FileLogger.log_msg("Ground click at %s (collider: %s)" % [str(hit_position), collider.name])
+	FileLogger.log_msg("Ground click at %s (collider: %s, layer: %d)" % [str(hit_position), collider.name, layer])
 	if not is_context:
 		world_clicked.emit(hit_position, hit_normal)
-
-
-## Walk up the node tree from the hit collider to find an ancestor in the given group.
-func _find_in_group(node: Node, group_name: String) -> Node3D:
-	var current: Node = node
-	while current:
-		if current.is_in_group(group_name):
-			return current as Node3D
-		current = current.get_parent()
-	return null

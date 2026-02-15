@@ -18,9 +18,11 @@ func on_enter(msg: Dictionary = {}) -> void:
 		return
 
 	# Check if target can be interacted with before committing
-	if _target is Interactable and (not _target.is_active or _target._is_depleted):
-		FileLogger.log_msg("Interacting: target '%s' is depleted/inactive, returning to Idle" % _target.display_name)
-		GameManager.log_action("You can't %s this right now." % _target.interaction_verb.to_lower())
+	if _target.get("_is_depleted") or not _target.get("is_active", true):
+		var tname: String = _target.get("display_name") if _target.get("display_name") else _target.name
+		var verb: String = _target.get("interaction_verb") if _target.get("interaction_verb") else "use"
+		FileLogger.log_msg("Interacting: target '%s' is depleted/inactive, returning to Idle" % tname)
+		GameManager.log_action("You can't %s this right now." % verb.to_lower())
 		state_machine.transition_to("Idle")
 		return
 
@@ -72,7 +74,7 @@ func on_physics_update(_delta: float) -> void:
 	if _target == null or not is_instance_valid(_target):
 		state_machine.transition_to("Idle")
 		return
-	if _target is Interactable and _target._is_depleted:
+	if _target.get("_is_depleted"):
 		state_machine.transition_to("Idle")
 		return
 
@@ -83,7 +85,7 @@ func _on_game_tick(_tick: int) -> void:
 		return
 
 	# Check if target was depleted
-	if _target is Interactable and _target._is_depleted:
+	if _target.get("_is_depleted"):
 		state_machine.transition_to("Idle")
 		return
 

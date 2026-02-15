@@ -36,12 +36,13 @@ func on_exit() -> void:
 
 func _arrive() -> void:
 	if _interact_on_arrive and _interact_target and is_instance_valid(_interact_target):
-		# Route to Combat for enemies, Interacting for everything else
-		if _interact_target is EnemyBase:
-			if not _interact_target.is_dead():
-				state_machine.transition_to("Combat", {"target": _interact_target})
-			else:
+		# Route to Combat for enemies (layer 4), Interacting for everything else
+		var target_layer: int = _interact_target.get("collision_layer") if _interact_target.get("collision_layer") != null else 0
+		if target_layer == 4:
+			if _interact_target.has_method("is_dead") and _interact_target.is_dead():
 				state_machine.transition_to("Idle")
+			else:
+				state_machine.transition_to("Combat", {"target": _interact_target})
 		else:
 			state_machine.transition_to("Interacting", {"target": _interact_target})
 	else:

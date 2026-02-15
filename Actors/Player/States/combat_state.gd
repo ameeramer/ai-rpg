@@ -28,7 +28,7 @@ func on_enter(msg: Dictionary = {}) -> void:
 	GameManager.game_tick.connect(_on_game_tick)
 	_tick_connected = true
 
-	var target_name := _target.display_name if _target is EnemyBase else _target.name
+	var target_name: String = _target.get("display_name") if _target.get("display_name") else _target.name
 	GameManager.log_action("You attack the %s." % target_name)
 
 
@@ -45,7 +45,7 @@ func on_physics_update(delta: float) -> void:
 		return
 
 	# Check if target died
-	if _target is EnemyBase and _target.is_dead():
+	if _target.has_method("is_dead") and _target.is_dead():
 		state_machine.transition_to("Idle")
 		return
 
@@ -66,7 +66,7 @@ func _on_game_tick(_tick: int) -> void:
 		state_machine.transition_to("Idle")
 		return
 
-	if _target is EnemyBase and _target.is_dead():
+	if _target.has_method("is_dead") and _target.is_dead():
 		state_machine.transition_to("Idle")
 		return
 
@@ -83,7 +83,7 @@ func _perform_attack() -> void:
 		var damage := randi_range(0, max_hit)
 		_target.take_damage(damage)
 
-		var target_name := _target.display_name if _target is EnemyBase else _target.name
+		var target_name: String = _target.get("display_name") if _target.get("display_name") else _target.name
 		if damage > 0:
 			GameManager.log_action("You hit the %s for %d damage." % [target_name, damage])
 		else:

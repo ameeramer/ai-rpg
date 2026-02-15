@@ -28,6 +28,7 @@ var _original_color: Color
 
 
 func _ready() -> void:
+	FileLogger.log_msg("EnemyBase._ready() %s (display_name=%s)" % [name, display_name])
 	hp = max_hp
 	_spawn_position = global_position
 	collision_layer = 4  # Layer 3: Enemies
@@ -173,7 +174,7 @@ func _check_aggro() -> void:
 	var players := get_tree().get_nodes_in_group("player")
 	for player in players:
 		# Don't aggro dead players
-		if player is PlayerController and player.hitpoints <= 0:
+		if player.get("hitpoints") != null and player.get("hitpoints") <= 0:
 			continue
 		if global_position.distance_to(player.global_position) <= aggro_range:
 			_target = player
@@ -187,7 +188,7 @@ func _combat_tick() -> void:
 		return
 
 	# Don't attack dead players
-	if _target is PlayerController and _target.hitpoints <= 0:
+	if _target.get("hitpoints") != null and _target.get("hitpoints") <= 0:
 		_target = null
 		return
 
