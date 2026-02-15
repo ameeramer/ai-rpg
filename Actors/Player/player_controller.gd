@@ -35,7 +35,42 @@ func _ready() -> void:
 
 	# Add to player group for easy lookup
 	add_to_group("player")
+
+	# Ensure PlayerSkills and PlayerInventory nodes exist with scripts loaded.
+	# On Android, inline script attachment in .tscn may silently fail.
+	# Creating them programmatically in the player's own _ready() is reliable.
+	_ensure_subsystem("PlayerSkills", "res://Systems/player_skills.gd")
+	_ensure_subsystem("PlayerInventory", "res://Systems/player_inventory.gd")
+
 	FileLogger.log_msg("PlayerController._ready() done")
+
+
+## Ensure a child subsystem node exists with its script properly loaded.
+## On Android, inline script attachment in .tscn files silently fails for some nodes.
+## This method: 1) finds or creates the node, 2) forces the script onto it, 3) calls ensure_initialized().
+func _ensure_subsystem(node_name: String, script_path: String) -> void:
+	var node := get_node_or_null(node_name)
+	var scr = load(script_path)
+	if scr == null:
+		FileLogger.log_error("Failed to load script: %s" % script_path)
+		return
+
+	if node == null:
+		# Node doesn't exist at all — create it
+		node = Node.new()
+		node.name = node_name
+		node.set_script(scr)
+		add_child(node)
+		FileLogger.log_msg("Created subsystem: %s" % node_name)
+	elif node.get_script() != scr:
+		# Node exists but script isn't loaded (Android inline script failure)
+		node.set_script(scr)
+		FileLogger.log_msg("Re-attached script to subsystem: %s" % node_name)
+	else:
+		FileLogger.log_msg("Subsystem already loaded: %s" % node_name)
+
+	# Force-initialize
+	node.call("ensure_initialized")
 
 
 func _on_world_clicked(world_pos: Vector3, _normal: Vector3) -> void:

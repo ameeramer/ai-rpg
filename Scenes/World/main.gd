@@ -51,14 +51,23 @@ func _ready() -> void:
 
 
 ## Force-initialize player subsystems (inventory, skills).
-## On Android, scripts attached via instance= in Main.tscn may not run _ready().
+## PlayerController._ready() should have already set up scripts via _ensure_subsystem.
+## This is a safety net — only call ensure_initialized if script is actually loaded.
 func _force_initialize_player_subsystems() -> void:
 	var inv := player.get_node_or_null("PlayerInventory")
-	if inv:
+	if inv and inv.get_script() != null:
 		inv.call("ensure_initialized")
+		FileLogger.log_msg("PlayerInventory force-initialized from Main")
+	else:
+		FileLogger.log_msg("PlayerInventory missing or no script")
+
 	var skills := player.get_node_or_null("PlayerSkills")
-	if skills:
+	if skills and skills.get_script() != null:
 		skills.call("ensure_initialized")
+		FileLogger.log_msg("PlayerSkills force-initialized from Main")
+	else:
+		FileLogger.log_msg("PlayerSkills missing or no script")
+
 	FileLogger.log_msg("Player subsystems force-initialized")
 
 

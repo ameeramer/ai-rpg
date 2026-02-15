@@ -115,7 +115,7 @@ func _calculate_max_hit() -> int:
 	var strength_bonus: int = 0
 
 	var skills_node := player.get_node_or_null("PlayerSkills")
-	if skills_node:
+	if skills_node and skills_node.get_script():
 		# Capture as untyped Variant — typed .call() may lose return value on Android
 		var level_result = skills_node.call("get_level", "Strength")
 		if level_result != null:
