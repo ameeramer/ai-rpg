@@ -17,8 +17,8 @@ extends StaticBody3D
 ## Respawn time in game ticks (0 = no respawn needed)
 @export var respawn_ticks: int = 0
 
-signal interaction_started(player: Node3D)
-signal interaction_completed(player: Node3D)
+signal interaction_started(player)
+signal interaction_completed(player)
 signal depleted()
 signal respawned()
 
@@ -121,7 +121,7 @@ func _deplete() -> void:
 		GameManager.game_tick.connect(_respawn_tick)
 
 
-func _respawn_tick(_tick: int) -> void:
+func _respawn_tick(_tick) -> void:
 	_respawn_counter -= 1
 	if _respawn_counter <= 0:
 		_is_depleted = false

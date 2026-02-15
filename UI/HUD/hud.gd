@@ -99,17 +99,17 @@ func _on_blocker_input(event: InputEvent) -> void:
 		_close_panels()
 
 
-func _on_action_logged(message: String) -> void:
+func _on_action_logged(message) -> void:
 	if action_log:
-		action_log.append_text(message + "\n")
+		action_log.append_text(str(message) + "\n")
 		action_log.scroll_to_line(action_log.get_line_count() - 1)
 
 
-func _on_xp_gained(skill_name: String, amount: float, _total: float) -> void:
+func _on_xp_gained(skill_name, amount, _total) -> void:
 	_on_action_logged("[color=green]+%.0f %s XP[/color]" % [amount, skill_name])
 
 
-func _on_level_up(skill_name: String, new_level: int) -> void:
+func _on_level_up(skill_name, new_level) -> void:
 	_on_action_logged("[color=yellow]*** %s level %d! ***[/color]" % [skill_name, new_level])
 
 
@@ -121,11 +121,11 @@ func _toggle_debug_log() -> void:
 	if _debug_panel and is_instance_valid(_debug_panel):
 		_debug_panel.visible = not _debug_panel.visible
 		if _debug_panel.visible:
-			_debug_panel._load_logs()
+			_debug_panel.call("_load_logs")
 	else:
-		_debug_panel = DebugLogPanel.new()
-		_debug_panel.name = "DebugLogPanel"
-		_debug_panel.anchors_preset = Control.PRESET_FULL_RECT
-		_debug_panel.anchor_right = 1.0
-		_debug_panel.anchor_bottom = 1.0
-		add_child(_debug_panel)
+		var dbg_scene = load("res://UI/HUD/DebugLogPanel.tscn")
+		if dbg_scene:
+			_debug_panel = dbg_scene.instantiate()
+			add_child(_debug_panel)
+		else:
+			FileLogger.log_msg("HUD: Failed to load DebugLogPanel.tscn")

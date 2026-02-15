@@ -15,7 +15,7 @@ extends CharacterBody3D
 @export var respawn_ticks: int = 50  # ~30 seconds
 
 signal died(enemy)
-signal took_damage(amount: int, current_hp: int)
+signal took_damage(amount, current_hp)
 
 var hp: int = 0
 var _target: Node3D = null
@@ -169,7 +169,7 @@ func is_dead() -> bool:
 	return _is_dead
 
 
-func _on_game_tick(_tick: int) -> void:
+func _on_game_tick(_tick) -> void:
 	if _is_dead:
 		_handle_respawn()
 		return

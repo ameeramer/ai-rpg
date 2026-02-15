@@ -1,10 +1,10 @@
-class_name InventoryUI
 extends GridContainer
 ## Renders the 28-slot inventory grid with OSRS-style slot buttons.
 ## Uses PlayerInventory autoload singleton for data.
+## NO class_name — instantiated via PackedScene on Android.
 
-const SLOT_SIZE := Vector2(88, 88)
-const MAX_SLOTS: int = 28
+var SLOT_SIZE = Vector2(88, 88)
+var SLOT_COUNT: int = 28
 
 var _slot_buttons: Array = []
 
@@ -46,7 +46,7 @@ func _create_slots() -> void:
 	slot_hover.corner_radius_bottom_right = 3
 	slot_hover.corner_radius_bottom_left = 3
 
-	for i in range(MAX_SLOTS):
+	for i in range(SLOT_COUNT):
 		var btn := Button.new()
 		btn.custom_minimum_size = SLOT_SIZE
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -65,7 +65,7 @@ func _create_slots() -> void:
 func refresh() -> void:
 	var inv_slots = PlayerInventory.slots
 
-	for i in range(MAX_SLOTS):
+	for i in range(SLOT_COUNT):
 		var btn := _slot_buttons[i]
 		var slot_data = inv_slots[i] if i < inv_slots.size() else null
 

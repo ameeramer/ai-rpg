@@ -3,16 +3,16 @@ extends Node
 ## Converts all input into world-space actions.
 
 ## Emitted when the player taps/clicks a point in the 3D world.
-signal world_clicked(position: Vector3, normal: Vector3)
+signal world_clicked(position, normal)
 
 ## Emitted when the player taps/clicks on a Node3D (e.g., an enemy, tree, NPC).
-signal object_clicked(object: Node3D, position: Vector3)
+signal object_clicked(object, position)
 
 ## Emitted when the player long-presses / right-clicks an object (context menu).
-signal object_context(object: Node3D, screen_position: Vector2)
+signal object_context(object, screen_position)
 
 ## Emitted on pinch zoom (mobile) or scroll wheel (PC).
-signal zoom_changed(delta: float)
+signal zoom_changed(delta)
 
 ## Ray length for raycasting from camera
 const RAY_LENGTH: float = 1000.0

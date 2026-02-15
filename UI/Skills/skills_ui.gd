@@ -1,7 +1,7 @@
-class_name SkillsUI
 extends VBoxContainer
 ## Displays all skills with their levels and XP progress bars.
 ## Uses PlayerSkills autoload singleton for data.
+## NO class_name — instantiated via PackedScene on Android.
 
 var _skill_rows: Dictionary = {}
 
@@ -110,9 +110,9 @@ func _xp_for_level(level: int) -> float:
 	return floorf(total / 4.0)
 
 
-func _on_xp_gained(_skill_name: String, _amount: float, _total: float) -> void:
+func _on_xp_gained(_skill_name, _amount, _total) -> void:
 	refresh()
 
 
-func _on_level_up(_skill_name: String, _new_level: int) -> void:
+func _on_level_up(_skill_name, _new_level) -> void:
 	refresh()

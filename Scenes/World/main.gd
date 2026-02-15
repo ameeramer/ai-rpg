@@ -27,22 +27,32 @@ func _ready() -> void:
 	# Force-initialize all enemies and interactables
 	_force_initialize_objects()
 
-	# Set up inventory UI — now uses PlayerInventory autoload, no player ref needed
-	var inventory_panel := hud.get_node_or_null("InventoryOverlay/VBox/InventoryPanel")
+	# Set up inventory UI — must use PackedScene instance (set_script fails on Android)
+	var inventory_panel = hud.get_node_or_null("InventoryOverlay/VBox/InventoryPanel")
+	FileLogger.log_msg("Main: inventory_panel = %s" % str(inventory_panel))
 	if inventory_panel:
-		var inv_ui := InventoryUI.new()
-		inv_ui.name = "InventoryGrid"
-		inventory_panel.add_child(inv_ui)
-		inv_ui.call("setup")
+		var inv_scene = load("res://UI/Inventory/InventoryUI.tscn")
+		FileLogger.log_msg("Main: inv_scene loaded = %s" % str(inv_scene != null))
+		if inv_scene:
+			var inv_ui = inv_scene.instantiate()
+			inventory_panel.add_child(inv_ui)
+			# _ready() should fire on add_child, but call setup as fallback
+			inv_ui.call("setup")
+			FileLogger.log_msg("Main: InventoryUI instantiated and setup called")
 	FileLogger.log_msg("Inventory UI done")
 
-	# Set up skills UI — now uses PlayerSkills autoload, no player ref needed
-	var skills_panel := hud.get_node_or_null("SkillsOverlay/VBox/SkillsScroll/SkillsPanel")
+	# Set up skills UI — must use PackedScene instance (set_script fails on Android)
+	var skills_panel = hud.get_node_or_null("SkillsOverlay/VBox/SkillsScroll/SkillsPanel")
+	FileLogger.log_msg("Main: skills_panel = %s" % str(skills_panel))
 	if skills_panel:
-		var skills_ui := SkillsUI.new()
-		skills_ui.name = "SkillsList"
-		skills_panel.add_child(skills_ui)
-		skills_ui.call("setup")
+		var skills_scene = load("res://UI/Skills/SkillsUI.tscn")
+		FileLogger.log_msg("Main: skills_scene loaded = %s" % str(skills_scene != null))
+		if skills_scene:
+			var skills_ui = skills_scene.instantiate()
+			skills_panel.add_child(skills_ui)
+			# _ready() should fire on add_child, but call setup as fallback
+			skills_ui.call("setup")
+			FileLogger.log_msg("Main: SkillsUI instantiated and setup called")
 	FileLogger.log_msg("Skills UI done")
 
 	FileLogger.log_msg("Main._ready() complete")
@@ -54,15 +64,22 @@ func _force_initialize_objects() -> void:
 	var interactables_count: int = 0
 
 	var all_nodes := _get_all_descendants(self)
+	FileLogger.log_msg("Main: walking %d descendant nodes" % all_nodes.size())
 	for node in all_nodes:
 		var layer = node.get("collision_layer")
 		if layer == null:
 			continue
+		# Check if node's script parsed (has _initialized property)
+		var init_check = node.get("_initialized")
 		if layer == 4:
-			node.call("ensure_initialized")
+			FileLogger.log_msg("Main: enemy node '%s' _initialized=%s" % [node.name, str(init_check)])
+			if init_check != null:
+				node.call("ensure_initialized")
 			enemies_count += 1
 		elif layer == 8:
-			node.call("ensure_initialized")
+			FileLogger.log_msg("Main: interactable node '%s' _initialized=%s" % [node.name, str(init_check)])
+			if init_check != null:
+				node.call("ensure_initialized")
 			interactables_count += 1
 
 	FileLogger.log_msg("Force-initialized %d enemies, %d interactables" % [enemies_count, interactables_count])

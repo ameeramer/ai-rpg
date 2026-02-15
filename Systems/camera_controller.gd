@@ -49,5 +49,5 @@ func _process(delta: float) -> void:
 		camera.position.z = _current_zoom
 
 
-func _on_zoom_changed(zoom_delta: float) -> void:
+func _on_zoom_changed(zoom_delta) -> void:
 	_target_zoom = clamp(_target_zoom - zoom_delta, min_zoom, max_zoom)

@@ -74,18 +74,22 @@ func on_physics_update(delta: float) -> void:
 		player.move_toward_target(delta)
 
 
-func _on_game_tick(_tick: int) -> void:
+func _on_game_tick(_tick) -> void:
 	if _target == null or not is_instance_valid(_target):
+		FileLogger.log_msg("Combat: tick — target gone, going Idle")
 		state_machine.transition_to("Idle")
 		return
 
 	if _is_target_dead():
+		FileLogger.log_msg("Combat: tick — target dead, going Idle")
 		state_machine.transition_to("Idle")
 		return
 
 	_ticks_since_attack += 1
+	var in_range = player.is_in_range_of(_target)
+	FileLogger.log_msg("Combat: tick=%s atk=%d/%d in_range=%s" % [str(_tick), _ticks_since_attack, _attack_speed_ticks, str(in_range)])
 
-	if _ticks_since_attack >= _attack_speed_ticks and player.is_in_range_of(_target):
+	if _ticks_since_attack >= _attack_speed_ticks and in_range:
 		_perform_attack()
 		_ticks_since_attack = 0
 

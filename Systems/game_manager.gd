@@ -5,13 +5,13 @@ extends Node
 const TICK_INTERVAL: float = 0.6
 
 ## Emitted every game tick (0.6s)
-signal game_tick(tick_count: int)
+signal game_tick(tick_count)
 
 ## Emitted when game is paused/resumed
-signal game_paused(is_paused: bool)
+signal game_paused(is_paused)
 
 ## Emitted when an action message should be logged
-signal action_logged(message: String)
+signal action_logged(message)
 
 var tick_count: int = 0
 var is_paused: bool = false

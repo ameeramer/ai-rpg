@@ -4,7 +4,7 @@ extends State
 var player: Node3D = null
 
 var _respawn_ticks: int = 0
-const RESPAWN_DELAY_TICKS: int = 5  # ~3 seconds
+var RESPAWN_DELAY_TICKS: int = 5  # ~3 seconds
 
 var _tick_connected: bool = false
 var _original_colors: Array = []
@@ -59,7 +59,7 @@ func on_physics_update(_delta: float) -> void:
 	pass
 
 
-func _on_game_tick(_tick: int) -> void:
+func _on_game_tick(_tick) -> void:
 	_respawn_ticks -= 1
 	if _respawn_ticks <= 0:
 		_respawn()

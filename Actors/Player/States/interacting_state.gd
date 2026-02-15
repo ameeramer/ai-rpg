@@ -21,9 +21,11 @@ func on_enter(msg: Dictionary = {}) -> void:
 		return
 
 	# Validate this is an interactable (layer 8) — don't use has_method on Android
-	var target_layer: int = _target.get("collision_layer") if _target.get("collision_layer") != null else 0
+	var target_layer = _target.get("collision_layer")
+	if target_layer == null:
+		target_layer = 0
 	if target_layer != 8:
-		FileLogger.log_msg("Interacting: target '%s' layer=%d not interactable, returning to Idle" % [_target.name, target_layer])
+		FileLogger.log_msg("Interacting: target '%s' layer=%s not interactable, returning to Idle" % [_target.name, str(target_layer)])
 		state_machine.transition_to("Idle")
 		return
 
@@ -57,20 +59,16 @@ func on_enter(msg: Dictionary = {}) -> void:
 	# Start interaction — call directly, skip has_method (fails on Android)
 	var result = _target.call("interact", player)
 	FileLogger.log_msg("Interacting: interact('%s') result=%s type=%d" % [_target.name, str(result), typeof(result)])
-	if result == false:
+	# Check for false using not — covers false, null, and 0
+	if not result:
+		FileLogger.log_msg("Interacting: interact returned falsy, going Idle")
 		state_machine.transition_to("Idle")
 		return
 
+	FileLogger.log_msg("Interacting: interact succeeded, connecting game_tick")
 	# Repeating actions — all gathering nodes repeat
-	var repeating = _target.call("is_repeating")
-	if repeating == null or repeating == true:
-		GameManager.game_tick.connect(_on_game_tick)
-		_tick_connected = true
-
-	if player.anim_player:
-		var anim_name = _target.call("get_animation_name")
-		if anim_name and player.anim_player.has_animation(anim_name):
-			player.anim_player.play(anim_name)
+	GameManager.game_tick.connect(_on_game_tick)
+	_tick_connected = true
 
 
 func on_exit() -> void:
@@ -79,7 +77,7 @@ func on_exit() -> void:
 		GameManager.game_tick.disconnect(_on_game_tick)
 		_tick_connected = false
 
-	if is_instance_valid(_target):
+	if _target and is_instance_valid(_target):
 		_target.call("stop_interaction", player)
 
 	_target = null
@@ -94,7 +92,7 @@ func on_physics_update(_delta: float) -> void:
 		return
 
 
-func _on_game_tick(_tick: int) -> void:
+func _on_game_tick(_tick) -> void:
 	if _target == null or not is_instance_valid(_target):
 		state_machine.transition_to("Idle")
 		return
@@ -109,7 +107,8 @@ func _on_game_tick(_tick: int) -> void:
 
 	# Tick the interaction — call directly, skip has_method
 	var tick_result = _target.call("interaction_tick", player)
-	if tick_result is Dictionary and tick_result.get("completed", false):
+	FileLogger.log_msg("Interacting: tick result=%s" % str(tick_result))
+	if typeof(tick_result) == TYPE_DICTIONARY and tick_result.get("completed", false):
 		state_machine.transition_to("Idle")
 	elif tick_result == null:
 		FileLogger.log_msg("Interacting: interaction_tick returned null")
