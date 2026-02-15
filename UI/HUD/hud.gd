@@ -21,6 +21,7 @@ var _current_panel: Control = null
 
 
 func _ready() -> void:
+	FileLogger.log_msg("HUD._ready() start")
 	GameManager.action_logged.connect(_on_action_logged)
 
 	inv_btn.pressed.connect(_toggle_inventory)
@@ -31,14 +32,62 @@ func _ready() -> void:
 	skills_close.pressed.connect(_close_panels)
 
 	touch_blocker.gui_input.connect(_on_blocker_input)
+	FileLogger.log_msg("HUD._ready() done")
 
 
-func setup(player: Node3D) -> void:
+func setup(player) -> void:
+	FileLogger.log_msg("HUD.setup() start")
 	_player = player
+
 	# Connect to autoload signals for XP/level/inventory
 	PlayerSkills.xp_gained.connect(_on_xp_gained)
 	PlayerSkills.level_up.connect(_on_level_up)
 	PlayerInventory.inventory_changed.connect(_on_inventory_changed)
+	FileLogger.log_msg("HUD.setup() autoload signals connected")
+
+	# Instantiate inventory UI from PackedScene
+	_setup_inventory_ui()
+
+	# Instantiate skills UI from PackedScene
+	_setup_skills_ui()
+
+	FileLogger.log_msg("HUD.setup() complete")
+
+
+func _setup_inventory_ui() -> void:
+	FileLogger.log_msg("HUD: loading InventoryUI.tscn")
+	var inv_scene = load("res://UI/Inventory/InventoryUI.tscn")
+	FileLogger.log_msg("HUD: inv_scene = %s" % str(inv_scene))
+	if inv_scene == null:
+		FileLogger.log_msg("HUD: FAILED to load InventoryUI.tscn")
+		return
+	if inventory_panel == null:
+		FileLogger.log_msg("HUD: inventory_panel is null")
+		return
+	var inv_ui = inv_scene.instantiate()
+	FileLogger.log_msg("HUD: inv_ui instantiated = %s" % str(inv_ui))
+	inventory_panel.add_child(inv_ui)
+	FileLogger.log_msg("HUD: inv_ui added to panel")
+	inv_ui.call("setup")
+	FileLogger.log_msg("HUD: inv_ui.setup() called")
+
+
+func _setup_skills_ui() -> void:
+	FileLogger.log_msg("HUD: loading SkillsUI.tscn")
+	var skills_scene = load("res://UI/Skills/SkillsUI.tscn")
+	FileLogger.log_msg("HUD: skills_scene = %s" % str(skills_scene))
+	if skills_scene == null:
+		FileLogger.log_msg("HUD: FAILED to load SkillsUI.tscn")
+		return
+	if skills_panel == null:
+		FileLogger.log_msg("HUD: skills_panel is null")
+		return
+	var skills_ui = skills_scene.instantiate()
+	FileLogger.log_msg("HUD: skills_ui instantiated = %s" % str(skills_ui))
+	skills_panel.add_child(skills_ui)
+	FileLogger.log_msg("HUD: skills_ui added to panel")
+	skills_ui.call("setup")
+	FileLogger.log_msg("HUD: skills_ui.setup() called")
 
 
 func _process(_delta: float) -> void:

@@ -15,10 +15,12 @@ var SKILL_NAMES = [
 
 
 func setup() -> void:
+	FileLogger.log_msg("SkillsUI.setup() start")
 	PlayerSkills.xp_gained.connect(_on_xp_gained)
 	PlayerSkills.level_up.connect(_on_level_up)
 	_build_ui()
 	refresh()
+	FileLogger.log_msg("SkillsUI.setup() done, %d rows" % _skill_rows.size())
 
 
 func _build_ui() -> void:

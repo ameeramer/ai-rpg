@@ -12,9 +12,6 @@ func _ready() -> void:
 	camera_controller.set("target", player)
 	FileLogger.log_msg("Camera target set")
 
-	hud.call("setup", player)
-	FileLogger.log_msg("HUD setup done")
-
 	# Force-initialize the player — _ready() may not fire on Android
 	var init_val = player.get("_initialized")
 	FileLogger.log_msg("Main: player _initialized = %s" % str(init_val))
@@ -27,33 +24,9 @@ func _ready() -> void:
 	# Force-initialize all enemies and interactables
 	_force_initialize_objects()
 
-	# Set up inventory UI — must use PackedScene instance (set_script fails on Android)
-	var inventory_panel = hud.get_node_or_null("InventoryOverlay/VBox/InventoryPanel")
-	FileLogger.log_msg("Main: inventory_panel = %s" % str(inventory_panel))
-	if inventory_panel:
-		var inv_scene = load("res://UI/Inventory/InventoryUI.tscn")
-		FileLogger.log_msg("Main: inv_scene loaded = %s" % str(inv_scene != null))
-		if inv_scene:
-			var inv_ui = inv_scene.instantiate()
-			inventory_panel.add_child(inv_ui)
-			# _ready() should fire on add_child, but call setup as fallback
-			inv_ui.call("setup")
-			FileLogger.log_msg("Main: InventoryUI instantiated and setup called")
-	FileLogger.log_msg("Inventory UI done")
-
-	# Set up skills UI — must use PackedScene instance (set_script fails on Android)
-	var skills_panel = hud.get_node_or_null("SkillsOverlay/VBox/SkillsScroll/SkillsPanel")
-	FileLogger.log_msg("Main: skills_panel = %s" % str(skills_panel))
-	if skills_panel:
-		var skills_scene = load("res://UI/Skills/SkillsUI.tscn")
-		FileLogger.log_msg("Main: skills_scene loaded = %s" % str(skills_scene != null))
-		if skills_scene:
-			var skills_ui = skills_scene.instantiate()
-			skills_panel.add_child(skills_ui)
-			# _ready() should fire on add_child, but call setup as fallback
-			skills_ui.call("setup")
-			FileLogger.log_msg("Main: SkillsUI instantiated and setup called")
-	FileLogger.log_msg("Skills UI done")
+	# HUD setup — passes player ref; HUD handles its own UI children
+	hud.call("setup", player)
+	FileLogger.log_msg("HUD setup done")
 
 	FileLogger.log_msg("Main._ready() complete")
 	GameManager.log_action("Welcome to AI RPG! Tap to move, tap objects to interact.")
