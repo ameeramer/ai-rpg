@@ -161,11 +161,26 @@ func show_shop(npc_name: String, stock: Array) -> void:
 		var sc = load("res://UI/Shop/ShopUI.tscn")
 		if sc:
 			_shop_ui = sc.instantiate()
+			_shop_ui.anchor_left = 0.5
+			_shop_ui.anchor_top = 0.5
+			_shop_ui.anchor_right = 0.5
+			_shop_ui.anchor_bottom = 0.5
+			_shop_ui.offset_left = -480
+			_shop_ui.offset_top = -450
+			_shop_ui.offset_right = 480
+			_shop_ui.offset_bottom = 450
+			_shop_ui.grow_horizontal = Control.GROW_DIRECTION_BOTH
+			_shop_ui.grow_vertical = Control.GROW_DIRECTION_BOTH
 			add_child(_shop_ui)
+			var sig = _shop_ui.get("shop_closed")
+			if sig:
+				_shop_ui.shop_closed.connect(_close_panels)
 	if _shop_ui:
+		_close_panels()
 		_shop_ui.call("open_shop", npc_name, stock)
 		_shop_ui.visible = true
 		touch_blocker.visible = true
+		_current_panel = _shop_ui
 
 func _toggle_debug_log() -> void:
 	if _debug_panel and is_instance_valid(_debug_panel):
