@@ -82,11 +82,26 @@ func add_combat_xp(total_xp: float) -> void:
 
 
 func get_combat_level() -> int:
-	var base = 0.25 * (get_level("Defence") + get_level("Hitpoints") + floorf(get_level("Prayer") / 2.0))
-	var melee = 0.325 * (get_level("Attack") + get_level("Strength"))
-	var ranged = 0.325 * (floorf(get_level("Ranged") / 2.0) + get_level("Ranged"))
-	var magic = 0.325 * (floorf(get_level("Magic") / 2.0) + get_level("Magic"))
-	return int(base + max(melee, max(ranged, magic)))
+	# OSRS combat level formula:
+	# base = (Defence + Hitpoints + floor(Prayer/2)) / 4
+	# melee_val = Attack + Strength
+	# ranged_val = floor(Ranged * 1.5)
+	# magic_val = floor(Magic * 1.5)
+	# If melee_val >= max(ranged_val, magic_val): type_val = melee_val
+	# Else: type_val = max(ranged_val, magic_val)
+	# combat_level = floor(base + type_val * 0.325)
+	var prayer_half = floorf(get_level("Prayer") / 2.0)
+	var base = (get_level("Defence") + get_level("Hitpoints") + prayer_half) / 4.0
+	var melee_val = get_level("Attack") + get_level("Strength")
+	var ranged_val = floorf(get_level("Ranged") * 1.5)
+	var magic_val = floorf(get_level("Magic") * 1.5)
+	var best_other = ranged_val
+	if magic_val > best_other:
+		best_other = magic_val
+	var type_val = melee_val
+	if best_other > melee_val:
+		type_val = best_other
+	return int(floorf(base + type_val * 0.325))
 
 
 func _xp_for_level(level: int) -> float:

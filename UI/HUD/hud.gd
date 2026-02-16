@@ -9,10 +9,12 @@ extends CanvasLayer
 @onready var skills_overlay: PanelContainer = $SkillsOverlay
 @onready var equipment_overlay: PanelContainer = $EquipmentOverlay
 @onready var save_menu_overlay: PanelContainer = $SaveMenuOverlay
+@onready var combat_overlay: PanelContainer = $CombatOverlay
 @onready var inventory_panel: Panel = $InventoryOverlay/VBox/InventoryPanel
 @onready var skills_panel: VBoxContainer = $SkillsOverlay/VBox/SkillsScroll/SkillsPanel
 @onready var equipment_panel: Panel = $EquipmentOverlay/VBox/EquipmentPanel
 @onready var save_menu_panel: VBoxContainer = $SaveMenuOverlay/VBox/SaveMenuScroll/SaveMenuPanel
+@onready var combat_panel: VBoxContainer = $CombatOverlay/VBox/CombatScroll/CombatPanel
 
 var _player: Node3D
 var _debug_panel: Control
@@ -26,12 +28,14 @@ func _ready() -> void:
 	$BottomToolbar/ButtonRow/InventoryBtn.pressed.connect(_toggle.bind("inv"))
 	$BottomToolbar/ButtonRow/SkillsBtn.pressed.connect(_toggle.bind("skills"))
 	$BottomToolbar/ButtonRow/EquipBtn.pressed.connect(_toggle.bind("equip"))
+	$BottomToolbar/ButtonRow/CombatBtn.pressed.connect(_toggle.bind("combat"))
 	$BottomToolbar/ButtonRow/MenuBtn.pressed.connect(_toggle.bind("menu"))
 	$BottomToolbar/ButtonRow/DebugBtn.pressed.connect(_toggle_debug_log)
 	$InventoryOverlay/VBox/Header/CloseBtn.pressed.connect(_close_panels)
 	$SkillsOverlay/VBox/Header/CloseBtn.pressed.connect(_close_panels)
 	$EquipmentOverlay/VBox/Header/CloseBtn.pressed.connect(_close_panels)
 	$SaveMenuOverlay/VBox/Header/CloseBtn.pressed.connect(_close_panels)
+	$CombatOverlay/VBox/Header/CloseBtn.pressed.connect(_close_panels)
 	touch_blocker.gui_input.connect(_on_blocker_input)
 
 func setup(player) -> void:
@@ -45,6 +49,7 @@ func setup(player) -> void:
 	_load_ui("res://UI/Skills/SkillsUI.tscn", skills_panel)
 	_load_ui("res://UI/Equipment/EquipmentUI.tscn", equipment_panel)
 	_load_ui("res://UI/SaveMenu/SaveMenuUI.tscn", save_menu_panel)
+	_load_ui("res://UI/Combat/CombatStyleUI.tscn", combat_panel)
 	var ctx = load("res://UI/Inventory/ItemContextMenu.tscn")
 	if ctx:
 		_context_menu = ctx.instantiate()
@@ -94,6 +99,8 @@ func _get_overlay(key: String) -> Control:
 		return skills_overlay
 	elif key == "equip":
 		return equipment_overlay
+	elif key == "combat":
+		return combat_overlay
 	elif key == "menu":
 		return save_menu_overlay
 	return null
@@ -111,7 +118,7 @@ func _toggle(key: String) -> void:
 		_current_panel = panel
 
 func _close_panels() -> void:
-	for p in [inventory_overlay, skills_overlay, equipment_overlay, save_menu_overlay, touch_blocker]:
+	for p in [inventory_overlay, skills_overlay, equipment_overlay, save_menu_overlay, combat_overlay, touch_blocker]:
 		p.visible = false
 	_current_panel = null
 	if _context_menu:

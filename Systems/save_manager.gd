@@ -120,6 +120,7 @@ func _collect_save_data() -> Dictionary:
 	_save_system(data, "player_skills", PlayerSkills)
 	_save_system(data, "player_inventory", PlayerInventory)
 	_save_system(data, "player_equipment", PlayerEquipment)
+	_save_system(data, "combat_style", CombatStyle)
 	_save_system(data, "game_manager", GameManager)
 	if _player_ref and is_instance_valid(_player_ref):
 		data["systems"]["player"] = {
@@ -154,6 +155,8 @@ func _apply_save_data(data: Dictionary) -> bool:
 		PlayerInventory.call("deserialize", systems["player_inventory"])
 	if systems.has("player_equipment"):
 		PlayerEquipment.call("deserialize", systems["player_equipment"])
+	if systems.has("combat_style"):
+		CombatStyle.call("deserialize", systems["combat_style"])
 	if systems.has("game_manager"):
 		GameManager.call("deserialize", systems["game_manager"])
 	if systems.has("player"):

@@ -19,6 +19,7 @@ PlayerSkills="*res://Systems/player_skills.gd"
 PlayerInventory="*res://Systems/player_inventory.gd"
 PlayerEquipment="*res://Systems/player_equipment.gd"
 ItemRegistry="*res://Systems/item_registry.gd"
+CombatStyle="*res://Systems/combat_style.gd"
 SaveManager="*res://Systems/save_manager.gd"
 
 [display]
