@@ -2,17 +2,37 @@ extends Node
 ## ItemRegistry — Maps item IDs to .tres resource paths for save/load.
 ## Registered as "ItemRegistry" in project.godot autoloads.
 ## No class_name — autoloads are accessed by name, not type.
+##
+## Uses a hardcoded manifest instead of DirAccess scanning because
+## DirAccess.open() cannot enumerate directories inside Android APKs.
+## When adding new items, add their ID and path to ITEM_MANIFEST below.
 
 var _id_to_path: Dictionary = {}
 var _id_to_resource: Dictionary = {}
 var _initialized: bool = false
 
-var ITEM_DIRS = [
-	"res://Data/Items",
-	"res://Data/Weapons",
-	"res://Data/Armor",
-	"res://Data/Food"
-]
+# Hardcoded manifest: item_id -> res:// path
+# DirAccess cannot enumerate packed APK resources on Android, so we
+# list every item explicitly. Add new items here when creating them.
+var ITEM_MANIFEST = {
+	315: "res://Data/Food/shrimps.tres",
+	317: "res://Data/Items/raw_shrimps.tres",
+	323: "res://Data/Food/burnt_food.tres",
+	333: "res://Data/Food/trout.tres",
+	335: "res://Data/Food/raw_trout.tres",
+	436: "res://Data/Items/copper_ore.tres",
+	526: "res://Data/Items/bones.tres",
+	995: "res://Data/Items/coins.tres",
+	1117: "res://Data/Armor/bronze_platebody.tres",
+	1139: "res://Data/Armor/bronze_med_helm.tres",
+	1277: "res://Data/Weapons/bronze_sword.tres",
+	1279: "res://Data/Weapons/iron_sword.tres",
+	1281: "res://Data/Weapons/steel_sword.tres",
+	1351: "res://Data/Weapons/bronze_axe.tres",
+	1353: "res://Data/Weapons/iron_axe.tres",
+	1511: "res://Data/Items/logs.tres",
+	1521: "res://Data/Items/oak_logs.tres",
+}
 
 
 func _ready() -> void:
@@ -23,29 +43,15 @@ func ensure_initialized() -> void:
 	if _initialized:
 		return
 	_initialized = true
-	for dir_path in ITEM_DIRS:
-		_scan_directory(dir_path)
-	FileLogger.log_msg("ItemRegistry: registered %d items" % _id_to_path.size())
-
-
-func _scan_directory(dir_path: String) -> void:
-	var dir = DirAccess.open(dir_path)
-	if dir == null:
-		FileLogger.log_msg("ItemRegistry: cannot open %s" % dir_path)
-		return
-	dir.list_dir_begin()
-	var file_name = dir.get_next()
-	while file_name != "":
-		if file_name.ends_with(".tres"):
-			var full_path = dir_path + "/" + file_name
-			var res = load(full_path)
-			if res != null:
-				var item_id = res.get("id")
-				if item_id != null and item_id > 0:
-					_id_to_path[item_id] = full_path
-					_id_to_resource[item_id] = res
-		file_name = dir.get_next()
-	dir.list_dir_end()
+	for item_id in ITEM_MANIFEST.keys():
+		var path = ITEM_MANIFEST[item_id]
+		_id_to_path[item_id] = path
+		var res = load(path)
+		if res != null:
+			_id_to_resource[item_id] = res
+		else:
+			FileLogger.log_msg("ItemRegistry: failed to load %s" % path)
+	FileLogger.log_msg("ItemRegistry: registered %d items" % _id_to_resource.size())
 
 
 func get_item_by_id(item_id: int):

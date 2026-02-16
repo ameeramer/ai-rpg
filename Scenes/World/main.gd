@@ -28,6 +28,9 @@ func _ready() -> void:
 	hud.call("setup", player)
 	FileLogger.log_msg("HUD setup done")
 
+	# Give SaveManager a direct player ref (avoids group lookup on Android)
+	SaveManager.call("set_player", player)
+
 	# Auto-load save if one exists
 	var has_save = SaveManager.call("has_save_file")
 	if has_save:

@@ -10,6 +10,7 @@ var SAVE_PATH = "user://savegame.json"
 var SAVE_VERSION: int = 1
 var AUTO_SAVE_INTERVAL: int = 500
 var _initialized: bool = false
+var _player_ref: Node3D = null
 
 
 func _ready() -> void:
@@ -24,6 +25,11 @@ func ensure_initialized() -> void:
 	if sig:
 		GameManager.game_tick.connect(_on_game_tick)
 	FileLogger.log_msg("SaveManager initialized")
+
+
+func set_player(p: Node3D) -> void:
+	_player_ref = p
+	FileLogger.log_msg("SaveManager: player ref set")
 
 
 func _notification(what: int) -> void:
@@ -111,19 +117,27 @@ func _collect_save_data() -> Dictionary:
 		"timestamp": _get_timestamp(),
 		"systems": {}
 	}
-	data["systems"]["player_skills"] = PlayerSkills.call("serialize")
-	data["systems"]["player_inventory"] = PlayerInventory.call("serialize")
-	data["systems"]["player_equipment"] = PlayerEquipment.call("serialize")
-	data["systems"]["game_manager"] = GameManager.call("serialize")
-	var players = get_tree().get_nodes_in_group("player")
-	if players.size() > 0:
-		var p = players[0]
+	_save_system(data, "player_skills", PlayerSkills)
+	_save_system(data, "player_inventory", PlayerInventory)
+	_save_system(data, "player_equipment", PlayerEquipment)
+	_save_system(data, "game_manager", GameManager)
+	if _player_ref and is_instance_valid(_player_ref):
 		data["systems"]["player"] = {
-			"hitpoints": p.get("hitpoints"),
-			"max_hitpoints": p.get("max_hitpoints"),
-			"position": [p.global_position.x, p.global_position.y, p.global_position.z]
+			"hitpoints": _player_ref.get("hitpoints"),
+			"max_hitpoints": _player_ref.get("max_hitpoints"),
+			"position": [
+				_player_ref.global_position.x,
+				_player_ref.global_position.y,
+				_player_ref.global_position.z
+			]
 		}
 	return data
+
+
+func _save_system(data: Dictionary, key: String, system: Node) -> void:
+	var result = system.call("serialize")
+	if result != null:
+		data["systems"][key] = result
 
 
 func _apply_save_data(data: Dictionary) -> bool:
@@ -133,6 +147,7 @@ func _apply_save_data(data: Dictionary) -> bool:
 		load_completed.emit(false)
 		return false
 	var systems = data.get("systems", {})
+	FileLogger.log_msg("SaveManager: applying keys: %s" % str(systems.keys()))
 	if systems.has("player_skills"):
 		PlayerSkills.call("deserialize", systems["player_skills"])
 	if systems.has("player_inventory"):
@@ -149,22 +164,22 @@ func _apply_save_data(data: Dictionary) -> bool:
 
 
 func _apply_player_data(pdata: Dictionary) -> void:
-	var players = get_tree().get_nodes_in_group("player")
-	if players.size() == 0:
+	if _player_ref == null or not is_instance_valid(_player_ref):
+		FileLogger.log_msg("SaveManager: no player ref for apply_player_data")
 		return
-	var p = players[0]
 	var hp = pdata.get("hitpoints")
 	if hp != null:
-		p.hitpoints = int(hp)
+		_player_ref.hitpoints = int(hp)
 	var max_hp = pdata.get("max_hitpoints")
 	if max_hp != null:
-		p.max_hitpoints = int(max_hp)
+		_player_ref.max_hitpoints = int(max_hp)
 	var pos = pdata.get("position")
 	if pos != null and pos is Array and pos.size() >= 3:
-		p.global_position = Vector3(float(pos[0]), float(pos[1]), float(pos[2]))
-	var sm = p.get("state_machine")
+		_player_ref.global_position = Vector3(float(pos[0]), float(pos[1]), float(pos[2]))
+	var sm = _player_ref.get("state_machine")
 	if sm:
 		sm.call("transition_to", "Idle")
+	FileLogger.log_msg("SaveManager: player data applied")
 
 
 func _get_timestamp() -> String:

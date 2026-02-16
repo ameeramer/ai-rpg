@@ -18,6 +18,9 @@ func setup() -> void:
 	FileLogger.log_msg("SkillsUI.setup() start")
 	PlayerSkills.xp_gained.connect(_on_xp_gained)
 	PlayerSkills.level_up.connect(_on_level_up)
+	var sc_sig = PlayerSkills.get("skills_changed")
+	if sc_sig:
+		PlayerSkills.skills_changed.connect(refresh)
 	_build_ui()
 	refresh()
 	FileLogger.log_msg("SkillsUI.setup() done, %d rows" % _skill_rows.size())

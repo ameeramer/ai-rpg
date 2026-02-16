@@ -5,6 +5,7 @@ extends Node
 
 signal xp_gained(skill_name, amount, total_xp)
 signal level_up(skill_name, new_level)
+signal skills_changed()
 
 var SKILL_NAMES = [
 	"Attack", "Strength", "Defence", "Hitpoints",
@@ -113,6 +114,7 @@ func deserialize(data: Dictionary) -> void:
 			skill_xp[skill] = float(saved_xp[skill])
 	for skill in SKILL_NAMES:
 		skill_levels[skill] = _level_for_xp(skill_xp[skill])
+	skills_changed.emit()
 	FileLogger.log_msg("PlayerSkills: deserialized %d skills" % SKILL_NAMES.size())
 
 
