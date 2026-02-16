@@ -22,4 +22,5 @@ attack_bonus = 16
 strength_bonus = 12
 combat_style = "Melee"
 attack_type = "Slash"
+weapon_category = "sword"
 attack_animation = "attack_slash"

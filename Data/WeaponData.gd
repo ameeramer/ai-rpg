@@ -22,6 +22,13 @@ extends ItemData
 @export_group("Style")
 @export_enum("Melee", "Ranged", "Magic") var combat_style: String = "Melee"
 @export_enum("Slash", "Stab", "Crush", "Ranged", "Magic") var attack_type: String = "Slash"
+## Weapon category determines available attack styles (OSRS-style)
+## sword = Stab/Accurate, Slash/Aggressive, Slash/Defensive
+## scimitar = Chop/Accurate, Slash/Aggressive, Lunge/Controlled, Block/Defensive
+## axe = Chop/Accurate, Hack/Aggressive, Smash/Aggressive(Crush), Block/Defensive
+## mace = Pound/Accurate, Pummel/Aggressive, Spike/Controlled, Block/Defensive
+## unarmed = Punch/Accurate, Kick/Aggressive, Block/Defensive
+@export_enum("sword", "scimitar", "axe", "mace", "unarmed") var weapon_category: String = "sword"
 
 ## Animation to play when attacking
 @export var attack_animation: String = "attack_slash"
