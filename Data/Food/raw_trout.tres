@@ -4,18 +4,18 @@
 
 [resource]
 script = ExtResource("1")
-id = 317
-item_name = "Raw Shrimps"
-description = "Some raw shrimps."
+id = 335
+item_name = "Raw Trout"
+description = "A raw trout. Needs cooking."
 is_stackable = false
 max_stack = 1
 weight = 0.5
-value = 1
+value = 10
 category = "Food"
-model_path = "res://Assets/Models/Items/raw_shrimps.glb"
+model_path = "res://Assets/Models/Food/cooked_trout.glb"
 heal_amount = 0
 eat_ticks = 3
-cooked_item_id = 315
-required_cooking_level = 1
-cooking_xp = 30.0
-burn_stop_level = 34
+cooked_item_id = 333
+required_cooking_level = 15
+cooking_xp = 70.0
+burn_stop_level = 49

@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://Scenes/World/main.gd" id="1"]
 [ext_resource type="PackedScene" path="res://Actors/Player/Player.tscn" id="2"]
@@ -16,6 +16,18 @@
 [ext_resource type="Resource" path="res://Data/DropTables/raw_shrimps_drop.tres" id="12"]
 [ext_resource type="Resource" path="res://Data/DropTables/bones_drop.tres" id="13"]
 [ext_resource type="Resource" path="res://Data/DropTables/coins_drop.tres" id="14"]
+[ext_resource type="PackedScene" path="res://Scenes/World/CookingFire.tscn" id="fire"]
+[ext_resource type="PackedScene" path="res://Actors/NPCs/NPC.tscn" id="npc"]
+[ext_resource type="PackedScene" path="res://Scenes/World/TroutSpot.tscn" id="trout"]
+[ext_resource type="Resource" path="res://Data/DropTables/bronze_sword_drop.tres" id="20"]
+[ext_resource type="Resource" path="res://Data/DropTables/iron_sword_drop.tres" id="21"]
+[ext_resource type="Resource" path="res://Data/DropTables/raw_trout_drop.tres" id="22"]
+[ext_resource type="Resource" path="res://Data/Weapons/bronze_sword.tres" id="shop_bsword"]
+[ext_resource type="Resource" path="res://Data/Weapons/iron_sword.tres" id="shop_isword"]
+[ext_resource type="Resource" path="res://Data/Weapons/bronze_axe.tres" id="shop_baxe"]
+[ext_resource type="Resource" path="res://Data/Weapons/iron_axe.tres" id="shop_iaxe"]
+[ext_resource type="Resource" path="res://Data/Armor/bronze_platebody.tres" id="shop_bplate"]
+[ext_resource type="Resource" path="res://Data/Armor/bronze_med_helm.tres" id="shop_bhelm"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_1"]
 size = Vector2(80, 80)
@@ -169,11 +181,11 @@ drop_table = [ExtResource("12")]
 
 [node name="Goblin1" parent="GoblinCamp" instance=ExtResource("goblin")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -8)
-drop_table = [ExtResource("13"), ExtResource("14")]
+drop_table = [ExtResource("13"), ExtResource("14"), ExtResource("20")]
 
 [node name="Goblin2" parent="GoblinCamp" instance=ExtResource("goblin")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -6)
-drop_table = [ExtResource("13"), ExtResource("14")]
+drop_table = [ExtResource("13"), ExtResource("14"), ExtResource("20")]
 
 [node name="Goblin3" parent="GoblinCamp" instance=ExtResource("goblin")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, -10)
@@ -194,11 +206,11 @@ drop_table = [ExtResource("13"), ExtResource("14")]
 
 [node name="Skeleton1" parent="SkeletonGraveyard" instance=ExtResource("skeleton")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -10)
-drop_table = [ExtResource("13"), ExtResource("14")]
+drop_table = [ExtResource("13"), ExtResource("14"), ExtResource("21")]
 
 [node name="Skeleton2" parent="SkeletonGraveyard" instance=ExtResource("skeleton")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, -8)
-drop_table = [ExtResource("13"), ExtResource("14")]
+drop_table = [ExtResource("13"), ExtResource("14"), ExtResource("21")]
 
 [node name="Skeleton3" parent="SkeletonGraveyard" instance=ExtResource("skeleton")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, -14)
@@ -207,7 +219,59 @@ attack_damage = 5
 aggro_range = 7.0
 combat_level = 15
 xp_reward = 80.0
-drop_table = [ExtResource("13"), ExtResource("14")]
+drop_table = [ExtResource("13"), ExtResource("14"), ExtResource("21")]
+
+; ==================== COOKING FIRES ====================
+
+[node name="CookingZone" type="Node3D" parent="."]
+
+[node name="CookingFire1" parent="CookingZone" instance=ExtResource("fire")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -8)
+
+[node name="CookingFire2" parent="CookingZone" instance=ExtResource("fire")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -2)
+
+; ==================== TROUT FISHING ====================
+
+[node name="TroutSpot1" parent="FishingZone" instance=ExtResource("trout")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -15)
+drop_table = [ExtResource("22")]
+
+[node name="TroutSpot2" parent="FishingZone" instance=ExtResource("trout")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -16)
+drop_table = [ExtResource("22")]
+
+; ==================== NPC VILLAGE ====================
+
+[node name="Village" type="Node3D" parent="."]
+
+[node name="Guide" parent="Village" instance=ExtResource("npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 4)
+display_name = "Guide"
+npc_role = "talk"
+dialogue_lines = ["Welcome to AI RPG, adventurer!", "Tap objects to interact with them.", "Fight goblins to the west, or try fishing to the south.", "You can cook raw food at a cooking fire.", "Bury bones for Prayer experience!", "Talk to the shopkeepers to buy equipment."]
+
+[node name="Hans" parent="Village" instance=ExtResource("npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 3)
+display_name = "Hans"
+npc_role = "talk"
+dialogue_lines = ["Hello there! I've been here for ages.", "This village has been peaceful, mostly.", "Watch out for the skeletons to the east!", "I hear the goblins have been causing trouble lately."]
+
+[node name="WeaponShop" parent="Village" instance=ExtResource("npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -4)
+display_name = "Weapon Smith"
+npc_role = "merchant"
+dialogue_lines = ["Looking for a fine weapon?"]
+shop_items = [ExtResource("shop_bsword"), ExtResource("shop_isword"), ExtResource("shop_baxe"), ExtResource("shop_iaxe")]
+shop_prices = [26, 91, 16, 56]
+
+[node name="ArmorShop" parent="Village" instance=ExtResource("npc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -2)
+display_name = "Armorer"
+npc_role = "merchant"
+dialogue_lines = ["Need some protection?"]
+shop_items = [ExtResource("shop_bplate"), ExtResource("shop_bhelm")]
+shop_prices = [160, 24]
 
 ; ==================== HUD ====================
 

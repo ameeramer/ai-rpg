@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Data/WeaponData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = 1281
+item_name = "Steel Sword"
+description = "A strong steel sword."
+is_stackable = false
+max_stack = 1
+weight = 2.5
+value = 325
+category = "Weapon"
+model_path = "res://Assets/Models/Weapons/steel_sword.glb"
+is_equippable = true
+attack_damage = 12
+attack_speed = 2.4
+attack_range = 1.5
+required_attack_level = 5
+attack_bonus = 16
+strength_bonus = 12
+combat_style = "Melee"
+attack_type = "Slash"
+attack_animation = "attack_slash"

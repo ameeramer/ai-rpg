@@ -1,6 +1,6 @@
 extends GridContainer
 
-var SLOT_SIZE = Vector2(88, 88)
+var SLOT_SIZE = Vector2(165, 165)
 var SLOT_COUNT: int = 28
 var ICON_RES: int = 128
 
@@ -85,7 +85,7 @@ func _create_slots() -> void:
 		btn.add_theme_stylebox_override("normal", slot_normal)
 		btn.add_theme_stylebox_override("hover", slot_hover)
 		btn.add_theme_stylebox_override("pressed", slot_hover)
-		btn.add_theme_font_size_override("font_size", 18)
+		btn.add_theme_font_size_override("font_size", 33)
 		btn.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
 		btn.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		btn.expand_icon = true
@@ -169,4 +169,17 @@ func _on_slot_pressed(slot_index: int) -> void:
 	if slot_index >= inv_slots.size() or inv_slots[slot_index] == null:
 		return
 	var item = inv_slots[slot_index]["item"]
-	GameManager.log_action("Selected: %s" % item.call("get_display_name"))
+	# Show context menu — find the HUD parent and call show_context_menu
+	var btn = _slot_buttons[slot_index]
+	var pos = btn.global_position + Vector2(btn.size.x, 0)
+	var hud = _find_hud()
+	if hud:
+		hud.call("show_context_menu", item, slot_index, pos)
+
+func _find_hud() -> Node:
+	var node = get_parent()
+	while node:
+		if node.get("show_context_menu") != null:
+			return node
+		node = node.get_parent()
+	return null
