@@ -18,6 +18,8 @@ InputManager="*res://Systems/input_manager.gd"
 PlayerSkills="*res://Systems/player_skills.gd"
 PlayerInventory="*res://Systems/player_inventory.gd"
 PlayerEquipment="*res://Systems/player_equipment.gd"
+ItemRegistry="*res://Systems/item_registry.gd"
+SaveManager="*res://Systems/save_manager.gd"
 
 [display]
 

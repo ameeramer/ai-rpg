@@ -28,6 +28,15 @@ func _ready() -> void:
 	hud.call("setup", player)
 	FileLogger.log_msg("HUD setup done")
 
+	# Auto-load save if one exists
+	var has_save = SaveManager.call("has_save_file")
+	if has_save:
+		FileLogger.log_msg("Main: save file found, loading...")
+		SaveManager.call("load_game")
+		FileLogger.log_msg("Main: save loaded")
+	else:
+		FileLogger.log_msg("Main: no save file, starting fresh")
+
 	FileLogger.log_msg("Main._ready() complete")
 	GameManager.log_action("Welcome to AI RPG! Tap to move, tap objects to interact.")
 
@@ -36,7 +45,7 @@ func _force_initialize_objects() -> void:
 	var enemies_count: int = 0
 	var interactables_count: int = 0
 
-	var all_nodes := _get_all_descendants(self)
+	var all_nodes = _get_all_descendants(self)
 	FileLogger.log_msg("Main: walking %d descendant nodes" % all_nodes.size())
 	for node in all_nodes:
 		var layer = node.get("collision_layer")

@@ -1,0 +1,160 @@
+extends VBoxContainer
+## SaveMenuUI — Save/Load/Export/Import game state panel.
+## Instantiated as PackedScene in SaveMenuOverlay via HUD.
+
+var _status_label: Label
+var _export_label: Label
+var _import_field: TextEdit
+var _import_status: Label
+var _initialized: bool = false
+
+
+func _ready() -> void:
+	FileLogger.log_msg("SaveMenuUI._ready()")
+
+
+func setup() -> void:
+	if _initialized:
+		return
+	_initialized = true
+	_build_ui()
+	_update_status()
+
+
+func _build_ui() -> void:
+	_status_label = _make_label("Checking save...")
+	_status_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.6))
+	add_child(_status_label)
+	# Save/Load row
+	var row1 = HBoxContainer.new()
+	row1.add_theme_constant_override("separation", 12)
+	add_child(row1)
+	var save_btn = _make_button("Save Game")
+	save_btn.pressed.connect(_on_save_pressed)
+	row1.add_child(save_btn)
+	var load_btn = _make_button("Load Game")
+	load_btn.pressed.connect(_on_load_pressed)
+	row1.add_child(load_btn)
+	# Separator
+	var sep = HSeparator.new()
+	sep.add_theme_constant_override("separation", 16)
+	add_child(sep)
+	# Transfer section header
+	var transfer_label = _make_label("Transfer Save Data")
+	transfer_label.add_theme_color_override("font_color", Color(1, 0.9, 0.5))
+	add_child(transfer_label)
+	# Export
+	var export_btn = _make_button("Export Code")
+	export_btn.pressed.connect(_on_export_pressed)
+	add_child(export_btn)
+	_export_label = _make_label("Tap Export to generate a code.")
+	_export_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_export_label.custom_minimum_size.y = 60
+	_export_label.add_theme_color_override("font_color", Color(0.6, 0.85, 0.6))
+	_export_label.add_theme_font_size_override("font_size", 27)
+	add_child(_export_label)
+	# Import section
+	var import_hint = _make_label("Paste code below:")
+	add_child(import_hint)
+	_import_field = TextEdit.new()
+	_import_field.custom_minimum_size = Vector2(0, 150)
+	_import_field.add_theme_font_size_override("font_size", 27)
+	_import_field.placeholder_text = "Paste save code here..."
+	var te_style = StyleBoxFlat.new()
+	te_style.bg_color = Color(0.08, 0.07, 0.05, 0.95)
+	te_style.border_width_left = 1
+	te_style.border_width_top = 1
+	te_style.border_width_right = 1
+	te_style.border_width_bottom = 1
+	te_style.border_color = Color(0.4, 0.35, 0.25)
+	te_style.corner_radius_top_left = 4
+	te_style.corner_radius_top_right = 4
+	te_style.corner_radius_bottom_right = 4
+	te_style.corner_radius_bottom_left = 4
+	_import_field.add_theme_stylebox_override("normal", te_style)
+	add_child(_import_field)
+	var import_btn = _make_button("Import Code")
+	import_btn.pressed.connect(_on_import_pressed)
+	add_child(import_btn)
+	_import_status = _make_label("")
+	_import_status.add_theme_color_override("font_color", Color(0.9, 0.7, 0.3))
+	add_child(_import_status)
+
+
+func _make_button(text: String) -> Button:
+	var btn = Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(255, 108)
+	btn.add_theme_font_size_override("font_size", 39)
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.18, 0.15, 0.1, 0.95)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.5, 0.42, 0.28, 1)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_right = 8
+	style.corner_radius_bottom_left = 8
+	btn.add_theme_stylebox_override("normal", style)
+	return btn
+
+
+func _make_label(text: String) -> Label:
+	var lbl = Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 33)
+	lbl.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
+	return lbl
+
+
+func _on_save_pressed() -> void:
+	var result = SaveManager.call("save_game")
+	if result:
+		GameManager.log_action("Game saved!")
+		_status_label.text = "Game saved successfully."
+	else:
+		_status_label.text = "Save failed!"
+
+
+func _on_load_pressed() -> void:
+	var result = SaveManager.call("load_game")
+	if result:
+		GameManager.log_action("Game loaded!")
+		_status_label.text = "Game loaded successfully."
+	else:
+		_status_label.text = "No save file found."
+
+
+func _on_export_pressed() -> void:
+	var code = SaveManager.call("export_save_string")
+	if code and str(code) != "":
+		_export_label.text = str(code)
+		DisplayServer.clipboard_set(str(code))
+		_import_status.text = "Code copied to clipboard!"
+		GameManager.log_action("Save code copied to clipboard!")
+	else:
+		_export_label.text = "Export failed."
+
+
+func _on_import_pressed() -> void:
+	var code = _import_field.text.strip_edges()
+	if code == "":
+		_import_status.text = "Paste a code first."
+		return
+	var result = SaveManager.call("import_save_string", code)
+	if result:
+		_import_status.text = "Import successful!"
+		GameManager.log_action("Save imported successfully!")
+		_update_status()
+	else:
+		_import_status.text = "Invalid code. Check and try again."
+
+
+func _update_status() -> void:
+	var has_save = SaveManager.call("has_save_file")
+	if has_save:
+		_status_label.text = "Save file exists."
+	else:
+		_status_label.text = "No save file yet."

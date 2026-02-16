@@ -8,9 +8,11 @@ extends CanvasLayer
 @onready var inventory_overlay: PanelContainer = $InventoryOverlay
 @onready var skills_overlay: PanelContainer = $SkillsOverlay
 @onready var equipment_overlay: PanelContainer = $EquipmentOverlay
+@onready var save_menu_overlay: PanelContainer = $SaveMenuOverlay
 @onready var inventory_panel: Panel = $InventoryOverlay/VBox/InventoryPanel
 @onready var skills_panel: VBoxContainer = $SkillsOverlay/VBox/SkillsScroll/SkillsPanel
 @onready var equipment_panel: Panel = $EquipmentOverlay/VBox/EquipmentPanel
+@onready var save_menu_panel: VBoxContainer = $SaveMenuOverlay/VBox/SaveMenuScroll/SaveMenuPanel
 
 var _player: Node3D
 var _debug_panel: Control
@@ -24,10 +26,12 @@ func _ready() -> void:
 	$BottomToolbar/ButtonRow/InventoryBtn.pressed.connect(_toggle.bind("inv"))
 	$BottomToolbar/ButtonRow/SkillsBtn.pressed.connect(_toggle.bind("skills"))
 	$BottomToolbar/ButtonRow/EquipBtn.pressed.connect(_toggle.bind("equip"))
+	$BottomToolbar/ButtonRow/MenuBtn.pressed.connect(_toggle.bind("menu"))
 	$BottomToolbar/ButtonRow/DebugBtn.pressed.connect(_toggle_debug_log)
 	$InventoryOverlay/VBox/Header/CloseBtn.pressed.connect(_close_panels)
 	$SkillsOverlay/VBox/Header/CloseBtn.pressed.connect(_close_panels)
 	$EquipmentOverlay/VBox/Header/CloseBtn.pressed.connect(_close_panels)
+	$SaveMenuOverlay/VBox/Header/CloseBtn.pressed.connect(_close_panels)
 	touch_blocker.gui_input.connect(_on_blocker_input)
 
 func setup(player) -> void:
@@ -40,13 +44,13 @@ func setup(player) -> void:
 	_load_ui("res://UI/Inventory/InventoryUI.tscn", inventory_panel)
 	_load_ui("res://UI/Skills/SkillsUI.tscn", skills_panel)
 	_load_ui("res://UI/Equipment/EquipmentUI.tscn", equipment_panel)
+	_load_ui("res://UI/SaveMenu/SaveMenuUI.tscn", save_menu_panel)
 	var ctx = load("res://UI/Inventory/ItemContextMenu.tscn")
 	if ctx:
 		_context_menu = ctx.instantiate()
 		add_child(_context_menu)
 		_context_menu.visible = false
-		if _context_menu.get("action_selected"):
-			_context_menu.action_selected.connect(_on_ctx_action)
+		_context_menu.call("set_player", player)
 	var dlg = load("res://UI/Dialogue/DialogueUI.tscn")
 	if dlg:
 		_dialogue_ui = dlg.instantiate()
@@ -90,6 +94,8 @@ func _get_overlay(key: String) -> Control:
 		return skills_overlay
 	elif key == "equip":
 		return equipment_overlay
+	elif key == "menu":
+		return save_menu_overlay
 	return null
 
 func _toggle(key: String) -> void:
@@ -105,7 +111,7 @@ func _toggle(key: String) -> void:
 		_current_panel = panel
 
 func _close_panels() -> void:
-	for p in [inventory_overlay, skills_overlay, equipment_overlay, touch_blocker]:
+	for p in [inventory_overlay, skills_overlay, equipment_overlay, save_menu_overlay, touch_blocker]:
 		p.visible = false
 	_current_panel = null
 	if _context_menu:
@@ -132,32 +138,6 @@ func show_context_menu(item, slot_idx: int, pos: Vector2) -> void:
 	if _context_menu:
 		_context_menu.call("show_for_item", item, slot_idx, pos)
 
-func _on_ctx_action(action: String, slot_idx: int) -> void:
-	var inv_slots = PlayerInventory.get("slots")
-	if inv_slots == null or slot_idx >= inv_slots.size() or inv_slots[slot_idx] == null:
-		return
-	var item = inv_slots[slot_idx]["item"]
-	if action == "Eat":
-		var heal = item.get("heal_amount")
-		if heal != null and heal > 0 and _player:
-			_player.call("heal", heal)
-			PlayerInventory.call("remove_item_at", slot_idx, 1)
-			GameManager.log_action("You eat the %s. It heals %d." % [item.call("get_display_name"), heal])
-	elif action == "Equip":
-		PlayerEquipment.call("equip_item", item, slot_idx)
-	elif action == "Bury":
-		PlayerInventory.call("remove_item_at", slot_idx, 1)
-		PlayerSkills.call("add_xp", "Prayer", 4.5)
-		GameManager.log_action("You bury the bones.")
-	elif action == "Drop":
-		PlayerInventory.call("remove_item_at", slot_idx, 1)
-		GameManager.log_action("You drop the %s." % item.call("get_display_name"))
-	elif action == "Examine":
-		var desc = item.get("description")
-		if desc == null or desc == "":
-			desc = item.call("get_display_name")
-		GameManager.log_action(desc)
-
 func show_dialogue(npc_name: String, lines: Array, merchant: bool = false, npc: Node3D = null) -> void:
 	if _dialogue_ui:
 		_dialogue_ui.call("show_dialogue", npc_name, lines, merchant, npc)
@@ -169,12 +149,12 @@ func _on_dialogue_closed() -> void:
 func _on_trade_requested(npc) -> void:
 	if npc == null:
 		return
-	var name = npc.get("display_name")
-	if name == null:
-		name = npc.name
+	var npc_name = npc.get("display_name")
+	if npc_name == null:
+		npc_name = npc.name
 	var stock = npc.call("get_shop_stock")
 	if stock:
-		show_shop(name, stock)
+		show_shop(npc_name, stock)
 
 func show_shop(npc_name: String, stock: Array) -> void:
 	if _shop_ui == null or not is_instance_valid(_shop_ui):

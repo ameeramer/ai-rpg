@@ -151,3 +151,37 @@ func _find_empty_slot() -> int:
 		if slots[i] == null:
 			return i
 	return -1
+
+
+func serialize() -> Dictionary:
+	var saved_slots = []
+	for i in range(MAX_SLOTS):
+		if slots[i] == null:
+			saved_slots.append(null)
+		else:
+			var item = slots[i]["item"]
+			var item_id = item.get("id")
+			saved_slots.append({
+				"item_id": int(item_id) if item_id != null else 0,
+				"quantity": slots[i]["quantity"]
+			})
+	return {"slots": saved_slots}
+
+
+func deserialize(data: Dictionary) -> void:
+	var saved_slots = data.get("slots", [])
+	for i in range(MAX_SLOTS):
+		if i >= saved_slots.size() or saved_slots[i] == null:
+			slots[i] = null
+		else:
+			var entry = saved_slots[i]
+			var item_id = int(entry.get("item_id", 0))
+			var qty = int(entry.get("quantity", 1))
+			var item = ItemRegistry.call("get_item_by_id", item_id)
+			if item != null:
+				slots[i] = {"item": item, "quantity": qty}
+			else:
+				slots[i] = null
+				FileLogger.log_msg("PlayerInventory: skipped unknown item id %d" % item_id)
+	inventory_changed.emit()
+	FileLogger.log_msg("PlayerInventory: deserialized %d slots" % MAX_SLOTS)
