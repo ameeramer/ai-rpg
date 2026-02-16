@@ -5,6 +5,7 @@ extends Node
 
 signal xp_gained(skill_name, amount, total_xp)
 signal level_up(skill_name, new_level)
+signal skills_changed()
 
 var SKILL_NAMES = [
 	"Attack", "Strength", "Defence", "Hitpoints",
@@ -46,18 +47,18 @@ func get_xp(skill_name: String) -> float:
 
 
 func get_xp_to_next_level(skill_name: String) -> float:
-	var current_level := get_level(skill_name)
+	var current_level = get_level(skill_name)
 	if current_level >= 99:
 		return 0.0
 	return _xp_for_level(current_level + 1) - get_xp(skill_name)
 
 
 func get_level_progress(skill_name: String) -> float:
-	var current_level := get_level(skill_name)
+	var current_level = get_level(skill_name)
 	if current_level >= 99:
 		return 1.0
-	var current_level_xp := _xp_for_level(current_level)
-	var next_level_xp := _xp_for_level(current_level + 1)
+	var current_level_xp = _xp_for_level(current_level)
+	var next_level_xp = _xp_for_level(current_level + 1)
 	return (get_xp(skill_name) - current_level_xp) / (next_level_xp - current_level_xp)
 
 
@@ -66,7 +67,7 @@ func add_xp(skill_name: String, amount: float) -> void:
 		return
 	skill_xp[skill_name] += amount
 	xp_gained.emit(skill_name, amount, skill_xp[skill_name])
-	var new_level := _level_for_xp(skill_xp[skill_name])
+	var new_level = _level_for_xp(skill_xp[skill_name])
 	if new_level > skill_levels[skill_name]:
 		skill_levels[skill_name] = new_level
 		level_up.emit(skill_name, new_level)
@@ -81,10 +82,10 @@ func add_combat_xp(total_xp: float) -> void:
 
 
 func get_combat_level() -> int:
-	var base := 0.25 * (get_level("Defence") + get_level("Hitpoints") + floorf(get_level("Prayer") / 2.0))
-	var melee := 0.325 * (get_level("Attack") + get_level("Strength"))
-	var ranged := 0.325 * (floorf(get_level("Ranged") / 2.0) + get_level("Ranged"))
-	var magic := 0.325 * (floorf(get_level("Magic") / 2.0) + get_level("Magic"))
+	var base = 0.25 * (get_level("Defence") + get_level("Hitpoints") + floorf(get_level("Prayer") / 2.0))
+	var melee = 0.325 * (get_level("Attack") + get_level("Strength"))
+	var ranged = 0.325 * (floorf(get_level("Ranged") / 2.0) + get_level("Ranged"))
+	var magic = 0.325 * (floorf(get_level("Magic") / 2.0) + get_level("Magic"))
 	return int(base + max(melee, max(ranged, magic)))
 
 
@@ -102,8 +103,23 @@ func _level_for_xp(xp: float) -> int:
 	return 1
 
 
+func serialize() -> Dictionary:
+	return {"skill_xp": skill_xp.duplicate()}
+
+
+func deserialize(data: Dictionary) -> void:
+	var saved_xp = data.get("skill_xp", {})
+	for skill in SKILL_NAMES:
+		if saved_xp.has(skill):
+			skill_xp[skill] = float(saved_xp[skill])
+	for skill in SKILL_NAMES:
+		skill_levels[skill] = _level_for_xp(skill_xp[skill])
+	skills_changed.emit()
+	FileLogger.log_msg("PlayerSkills: deserialized %d skills" % SKILL_NAMES.size())
+
+
 func _update_player_hp(new_level: int) -> void:
-	var players := get_tree().get_nodes_in_group("player")
+	var players = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		var player = players[0]
 		player.max_hitpoints = new_level
