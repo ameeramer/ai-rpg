@@ -20,6 +20,8 @@ var _player: Node3D
 var _debug_panel: Control
 var _dialogue_ui: Control
 var _shop_ui: Control
+var _chat_ui: Control
+var _trade_ui: Control
 var _context_menu: Control
 var _current_panel: Control = null
 
@@ -65,6 +67,42 @@ func setup(player) -> void:
 			_dialogue_ui.dialogue_closed.connect(_on_dialogue_closed)
 		if _dialogue_ui.get("trade_requested"):
 			_dialogue_ui.trade_requested.connect(_on_trade_requested)
+	_init_chat_ui()
+	_init_trade_ui()
+
+func _init_chat_ui() -> void:
+	var sc = load("res://UI/Chat/ChatUI.tscn")
+	if sc:
+		_chat_ui = sc.instantiate()
+		_chat_ui.anchor_left = 0.5
+		_chat_ui.anchor_top = 0.5
+		_chat_ui.anchor_right = 0.5
+		_chat_ui.anchor_bottom = 0.5
+		_chat_ui.offset_left = -480
+		_chat_ui.offset_top = -300
+		_chat_ui.offset_right = 480
+		_chat_ui.offset_bottom = 300
+		add_child(_chat_ui)
+		var sig = _chat_ui.get("chat_closed")
+		if sig:
+			_chat_ui.chat_closed.connect(_close_panels)
+
+func _init_trade_ui() -> void:
+	var sc = load("res://UI/Trade/TradeUI.tscn")
+	if sc:
+		_trade_ui = sc.instantiate()
+		_trade_ui.anchor_left = 0.5
+		_trade_ui.anchor_top = 0.5
+		_trade_ui.anchor_right = 0.5
+		_trade_ui.anchor_bottom = 0.5
+		_trade_ui.offset_left = -480
+		_trade_ui.offset_top = -350
+		_trade_ui.offset_right = 480
+		_trade_ui.offset_bottom = 350
+		add_child(_trade_ui)
+		var sig = _trade_ui.get("trade_closed")
+		if sig:
+			_trade_ui.trade_closed.connect(_close_panels)
 
 func _load_ui(path: String, parent: Control) -> void:
 	var scene = load(path)
@@ -125,6 +163,10 @@ func _close_panels() -> void:
 		_context_menu.visible = false
 	if _shop_ui and is_instance_valid(_shop_ui):
 		_shop_ui.visible = false
+	if _chat_ui and is_instance_valid(_chat_ui):
+		_chat_ui.visible = false
+	if _trade_ui and is_instance_valid(_trade_ui):
+		_trade_ui.visible = false
 
 func _on_blocker_input(event: InputEvent) -> void:
 	if (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
@@ -146,6 +188,10 @@ func show_context_menu(item, slot_idx: int, pos: Vector2) -> void:
 		_context_menu.call("show_for_item", item, slot_idx, pos)
 
 func show_dialogue(npc_name: String, lines: Array, merchant: bool = false, npc: Node3D = null) -> void:
+	# Check if this is an AI NPC — show chat UI instead of dialogue
+	if npc and npc.call("is_ai_npc"):
+		show_ai_chat(npc)
+		return
 	if _dialogue_ui:
 		_dialogue_ui.call("show_dialogue", npc_name, lines, merchant, npc)
 
@@ -188,6 +234,28 @@ func show_shop(npc_name: String, stock: Array) -> void:
 		_shop_ui.visible = true
 		touch_blocker.visible = true
 		_current_panel = _shop_ui
+
+func show_ai_chat(npc) -> void:
+	if _chat_ui == null:
+		return
+	var npc_name = npc.get("display_name")
+	if npc_name == null:
+		npc_name = "AI NPC"
+	_close_panels()
+	_chat_ui.call("open_chat", npc_name, npc)
+	touch_blocker.visible = true
+	_current_panel = _chat_ui
+
+func show_ai_trade(npc) -> void:
+	if _trade_ui == null:
+		return
+	var npc_name = npc.get("display_name")
+	if npc_name == null:
+		npc_name = "AI NPC"
+	_close_panels()
+	_trade_ui.call("open_trade", npc_name, npc)
+	touch_blocker.visible = true
+	_current_panel = _trade_ui
 
 func _toggle_debug_log() -> void:
 	if _debug_panel and is_instance_valid(_debug_panel):

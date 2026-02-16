@@ -21,6 +21,7 @@ PlayerEquipment="*res://Systems/player_equipment.gd"
 ItemRegistry="*res://Systems/item_registry.gd"
 CombatStyle="*res://Systems/combat_style.gd"
 SaveManager="*res://Systems/save_manager.gd"
+AiNpcManager="*res://Systems/ai_npc_manager.gd"
 
 [display]
 
