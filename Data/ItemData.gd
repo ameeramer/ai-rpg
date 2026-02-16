@@ -21,6 +21,9 @@ extends Resource
 ## The 3D model to show when dropped on the ground
 @export var world_model: PackedScene
 
+## Path to .glb model for inventory icon rendering
+@export var model_path: String = ""
+
 
 func get_display_name() -> String:
 	return item_name if item_name != "" else "Unknown Item"

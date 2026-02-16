@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="FoodData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Data/ItemData.gd" id="1"]
+[ext_resource type="Script" path="res://Data/FoodData.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
@@ -12,3 +12,10 @@ max_stack = 1
 weight = 0.5
 value = 1
 category = "Food"
+model_path = "res://Assets/Models/Items/raw_shrimps.glb"
+heal_amount = 0
+eat_ticks = 3
+cooked_item_id = 315
+required_cooking_level = 1
+cooking_xp = 30.0
+burn_stop_level = 34

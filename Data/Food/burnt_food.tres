@@ -4,12 +4,11 @@
 
 [resource]
 script = ExtResource("1")
-id = 436
-item_name = "Copper Ore"
-description = "A piece of copper ore."
+id = 323
+item_name = "Burnt food"
+description = "Oops! It's completely burnt."
 is_stackable = false
 max_stack = 1
-weight = 2.0
-value = 3
-category = "Resource"
-model_path = "res://Assets/Models/Items/copper_ore.glb"
+weight = 0.5
+value = 0
+category = "General"

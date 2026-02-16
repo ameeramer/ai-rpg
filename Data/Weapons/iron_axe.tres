@@ -4,21 +4,21 @@
 
 [resource]
 script = ExtResource("1")
-id = 1277
-item_name = "Bronze Sword"
-description = "A razor-sharp sword."
+id = 1353
+item_name = "Iron Axe"
+description = "An iron woodcutting axe."
 is_stackable = false
 max_stack = 1
-weight = 1.8
-value = 26
-category = "Weapon"
-model_path = "res://Assets/Models/Weapons/bronze_sword.glb"
+weight = 2.2
+value = 56
+category = "Tool"
+model_path = "res://Assets/Models/Weapons/iron_axe.glb"
 is_equippable = true
 attack_damage = 4
-attack_speed = 2.4
+attack_speed = 3.0
 attack_range = 1.5
 required_attack_level = 1
-attack_bonus = 4
+attack_bonus = 5
 strength_bonus = 3
 combat_style = "Melee"
 attack_type = "Slash"

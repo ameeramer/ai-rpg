@@ -7,16 +7,18 @@
 radius = 1.5
 height = 0.5
 
-[node name="FishingSpot" type="StaticBody3D"]
+[node name="TroutSpot" type="StaticBody3D"]
 collision_layer = 8
 script = ExtResource("1")
 display_name = "Fishing Spot"
 interaction_verb = "Fish"
 ticks_per_action = 5
 required_skill = "Fishing"
-required_level = 1
-xp_reward = 10.0
-respawn_ticks = 8
+required_level = 20
+xp_reward = 50.0
+respawn_ticks = 12
+min_gathers = 2
+max_gathers = 8
 
 [node name="ActiveMesh" type="Node3D" parent="."]
 

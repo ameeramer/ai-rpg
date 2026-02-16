@@ -122,11 +122,10 @@ func _perform_attack() -> void:
 
 
 func _calculate_max_hit() -> int:
-	var strength_level: int = 1
-	var strength_bonus: int = 0
-
-	strength_level = PlayerSkills.get_level("Strength")
-
-	var effective_strength := strength_level + 8
-	var max_hit := int(0.5 + effective_strength * (strength_bonus + 64) / 640.0)
+	var strength_level = PlayerSkills.get_level("Strength")
+	var strength_bonus = PlayerEquipment.call("get_strength_bonus")
+	if strength_bonus == null:
+		strength_bonus = 0
+	var effective_strength = strength_level + 8
+	var max_hit = int(0.5 + effective_strength * (strength_bonus + 64) / 640.0)
 	return max(1, max_hit)

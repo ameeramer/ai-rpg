@@ -12,6 +12,7 @@ max_stack = 1
 weight = 1.8
 value = 16
 category = "Tool"
+model_path = "res://Assets/Models/Weapons/bronze_axe.glb"
 is_equippable = true
 attack_damage = 2
 attack_speed = 3.0
