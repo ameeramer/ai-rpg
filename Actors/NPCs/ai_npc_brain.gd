@@ -10,6 +10,8 @@ var _decision_interval: int = 15
 var _last_action: String = "idle"
 var _world_objects: Array = []
 var _chat_history: Array = []
+var _event_log: Array = []
+var MAX_EVENTS: int = 20
 
 
 func _ready() -> void:
@@ -37,8 +39,13 @@ func set_world_objects(objects: Array) -> void:
 
 func set_chat_history(messages: Array) -> void:
 	_chat_history = messages
-	# Player just chatted — trigger a quicker decision
 	_decision_cooldown = min(_decision_cooldown, 2)
+
+
+func log_event(text: String) -> void:
+	_event_log.append(text)
+	if _event_log.size() > MAX_EVENTS:
+		_event_log.pop_front()
 
 
 func _on_game_tick(_tick) -> void:
@@ -92,9 +99,13 @@ func _build_game_state() -> String:
 	if player_dist >= 0:
 		state += "Player distance: %.0f units. " % player_dist
 	state += "Skills: %s. " % skill_text
+	if _event_log.size() > 0:
+		state += "\nRecent events:\n"
+		var ev_start = max(0, _event_log.size() - 6)
+		for i in range(ev_start, _event_log.size()):
+			state += "- %s\n" % _event_log[i]
 	if _chat_history.size() > 0:
 		state += "\nRecent conversation with the player:\n"
-		# Include last few messages to stay within token limits
 		var start = max(0, _chat_history.size() - 6)
 		for i in range(start, _chat_history.size()):
 			var msg = _chat_history[i]
@@ -113,6 +124,8 @@ func _on_decision(response: String) -> void:
 	var action = parsed.get("action", "idle")
 	var reason = parsed.get("reason", "")
 	FileLogger.log_msg("AiNpcBrain: action=%s reason=%s" % [action, reason])
+	if reason != "":
+		log_event("Decided to %s: %s" % [action.replace("_", " "), reason])
 	_execute_action(action)
 	_last_action = action
 

@@ -122,6 +122,7 @@ func take_damage(amount: int) -> void:
 		collision_layer = 0
 		_respawn_counter = 50
 		GameManager.log_action("%s has been defeated!" % display_name)
+		_log_event("I was defeated in combat and had to respawn.")
 
 func _show_hitsplat(amount: int) -> void:
 	var lbl = Label3D.new()
@@ -149,6 +150,7 @@ func _on_game_tick(_tick) -> void:
 			visible = true
 			collision_layer = 16
 			_current_action = "idle"
+			_log_event("Respawned after being defeated.")
 		return
 	if _current_action == "combat":
 		_combat_tick()
@@ -216,6 +218,10 @@ func _combat_tick() -> void:
 		_current_action = "idle"
 		return
 	if _target_object.get("_is_dead"):
+		var ename = _target_object.get("display_name")
+		if ename == null:
+			ename = _target_object.name
+		_log_event("Defeated %s in combat." % ename)
 		_current_action = "idle"
 		_target_object = null
 		return
@@ -281,6 +287,10 @@ func _gathering_tick() -> void:
 		gr -= 1
 		_target_object.set("_gathers_remaining", gr)
 		if gr <= 0:
+			var obj_name = _target_object.get("display_name")
+			if obj_name == null:
+				obj_name = _target_object.name
+			_log_event("Finished gathering from %s." % obj_name)
 			_target_object.call("_deplete")
 			_current_action = "idle"
 			_target_object = null
@@ -297,11 +307,18 @@ func _add_xp(skill: String, amount: float) -> void:
 	if nl > 99:
 		nl = 99
 	if nl > npc_skills[skill]["level"]:
+		var old_lv = npc_skills[skill]["level"]
 		npc_skills[skill]["level"] = nl
 		GameManager.log_action("%s: %s level %d!" % [display_name, skill, nl])
+		_log_event("%s leveled up from %d to %d!" % [skill, old_lv, nl])
 		if skill == "Hitpoints":
 			max_hitpoints = nl
 			hitpoints = nl
+
+func _log_event(text: String) -> void:
+	var brain = get_node_or_null("Brain")
+	if brain:
+		brain.call("log_event", text)
 
 func approach_player(reason: String) -> void:
 	if _player_ref == null or _is_dead:
@@ -325,6 +342,9 @@ func serialize() -> Dictionary:
 		var ch = brain.get("_chat_history")
 		if ch and ch.size() > 0:
 			data["chat"] = ch
+		var ev = brain.get("_event_log")
+		if ev and ev.size() > 0:
+			data["events"] = ev
 	return data
 
 
@@ -348,8 +368,11 @@ func deserialize(data: Dictionary) -> void:
 	var pos = data.get("pos")
 	if pos != null and pos is Array and pos.size() >= 3:
 		global_position = Vector3(float(pos[0]), float(pos[1]), float(pos[2]))
-	var chat = data.get("chat")
-	if chat:
-		var brain = get_node_or_null("Brain")
-		if brain:
+	var brain = get_node_or_null("Brain")
+	if brain:
+		var chat = data.get("chat")
+		if chat:
 			brain.call("set_chat_history", chat)
+		var events = data.get("events")
+		if events:
+			brain.set("_event_log", events)

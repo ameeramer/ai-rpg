@@ -125,12 +125,23 @@ func _on_send_text(_text: String) -> void:
 
 func _build_chat_system() -> String:
 	var skills = ""
+	var events = ""
 	if _npc_ref:
 		var ns = _npc_ref.get("npc_skills")
 		if ns:
 			for s in ns:
 				skills += "%s:%d " % [s, ns[s]["level"]]
-	return "You are %s, an AI companion in an OSRS-style RPG. You are friendly, helpful, and talk like an adventurer. Your skills: %s. Keep responses short (1-3 sentences). You can discuss strategy, offer to trade items, or just chat." % [_npc_name, skills]
+		var brain = _npc_ref.get_node_or_null("Brain")
+		if brain:
+			var log = brain.get("_event_log")
+			if log and log.size() > 0:
+				var start = max(0, log.size() - 10)
+				for i in range(start, log.size()):
+					events += "- " + str(log[i]) + "\n"
+	var prompt = "You are %s, an AI companion in an OSRS-style RPG. You are friendly, helpful, and talk like an adventurer. Your skills: %s. Keep responses short (1-3 sentences). You can discuss strategy, offer to trade items, or just chat." % [_npc_name, skills]
+	if events != "":
+		prompt += "\n\nThings that happened recently (use this to inform your responses):\n" + events
+	return prompt
 
 
 func _on_chat_response(text: String) -> void:
