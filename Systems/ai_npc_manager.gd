@@ -57,10 +57,17 @@ func _load_api_key() -> void:
 		api_key = str(parsed["api_key"])
 
 
+var _retry_count: int = 0
+var _max_retries: int = 2
+
+
 func _make_http() -> HTTPRequest:
 	var http = HTTPRequest.new()
 	http.timeout = 30.0
-	http.use_threads = true
+	# CRITICAL: use_threads=false on Android — threaded HTTPS fails instantly
+	# with RESULT_CONNECTION_ERROR because the background thread lacks proper
+	# JNI/network context for mbedTLS on Android Godot 4.3
+	http.use_threads = false
 	add_child(http)
 	return http
 
@@ -70,6 +77,7 @@ func send_brain_request(system_prompt: String, user_msg: String, callback: Calla
 		FileLogger.log_msg("AiNpcManager: no API key, skipping request")
 		return
 	_pending_callback = callback
+	_retry_count = 0
 	var body = {
 		"model": "claude-haiku-4-5-20251001",
 		"max_tokens": 300,
@@ -77,14 +85,18 @@ func send_brain_request(system_prompt: String, user_msg: String, callback: Calla
 		"messages": [{"role": "user", "content": user_msg}]
 	}
 	var json_body = JSON.stringify(body)
+	_do_request(json_body)
+
+
+func _do_request(json_body: String) -> void:
 	var headers = [
 		"Content-Type: application/json",
 		"x-api-key: " + api_key,
 		"anthropic-version: 2023-06-01"
 	]
 	var http = _make_http()
-	http.request_completed.connect(_on_request_done.bind(http))
-	FileLogger.log_msg("AiNpcManager: sending brain request, body_len=%d" % json_body.length())
+	http.request_completed.connect(_on_request_done.bind(http, json_body))
+	FileLogger.log_msg("AiNpcManager: sending request attempt=%d body_len=%d" % [_retry_count, json_body.length()])
 	var err = http.request(
 		"https://api.anthropic.com/v1/messages",
 		headers,
@@ -95,13 +107,14 @@ func send_brain_request(system_prompt: String, user_msg: String, callback: Calla
 		FileLogger.log_msg("AiNpcManager: request() returned error %d" % err)
 		http.queue_free()
 	else:
-		FileLogger.log_msg("AiNpcManager: request() queued OK")
+		FileLogger.log_msg("AiNpcManager: request() queued OK (no threads)")
 
 
 func send_chat_request(system_prompt: String, messages: Array, callback: Callable) -> void:
 	if api_key == "":
 		return
 	_pending_callback = callback
+	_retry_count = 0
 	var body = {
 		"model": "claude-haiku-4-5-20251001",
 		"max_tokens": 500,
@@ -109,28 +122,20 @@ func send_chat_request(system_prompt: String, messages: Array, callback: Callabl
 		"messages": messages
 	}
 	var json_body = JSON.stringify(body)
-	var headers = [
-		"Content-Type: application/json",
-		"x-api-key: " + api_key,
-		"anthropic-version: 2023-06-01"
-	]
-	var http = _make_http()
-	http.request_completed.connect(_on_request_done.bind(http))
-	var err = http.request(
-		"https://api.anthropic.com/v1/messages",
-		headers,
-		HTTPClient.METHOD_POST,
-		json_body
-	)
-	if err != OK:
-		FileLogger.log_msg("AiNpcManager: chat request error %d" % err)
-		http.queue_free()
+	_do_request(json_body)
 
 
-func _on_request_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
+func _on_request_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest, json_body: String) -> void:
 	http.queue_free()
 	if result != HTTPRequest.RESULT_SUCCESS:
-		FileLogger.log_msg("AiNpcManager: HTTP failed result=%d code=%d" % [result, code])
+		FileLogger.log_msg("AiNpcManager: HTTP failed result=%d code=%d attempt=%d" % [result, code, _retry_count])
+		# Retry on connection error (could be transient)
+		if result == 3 and _retry_count < _max_retries:
+			_retry_count += 1
+			FileLogger.log_msg("AiNpcManager: retrying in 2s (attempt %d)" % _retry_count)
+			var timer = get_tree().create_timer(2.0)
+			timer.timeout.connect(_do_request.bind(json_body))
+			return
 		return
 	var json_str = body.get_string_from_utf8()
 	var parsed = JSON.parse_string(json_str)
