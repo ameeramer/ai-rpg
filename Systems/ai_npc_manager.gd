@@ -8,7 +8,6 @@ signal api_key_changed(has_key)
 
 var api_key: String = ""
 var _initialized: bool = false
-var _http: HTTPRequest = null
 var _pending_callback: Callable
 var _settings_path = "user://ai_npc_settings.json"
 
@@ -21,15 +20,6 @@ func ensure_initialized() -> void:
 	if _initialized:
 		return
 	_initialized = true
-	_http = HTTPRequest.new()
-	_http.timeout = 30.0
-	_http.use_threads = true
-	var tls = TLSOptions.client_unsafe()
-	if tls:
-		_http.set_tls_options(tls)
-		FileLogger.log_msg("AiNpcManager: TLS options set (unsafe)")
-	add_child(_http)
-	_http.request_completed.connect(_on_request_completed)
 	_load_api_key()
 	FileLogger.log_msg("AiNpcManager initialized, key=%s" % ("set" if api_key != "" else "unset"))
 
@@ -67,12 +57,17 @@ func _load_api_key() -> void:
 		api_key = str(parsed["api_key"])
 
 
+func _make_http() -> HTTPRequest:
+	var http = HTTPRequest.new()
+	http.timeout = 30.0
+	http.use_threads = true
+	add_child(http)
+	return http
+
+
 func send_brain_request(system_prompt: String, user_msg: String, callback: Callable) -> void:
 	if api_key == "":
 		FileLogger.log_msg("AiNpcManager: no API key, skipping request")
-		return
-	if _http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED and _http.get_http_client_status() != HTTPClient.STATUS_CONNECTED:
-		FileLogger.log_msg("AiNpcManager: HTTP busy, skipping")
 		return
 	_pending_callback = callback
 	var body = {
@@ -87,8 +82,10 @@ func send_brain_request(system_prompt: String, user_msg: String, callback: Calla
 		"x-api-key: " + api_key,
 		"anthropic-version: 2023-06-01"
 	]
+	var http = _make_http()
+	http.request_completed.connect(_on_request_done.bind(http))
 	FileLogger.log_msg("AiNpcManager: sending brain request, body_len=%d" % json_body.length())
-	var err = _http.request(
+	var err = http.request(
 		"https://api.anthropic.com/v1/messages",
 		headers,
 		HTTPClient.METHOD_POST,
@@ -96,14 +93,13 @@ func send_brain_request(system_prompt: String, user_msg: String, callback: Calla
 	)
 	if err != OK:
 		FileLogger.log_msg("AiNpcManager: request() returned error %d" % err)
+		http.queue_free()
 	else:
 		FileLogger.log_msg("AiNpcManager: request() queued OK")
 
 
 func send_chat_request(system_prompt: String, messages: Array, callback: Callable) -> void:
 	if api_key == "":
-		return
-	if _http.get_http_client_status() != HTTPClient.STATUS_DISCONNECTED and _http.get_http_client_status() != HTTPClient.STATUS_CONNECTED:
 		return
 	_pending_callback = callback
 	var body = {
@@ -118,7 +114,9 @@ func send_chat_request(system_prompt: String, messages: Array, callback: Callabl
 		"x-api-key: " + api_key,
 		"anthropic-version: 2023-06-01"
 	]
-	var err = _http.request(
+	var http = _make_http()
+	http.request_completed.connect(_on_request_done.bind(http))
+	var err = http.request(
 		"https://api.anthropic.com/v1/messages",
 		headers,
 		HTTPClient.METHOD_POST,
@@ -126,9 +124,11 @@ func send_chat_request(system_prompt: String, messages: Array, callback: Callabl
 	)
 	if err != OK:
 		FileLogger.log_msg("AiNpcManager: chat request error %d" % err)
+		http.queue_free()
 
 
-func _on_request_completed(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+func _on_request_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest) -> void:
+	http.queue_free()
 	if result != HTTPRequest.RESULT_SUCCESS:
 		FileLogger.log_msg("AiNpcManager: HTTP failed result=%d code=%d" % [result, code])
 		return
