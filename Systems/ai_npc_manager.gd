@@ -22,8 +22,12 @@ func ensure_initialized() -> void:
 		return
 	_initialized = true
 	_http = HTTPRequest.new()
-	_http.timeout = 15.0
-	_http.set_tls_options(TLSOptions.client_unsafe())
+	_http.timeout = 30.0
+	_http.use_threads = true
+	var tls = TLSOptions.client_unsafe()
+	if tls:
+		_http.set_tls_options(tls)
+		FileLogger.log_msg("AiNpcManager: TLS options set (unsafe)")
 	add_child(_http)
 	_http.request_completed.connect(_on_request_completed)
 	_load_api_key()
@@ -83,6 +87,7 @@ func send_brain_request(system_prompt: String, user_msg: String, callback: Calla
 		"x-api-key: " + api_key,
 		"anthropic-version: 2023-06-01"
 	]
+	FileLogger.log_msg("AiNpcManager: sending brain request, body_len=%d" % json_body.length())
 	var err = _http.request(
 		"https://api.anthropic.com/v1/messages",
 		headers,
@@ -90,7 +95,9 @@ func send_brain_request(system_prompt: String, user_msg: String, callback: Calla
 		json_body
 	)
 	if err != OK:
-		FileLogger.log_msg("AiNpcManager: request error %d" % err)
+		FileLogger.log_msg("AiNpcManager: request() returned error %d" % err)
+	else:
+		FileLogger.log_msg("AiNpcManager: request() queued OK")
 
 
 func send_chat_request(system_prompt: String, messages: Array, callback: Callable) -> void:
