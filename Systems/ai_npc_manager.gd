@@ -4,6 +4,7 @@ extends Node
 
 signal api_response(result)
 signal chat_response(message)
+signal api_key_changed(has_key)
 
 var api_key: String = ""
 var _initialized: bool = false
@@ -35,7 +36,8 @@ func has_api_key() -> bool:
 func set_api_key(key: String) -> void:
 	api_key = key.strip_edges()
 	_save_api_key()
-	FileLogger.log_msg("AiNpcManager: API key updated")
+	FileLogger.log_msg("AiNpcManager: API key updated, has_key=%s" % str(api_key != ""))
+	api_key_changed.emit(api_key != "")
 
 
 func _save_api_key() -> void:

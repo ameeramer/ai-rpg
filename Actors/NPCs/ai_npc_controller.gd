@@ -23,6 +23,7 @@ var _player_ref: Node3D = null
 var _approach_player: bool = false
 var _approach_reason: String = ""
 var _xp_table: Array = []
+var _suspended: bool = false
 
 func _ready() -> void:
 	ensure_initialized()
@@ -51,7 +52,14 @@ func ensure_initialized() -> void:
 		if sig:
 			GameManager.game_tick.connect(_on_game_tick)
 			_tick_connected = true
+	var key_sig = AiNpcManager.get("api_key_changed")
+	if key_sig:
+		AiNpcManager.api_key_changed.connect(_on_api_key_changed)
 	_add_name_label()
+	# Start suspended if no API key
+	var has_key = AiNpcManager.call("has_api_key")
+	if not has_key:
+		_suspend()
 
 func _add_name_label() -> void:
 	if get_node_or_null("NameLabel"):
@@ -66,6 +74,25 @@ func _add_name_label() -> void:
 	lbl.outline_modulate = Color(0, 0, 0)
 	lbl.position.y = 2.3
 	add_child(lbl)
+
+func _on_api_key_changed(has_key) -> void:
+	if has_key and _suspended:
+		_resume()
+	elif not has_key and not _suspended:
+		_suspend()
+
+func _suspend() -> void:
+	_suspended = true
+	visible = false
+	collision_layer = 0
+	_current_action = "idle"
+	_target_object = null
+
+func _resume() -> void:
+	_suspended = false
+	visible = true
+	if not _is_dead:
+		collision_layer = 16
 
 func set_player_ref(p: Node3D) -> void:
 	_player_ref = p
@@ -112,6 +139,8 @@ func _show_hitsplat(amount: int) -> void:
 	tw.tween_callback(lbl.queue_free)
 
 func _on_game_tick(_tick) -> void:
+	if _suspended:
+		return
 	if _is_dead:
 		_respawn_counter -= 1
 		if _respawn_counter <= 0:
@@ -136,7 +165,7 @@ func move_to(pos: Vector3) -> void:
 	is_moving = true
 
 func _physics_process(_delta: float) -> void:
-	if _is_dead or _nav_agent == null:
+	if _suspended or _is_dead or _nav_agent == null:
 		return
 	if (_current_action == "combat" or _current_action == "gathering") and _target_object and is_instance_valid(_target_object):
 		if not is_in_range_of(_target_object):

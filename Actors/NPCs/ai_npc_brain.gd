@@ -43,7 +43,6 @@ func _on_game_tick(_tick) -> void:
 		return
 	var mgr_key = AiNpcManager.call("has_api_key")
 	if not mgr_key:
-		_do_fallback_action()
 		return
 	_decision_cooldown -= 1
 	if _decision_cooldown <= 0:
@@ -155,13 +154,3 @@ func _find_and_attack() -> void:
 			best = obj
 	if best:
 		_npc.call("attack_target", best)
-
-
-func _do_fallback_action() -> void:
-	_decision_cooldown -= 1
-	if _decision_cooldown <= 0:
-		_decision_cooldown = 20
-		var actions = ["gather_trees", "gather_rocks", "attack_goblins", "idle"]
-		var pick = actions[randi() % actions.size()]
-		_execute_action(pick)
-		_last_action = pick
