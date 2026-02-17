@@ -104,11 +104,6 @@ func _on_send() -> void:
 	_messages.append({"role": "user", "content": text})
 	_waiting = true
 	_send_btn.disabled = true
-	# Tell the brain what the player said so it can act on it
-	if _npc_ref:
-		var brain = _npc_ref.get_node_or_null("Brain")
-		if brain:
-			brain.call("set_player_request", text)
 	var sys = _build_chat_system()
 	AiNpcManager.call("send_chat_request", sys, _messages, Callable(self, "_on_chat_response"))
 
@@ -134,6 +129,15 @@ func _on_chat_response(text: String) -> void:
 		text = "Hmm, I'm not sure what to say..."
 	_messages.append({"role": "assistant", "content": text})
 	_add_msg_bubble(_npc_name, text, false)
+	_sync_chat_to_brain()
+
+
+func _sync_chat_to_brain() -> void:
+	if _npc_ref == null:
+		return
+	var brain = _npc_ref.get_node_or_null("Brain")
+	if brain:
+		brain.call("set_chat_history", _messages)
 
 
 func _add_msg_bubble(sender: String, text: String, is_player: bool) -> void:

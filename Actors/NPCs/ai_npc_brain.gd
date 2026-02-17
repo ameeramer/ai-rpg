@@ -9,7 +9,7 @@ var _decision_cooldown: int = 0
 var _decision_interval: int = 15
 var _last_action: String = "idle"
 var _world_objects: Array = []
-var _player_request: String = ""
+var _chat_history: Array = []
 
 
 func _ready() -> void:
@@ -35,10 +35,10 @@ func set_world_objects(objects: Array) -> void:
 	_world_objects = objects
 
 
-func set_player_request(text: String) -> void:
-	_player_request = text
-	# Trigger immediate decision so NPC responds to the request
-	_decision_cooldown = 0
+func set_chat_history(messages: Array) -> void:
+	_chat_history = messages
+	# Player just chatted — trigger a quicker decision
+	_decision_cooldown = min(_decision_cooldown, 2)
 
 
 func _on_game_tick(_tick) -> void:
@@ -92,9 +92,15 @@ func _build_game_state() -> String:
 	if player_dist >= 0:
 		state += "Player distance: %.0f units. " % player_dist
 	state += "Skills: %s. " % skill_text
-	if _player_request != "":
-		state += "PLAYER REQUEST: \"%s\". Prioritize this!" % _player_request
-		_player_request = ""
+	if _chat_history.size() > 0:
+		state += "\nRecent conversation with the player:\n"
+		# Include last few messages to stay within token limits
+		var start = max(0, _chat_history.size() - 6)
+		for i in range(start, _chat_history.size()):
+			var msg = _chat_history[i]
+			var who = "Player" if msg["role"] == "user" else "You"
+			state += "%s: %s\n" % [who, msg["content"]]
+		state += "Consider what was discussed when choosing your action."
 	return state
 
 
