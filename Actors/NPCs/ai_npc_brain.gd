@@ -89,15 +89,28 @@ func _build_game_state() -> String:
 
 
 func _on_decision(response: String) -> void:
-	var parsed = JSON.parse_string(response)
+	var json_str = _extract_json(response)
+	var parsed = JSON.parse_string(json_str)
 	if parsed == null:
-		FileLogger.log_msg("AiNpcBrain: failed to parse response")
+		FileLogger.log_msg("AiNpcBrain: failed to parse: %s" % response.substr(0, 120))
 		return
 	var action = parsed.get("action", "idle")
 	var reason = parsed.get("reason", "")
 	FileLogger.log_msg("AiNpcBrain: action=%s reason=%s" % [action, reason])
 	_execute_action(action)
 	_last_action = action
+
+
+func _extract_json(text: String) -> String:
+	# Try raw parse first
+	if JSON.parse_string(text) != null:
+		return text
+	# Find JSON object in response (model may wrap in markdown/text)
+	var start = text.find("{")
+	var end = text.rfind("}")
+	if start >= 0 and end > start:
+		return text.substr(start, end - start + 1)
+	return text
 
 
 func _execute_action(action: String) -> void:
