@@ -37,6 +37,10 @@ func set_world_objects(objects: Array) -> void:
 func _on_game_tick(_tick) -> void:
 	if _npc == null or _npc.get("_is_dead"):
 		return
+	# Don't interrupt ongoing actions — let NPC finish what it's doing
+	var action = _npc.get("_current_action")
+	if action == "combat" or action == "gathering":
+		return
 	var mgr_key = AiNpcManager.call("has_api_key")
 	if not mgr_key:
 		_do_fallback_action()
@@ -54,7 +58,7 @@ func _request_decision() -> void:
 
 
 func _build_system_prompt() -> String:
-	return "You are an AI NPC named %s in an OSRS-style RPG. You decide what action to take next to level up your skills and become stronger. Respond with ONLY a JSON object (no markdown) with keys: \"action\" (one of: \"move_to_trees\", \"move_to_rocks\", \"move_to_fish\", \"attack_goblins\", \"attack_skeletons\", \"idle\", \"approach_player_chat\", \"approach_player_trade\"), and \"reason\" (short explanation). Consider your current skill levels, HP, and what would be most efficient to train." % _npc.get("display_name")
+	return "You are an AI NPC named %s in an OSRS-style RPG. You decide what action to take next to level up your skills and become stronger. Respond with ONLY a JSON object (no markdown) with keys: \"action\" (one of: \"gather_trees\", \"gather_rocks\", \"gather_fish\", \"attack_goblins\", \"attack_skeletons\", \"idle\", \"approach_player_chat\", \"approach_player_trade\"), and \"reason\" (short explanation). Consider your current skill levels, HP, and what would be most efficient to train." % _npc.get("display_name")
 
 
 func _build_game_state() -> String:
@@ -82,7 +86,6 @@ func _build_game_state() -> String:
 	if player_dist >= 0:
 		state += "Player distance: %.0f units. " % player_dist
 	state += "Skills: %s. " % skill_text
-	state += "World: Trees at (6-16, 4-12), Rocks at (-14--8, 5-10), Fish at (-8-5, -16--10), Goblins at (-20--13, -11--6), Skeletons at (18-22, -14--8)."
 	return state
 
 
@@ -99,34 +102,26 @@ func _on_decision(response: String) -> void:
 
 
 func _execute_action(action: String) -> void:
-	if action == "move_to_trees":
-		var tx = randf_range(6, 16)
-		var tz = randf_range(4, 12)
-		_npc.call("move_to", Vector3(tx, 0, tz))
-		_try_gather_nearby(8)
-	elif action == "move_to_rocks":
-		var rx = randf_range(-14, -8)
-		var rz = randf_range(5, 10)
-		_npc.call("move_to", Vector3(rx, 0, rz))
-		_try_gather_nearby(8)
-	elif action == "move_to_fish":
-		var fx = randf_range(-8, 5)
-		var fz = randf_range(-16, -10)
-		_npc.call("move_to", Vector3(fx, 0, fz))
-		_try_gather_nearby(8)
-	elif action == "attack_goblins":
-		_try_attack_nearby(Vector3(-16, 0, -9), 4)
-	elif action == "attack_skeletons":
-		_try_attack_nearby(Vector3(20, 0, -11), 4)
+	if action == "gather_trees" or action == "move_to_trees":
+		_find_and_gather(8)
+	elif action == "gather_rocks" or action == "move_to_rocks":
+		_find_and_gather(8)
+	elif action == "gather_fish" or action == "move_to_fish":
+		_find_and_gather(8)
+	elif action == "attack_goblins" or action == "attack_skeletons":
+		_find_and_attack()
 	elif action == "approach_player_chat":
 		_npc.call("approach_player", "chat")
 	elif action == "approach_player_trade":
 		_npc.call("approach_player", "trade")
 	else:
-		_npc.call("move_to", _npc.global_position + Vector3(randf_range(-3, 3), 0, randf_range(-3, 3)))
+		var wander = _npc.global_position + Vector3(randf_range(-3, 3), 0, randf_range(-3, 3))
+		_npc.call("move_to", wander)
 
 
-func _try_gather_nearby(layer: int) -> void:
+func _find_and_gather(layer: int) -> void:
+	var best = null
+	var best_dist = 999.0
 	for obj in _world_objects:
 		if not is_instance_valid(obj):
 			continue
@@ -136,32 +131,37 @@ func _try_gather_nearby(layer: int) -> void:
 		if obj.get("_is_depleted"):
 			continue
 		var dist = _npc.global_position.distance_to(obj.global_position)
-		if dist < 8.0:
-			_npc.call("gather_from", obj)
-			return
+		if dist < best_dist:
+			best_dist = dist
+			best = obj
+	if best:
+		_npc.call("gather_from", best)
 
 
-func _try_attack_nearby(center: Vector3, layer: int) -> void:
-	_npc.call("move_to", center)
+func _find_and_attack() -> void:
+	var best = null
+	var best_dist = 999.0
 	for obj in _world_objects:
 		if not is_instance_valid(obj):
 			continue
 		var ol = obj.get("collision_layer")
-		if ol != layer:
+		if ol != 4:
 			continue
 		if obj.get("_is_dead"):
 			continue
-		var dist = center.distance_to(obj.global_position)
-		if dist < 10.0:
-			_npc.call("attack_target", obj)
-			return
+		var dist = _npc.global_position.distance_to(obj.global_position)
+		if dist < best_dist:
+			best_dist = dist
+			best = obj
+	if best:
+		_npc.call("attack_target", best)
 
 
 func _do_fallback_action() -> void:
 	_decision_cooldown -= 1
 	if _decision_cooldown <= 0:
 		_decision_cooldown = 20
-		var actions = ["move_to_trees", "move_to_rocks", "attack_goblins", "idle"]
+		var actions = ["gather_trees", "gather_rocks", "attack_goblins", "idle"]
 		var pick = actions[randi() % actions.size()]
 		_execute_action(pick)
 		_last_action = pick

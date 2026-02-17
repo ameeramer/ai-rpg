@@ -22,7 +22,6 @@ var npc_skills: Dictionary = {}
 var _player_ref: Node3D = null
 var _approach_player: bool = false
 var _approach_reason: String = ""
-# Pre-computed XP table for levels 1-99
 var _xp_table: Array = []
 
 func _ready() -> void:
@@ -40,36 +39,39 @@ func ensure_initialized() -> void:
 		_nav_agent.path_desired_distance = 0.5
 		_nav_agent.target_desired_distance = 0.5
 		_nav_agent.max_speed = move_speed
-	# Build XP table once
 	var t: float = 0.0
 	for i in range(1, 100):
 		t += floorf(i + 300.0 * pow(2.0, i / 7.0))
 		_xp_table.append(floorf(t / 4.0))
-	for s in ["Attack","Strength","Defence","Hitpoints","Ranged","Prayer","Magic","Cooking","Woodcutting","Fishing","Mining","Smithing","Crafting","Firemaking","Agility","Thieving"]:
+	var skills = ["Attack","Strength","Defence","Hitpoints","Ranged","Prayer","Magic","Cooking","Woodcutting","Fishing","Mining","Smithing","Crafting","Firemaking","Agility","Thieving"]
+	for s in skills:
 		npc_skills[s] = {"level": 10 if s == "Hitpoints" else 1, "xp": 1154.0 if s == "Hitpoints" else 0.0}
 	if not _tick_connected:
 		var sig = GameManager.get("game_tick")
 		if sig:
 			GameManager.game_tick.connect(_on_game_tick)
 			_tick_connected = true
-	if not get_node_or_null("NameLabel"):
-		var lbl = Label3D.new()
-		lbl.name = "NameLabel"
-		lbl.text = display_name
-		lbl.font_size = 32
-		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		lbl.modulate = Color(0.4, 0.7, 1.0)
-		lbl.outline_size = 8
-		lbl.outline_modulate = Color(0, 0, 0)
-		lbl.position.y = 2.3
-		add_child(lbl)
-	FileLogger.log_msg("AiNpc.init: %s" % display_name)
+	_add_name_label()
+
+func _add_name_label() -> void:
+	if get_node_or_null("NameLabel"):
+		return
+	var lbl = Label3D.new()
+	lbl.name = "NameLabel"
+	lbl.text = display_name
+	lbl.font_size = 32
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.modulate = Color(0.4, 0.7, 1.0)
+	lbl.outline_size = 8
+	lbl.outline_modulate = Color(0, 0, 0)
+	lbl.position.y = 2.3
+	add_child(lbl)
 
 func set_player_ref(p: Node3D) -> void:
 	_player_ref = p
 
 func get_dialogue() -> Array:
-	return ["Hello! I'm " + display_name + ".", "I'm exploring too."]
+	return ["Hello! I'm " + display_name + "."]
 
 func is_merchant() -> bool:
 	return false
@@ -77,10 +79,24 @@ func is_merchant() -> bool:
 func is_ai_npc() -> bool:
 	return true
 
+func is_in_range_of(target: Node3D) -> bool:
+	return global_position.distance_to(target.global_position) <= interaction_range
+
 func take_damage(amount: int) -> void:
 	if _is_dead:
 		return
 	hitpoints = max(0, hitpoints - amount)
+	_show_hitsplat(amount)
+	if hitpoints <= 0:
+		_is_dead = true
+		_current_action = "dead"
+		_target_object = null
+		visible = false
+		collision_layer = 0
+		_respawn_counter = 50
+		GameManager.log_action("%s has been defeated!" % display_name)
+
+func _show_hitsplat(amount: int) -> void:
 	var lbl = Label3D.new()
 	lbl.text = str(amount) if amount > 0 else "Miss"
 	lbl.font_size = 48
@@ -94,14 +110,6 @@ func take_damage(amount: int) -> void:
 	tw.tween_property(lbl, "position:y", 3.5, 0.8)
 	tw.tween_property(lbl, "modulate:a", 0.0, 0.8)
 	tw.tween_callback(lbl.queue_free)
-	if hitpoints <= 0:
-		_is_dead = true
-		_current_action = "dead"
-		_target_object = null
-		visible = false
-		collision_layer = 0
-		_respawn_counter = 50
-		GameManager.log_action("%s has been defeated!" % display_name)
 
 func _on_game_tick(_tick) -> void:
 	if _is_dead:
@@ -121,6 +129,8 @@ func _on_game_tick(_tick) -> void:
 func move_to(pos: Vector3) -> void:
 	if _nav_agent == null or _is_dead:
 		return
+	_target_object = null
+	_gather_ticks = 0
 	_nav_agent.target_position = pos
 	_current_action = "moving"
 	is_moving = true
@@ -128,6 +138,11 @@ func move_to(pos: Vector3) -> void:
 func _physics_process(_delta: float) -> void:
 	if _is_dead or _nav_agent == null:
 		return
+	if (_current_action == "combat" or _current_action == "gathering") and _target_object and is_instance_valid(_target_object):
+		if not is_in_range_of(_target_object):
+			_nav_agent.target_position = _target_object.global_position
+			_do_move()
+			return
 	if _current_action != "moving" and not _approach_player:
 		return
 	if _nav_agent.is_navigation_finished():
@@ -143,6 +158,9 @@ func _physics_process(_delta: float) -> void:
 		elif _current_action == "moving":
 			_current_action = "idle"
 		return
+	_do_move()
+
+func _do_move() -> void:
 	var np = _nav_agent.get_next_path_position()
 	var dir = (np - global_position).normalized()
 	dir.y = 0
@@ -156,10 +174,13 @@ func _physics_process(_delta: float) -> void:
 	is_moving = true
 
 func attack_target(target: Node3D) -> void:
-	if not _is_dead:
-		_target_object = target
-		_current_action = "combat"
-		_attack_ticks = 4
+	if _is_dead or target == null or target.get("_is_dead"):
+		return
+	_target_object = target
+	_current_action = "combat"
+	_attack_ticks = 4
+	if _nav_agent and not is_in_range_of(target):
+		_nav_agent.target_position = target.global_position
 
 func _combat_tick() -> void:
 	if _target_object == null or not is_instance_valid(_target_object):
@@ -169,9 +190,7 @@ func _combat_tick() -> void:
 		_current_action = "idle"
 		_target_object = null
 		return
-	var dist = global_position.distance_to(_target_object.global_position)
-	if dist > interaction_range and _nav_agent:
-		_nav_agent.target_position = _target_object.global_position
+	if not is_in_range_of(_target_object):
 		return
 	_attack_ticks -= 1
 	if _attack_ticks <= 0:
@@ -184,10 +203,13 @@ func _combat_tick() -> void:
 		_attack_ticks = 4
 
 func gather_from(target: Node3D) -> void:
-	if not _is_dead:
-		_target_object = target
-		_current_action = "gathering"
-		_gather_ticks = 4
+	if _is_dead or target == null or target.get("_is_depleted"):
+		return
+	_target_object = target
+	_current_action = "gathering"
+	_gather_ticks = 0
+	if _nav_agent:
+		_nav_agent.target_position = target.global_position
 
 func _gathering_tick() -> void:
 	if _target_object == null or not is_instance_valid(_target_object):
@@ -197,13 +219,42 @@ func _gathering_tick() -> void:
 		_current_action = "idle"
 		_target_object = null
 		return
-	_gather_ticks -= 1
-	if _gather_ticks <= 0:
-		_gather_ticks = 4
-		var sk = _target_object.get("required_skill")
-		var xp = _target_object.get("xp_reward")
-		if sk and xp:
-			_add_xp(str(sk), float(xp))
+	if not is_in_range_of(_target_object):
+		return
+	var tpa = _target_object.get("ticks_per_action")
+	if tpa == null:
+		tpa = 4
+	_gather_ticks += 1
+	if _gather_ticks < tpa:
+		return
+	_gather_ticks = 0
+	var sk = _target_object.get("required_skill")
+	var req_lv = _target_object.get("required_level")
+	var my_lv = 1
+	if sk:
+		my_lv = npc_skills.get(str(sk), {}).get("level", 1)
+	if req_lv and my_lv < int(req_lv):
+		_current_action = "idle"
+		_target_object = null
+		return
+	var chance = _target_object.get("base_success_chance")
+	if chance == null:
+		chance = 0.5
+	if sk and req_lv:
+		chance = min(0.95, float(chance) + (my_lv - int(req_lv)) * 0.02)
+	if randf() > chance:
+		return
+	var xp = _target_object.get("xp_reward")
+	if sk and xp:
+		_add_xp(str(sk), float(xp))
+	var gr = _target_object.get("_gathers_remaining")
+	if gr != null:
+		gr -= 1
+		_target_object.set("_gathers_remaining", gr)
+		if gr <= 0:
+			_target_object.call("_deplete")
+			_current_action = "idle"
+			_target_object = null
 
 func _add_xp(skill: String, amount: float) -> void:
 	if not npc_skills.has(skill):
