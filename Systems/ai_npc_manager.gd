@@ -8,7 +8,6 @@ signal api_key_changed(has_key)
 
 var api_key: String = ""
 var _initialized: bool = false
-var _pending_callback: Callable
 var _settings_path = "user://ai_npc_settings.json"
 
 
@@ -57,10 +56,6 @@ func _load_api_key() -> void:
 		api_key = str(parsed["api_key"])
 
 
-var _retry_count: int = 0
-var _max_retries: int = 2
-
-
 func _make_http() -> HTTPRequest:
 	var http = HTTPRequest.new()
 	http.timeout = 30.0
@@ -76,8 +71,6 @@ func send_brain_request(system_prompt: String, user_msg: String, callback: Calla
 	if api_key == "":
 		FileLogger.log_msg("AiNpcManager: no API key, skipping request")
 		return
-	_pending_callback = callback
-	_retry_count = 0
 	var body = {
 		"model": "claude-haiku-4-5-20251001",
 		"max_tokens": 300,
@@ -85,18 +78,18 @@ func send_brain_request(system_prompt: String, user_msg: String, callback: Calla
 		"messages": [{"role": "user", "content": user_msg}]
 	}
 	var json_body = JSON.stringify(body)
-	_do_request(json_body)
+	_do_request(json_body, callback, 0)
 
 
-func _do_request(json_body: String) -> void:
+func _do_request(json_body: String, cb: Callable, retry: int) -> void:
 	var headers = [
 		"Content-Type: application/json",
 		"x-api-key: " + api_key,
 		"anthropic-version: 2023-06-01"
 	]
 	var http = _make_http()
-	http.request_completed.connect(_on_request_done.bind(http, json_body))
-	FileLogger.log_msg("AiNpcManager: sending request attempt=%d body_len=%d" % [_retry_count, json_body.length()])
+	http.request_completed.connect(_on_req_done.bind(http, json_body, cb, retry))
+	FileLogger.log_msg("AiNpcManager: sending request attempt=%d body_len=%d" % [retry, json_body.length()])
 	var err = http.request(
 		"https://api.anthropic.com/v1/messages",
 		headers,
@@ -113,8 +106,6 @@ func _do_request(json_body: String) -> void:
 func send_chat_request(system_prompt: String, messages: Array, callback: Callable) -> void:
 	if api_key == "":
 		return
-	_pending_callback = callback
-	_retry_count = 0
 	var body = {
 		"model": "claude-haiku-4-5-20251001",
 		"max_tokens": 500,
@@ -122,19 +113,17 @@ func send_chat_request(system_prompt: String, messages: Array, callback: Callabl
 		"messages": messages
 	}
 	var json_body = JSON.stringify(body)
-	_do_request(json_body)
+	_do_request(json_body, callback, 0)
 
 
-func _on_request_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray, http: HTTPRequest, json_body: String) -> void:
+func _on_req_done(result: int, code: int, _hdrs: PackedStringArray, body: PackedByteArray, http: HTTPRequest, json_body: String, cb: Callable, retry: int) -> void:
 	http.queue_free()
 	if result != HTTPRequest.RESULT_SUCCESS:
-		FileLogger.log_msg("AiNpcManager: HTTP failed result=%d code=%d attempt=%d" % [result, code, _retry_count])
-		# Retry on connection error (could be transient)
-		if result == 3 and _retry_count < _max_retries:
-			_retry_count += 1
-			FileLogger.log_msg("AiNpcManager: retrying in 2s (attempt %d)" % _retry_count)
+		FileLogger.log_msg("AiNpcManager: HTTP failed result=%d code=%d attempt=%d" % [result, code, retry])
+		if result == 3 and retry < 2:
+			FileLogger.log_msg("AiNpcManager: retrying in 2s (attempt %d)" % (retry + 1))
 			var timer = get_tree().create_timer(2.0)
-			timer.timeout.connect(_do_request.bind(json_body))
+			timer.timeout.connect(_do_request.bind(json_body, cb, retry + 1))
 			return
 		return
 	var json_str = body.get_string_from_utf8()
@@ -152,8 +141,8 @@ func _on_request_done(result: int, code: int, _headers: PackedStringArray, body:
 			text = block.get("text", "")
 			break
 	FileLogger.log_msg("AiNpcManager: response len=%d" % text.length())
-	if _pending_callback.is_valid():
-		_pending_callback.call(text)
+	if cb.is_valid():
+		cb.call(text)
 
 
 func serialize() -> Dictionary:

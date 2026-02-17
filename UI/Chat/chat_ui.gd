@@ -78,14 +78,21 @@ func _build_ui() -> void:
 
 
 func open_chat(npc_name: String, npc: Node3D) -> void:
+	# Only reset if different NPC or first open
+	var same_npc = (_npc_ref == npc and _messages.size() > 0)
 	_npc_name = npc_name
 	_npc_ref = npc
 	_title_label.text = "Chat with " + npc_name
-	_messages.clear()
-	_clear_messages()
-	_add_msg_bubble(npc_name, "Hello! What would you like to talk about?", false)
+	_waiting = false
+	_send_btn.disabled = false
+	if not same_npc:
+		_messages.clear()
+		_clear_messages()
+		_add_msg_bubble(npc_name, "Hello! What would you like to talk about?", false)
 	visible = true
 	_input_field.grab_focus()
+	await get_tree().process_frame
+	_scroll.scroll_vertical = 999999
 
 
 func _on_send() -> void:
@@ -97,6 +104,11 @@ func _on_send() -> void:
 	_messages.append({"role": "user", "content": text})
 	_waiting = true
 	_send_btn.disabled = true
+	# Tell the brain what the player said so it can act on it
+	if _npc_ref:
+		var brain = _npc_ref.get_node_or_null("Brain")
+		if brain:
+			brain.call("set_player_request", text)
 	var sys = _build_chat_system()
 	AiNpcManager.call("send_chat_request", sys, _messages, Callable(self, "_on_chat_response"))
 

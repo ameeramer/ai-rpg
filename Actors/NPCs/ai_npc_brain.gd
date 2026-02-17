@@ -9,6 +9,7 @@ var _decision_cooldown: int = 0
 var _decision_interval: int = 15
 var _last_action: String = "idle"
 var _world_objects: Array = []
+var _player_request: String = ""
 
 
 func _ready() -> void:
@@ -32,6 +33,12 @@ func set_player(p: Node3D) -> void:
 
 func set_world_objects(objects: Array) -> void:
 	_world_objects = objects
+
+
+func set_player_request(text: String) -> void:
+	_player_request = text
+	# Trigger immediate decision so NPC responds to the request
+	_decision_cooldown = 0
 
 
 func _on_game_tick(_tick) -> void:
@@ -85,6 +92,9 @@ func _build_game_state() -> String:
 	if player_dist >= 0:
 		state += "Player distance: %.0f units. " % player_dist
 	state += "Skills: %s. " % skill_text
+	if _player_request != "":
+		state += "PLAYER REQUEST: \"%s\". Prioritize this!" % _player_request
+		_player_request = ""
 	return state
 
 
