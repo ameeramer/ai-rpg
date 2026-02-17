@@ -35,6 +35,10 @@ func _ready() -> void:
 	# Initialize AI NPC with player ref and world objects
 	_setup_ai_npc()
 
+	# Give SaveManager a direct AI NPC ref for save/load
+	if ai_npc:
+		SaveManager.call("set_ai_npc", ai_npc)
+
 	# Auto-load save if one exists
 	var has_save = SaveManager.call("has_save_file")
 	if has_save:

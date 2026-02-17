@@ -78,7 +78,6 @@ func _build_ui() -> void:
 
 
 func open_chat(npc_name: String, npc: Node3D) -> void:
-	# Only reset if different NPC or first open
 	var same_npc = (_npc_ref == npc and _messages.size() > 0)
 	_npc_name = npc_name
 	_npc_ref = npc
@@ -88,7 +87,19 @@ func open_chat(npc_name: String, npc: Node3D) -> void:
 	if not same_npc:
 		_messages.clear()
 		_clear_messages()
-		_add_msg_bubble(npc_name, "Hello! What would you like to talk about?", false)
+		# Restore saved chat history from brain if available
+		var brain = npc.get_node_or_null("Brain")
+		if brain:
+			var saved = brain.get("_chat_history")
+			if saved and saved.size() > 0:
+				_messages = saved.duplicate()
+				for msg in _messages:
+					var who = "You" if msg["role"] == "user" else npc_name
+					_add_msg_bubble(who, msg["content"], msg["role"] == "user")
+			else:
+				_add_msg_bubble(npc_name, "Hello! What would you like to talk about?", false)
+		else:
+			_add_msg_bubble(npc_name, "Hello! What would you like to talk about?", false)
 	visible = true
 	_input_field.grab_focus()
 	await get_tree().process_frame

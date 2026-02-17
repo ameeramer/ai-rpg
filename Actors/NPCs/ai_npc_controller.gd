@@ -310,3 +310,46 @@ func approach_player(reason: String) -> void:
 	_approach_reason = reason
 	_nav_agent.target_position = _player_ref.global_position
 	_current_action = "moving"
+
+
+func serialize() -> Dictionary:
+	var data = {
+		"skills": npc_skills,
+		"hp": hitpoints,
+		"max_hp": max_hitpoints,
+		"dead": _is_dead,
+		"pos": [global_position.x, global_position.y, global_position.z]
+	}
+	var brain = get_node_or_null("Brain")
+	if brain:
+		var ch = brain.get("_chat_history")
+		if ch and ch.size() > 0:
+			data["chat"] = ch
+	return data
+
+
+func deserialize(data: Dictionary) -> void:
+	var sk = data.get("skills")
+	if sk:
+		npc_skills = sk
+	var hp = data.get("hp")
+	if hp != null:
+		hitpoints = int(hp)
+	var mhp = data.get("max_hp")
+	if mhp != null:
+		max_hitpoints = int(mhp)
+	var dead = data.get("dead")
+	if dead:
+		_is_dead = true
+		visible = false
+		collision_layer = 0
+		_current_action = "dead"
+		_respawn_counter = 50
+	var pos = data.get("pos")
+	if pos != null and pos is Array and pos.size() >= 3:
+		global_position = Vector3(float(pos[0]), float(pos[1]), float(pos[2]))
+	var chat = data.get("chat")
+	if chat:
+		var brain = get_node_or_null("Brain")
+		if brain:
+			brain.call("set_chat_history", chat)
