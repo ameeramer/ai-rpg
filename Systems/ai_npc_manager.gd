@@ -23,6 +23,7 @@ func ensure_initialized() -> void:
 	_initialized = true
 	_http = HTTPRequest.new()
 	_http.timeout = 15.0
+	_http.set_tls_options(TLSOptions.client_unsafe())
 	add_child(_http)
 	_http.request_completed.connect(_on_request_completed)
 	_load_api_key()
@@ -122,7 +123,7 @@ func send_chat_request(system_prompt: String, messages: Array, callback: Callabl
 
 func _on_request_completed(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if result != HTTPRequest.RESULT_SUCCESS:
-		FileLogger.log_msg("AiNpcManager: HTTP failed result=%d" % result)
+		FileLogger.log_msg("AiNpcManager: HTTP failed result=%d code=%d" % [result, code])
 		return
 	var json_str = body.get_string_from_utf8()
 	var parsed = JSON.parse_string(json_str)
