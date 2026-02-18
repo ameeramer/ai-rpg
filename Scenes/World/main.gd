@@ -70,6 +70,12 @@ func _setup_ai_npc() -> void:
 	var trade_sig = ai_npc.get("request_trade")
 	if trade_sig:
 		ai_npc.request_trade.connect(_on_ai_npc_trade)
+	# Force-init Actions child
+	var actions = ai_npc.get_node_or_null("Actions")
+	if actions:
+		var act_init = actions.get("_initialized")
+		if act_init == false:
+			actions.call("ensure_initialized")
 	# Pass world objects to brain
 	var brain = ai_npc.get_node_or_null("Brain")
 	if brain:
@@ -97,7 +103,9 @@ func _collect_world_objects() -> Array:
 		var layer = node.get("collision_layer")
 		if layer == null:
 			continue
-		if layer == 4 or layer == 8:
+		if layer == 4 or layer == 8 or layer == 16:
+			if node == ai_npc:
+				continue
 			objects.append(node)
 	return objects
 

@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Actors/NPCs/ai_npc_controller.gd" id="1"]
 [ext_resource type="Script" path="res://Actors/NPCs/ai_npc_brain.gd" id="2"]
 [ext_resource type="PackedScene" path="res://Assets/Models/Characters/player_character.glb" id="npc_model"]
+[ext_resource type="Script" path="res://Actors/NPCs/ai_npc_actions.gd" id="4"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ai"]
 radius = 0.4
@@ -30,3 +31,15 @@ max_speed = 3.5
 
 [node name="Brain" type="Node" parent="."]
 script = ExtResource("2")
+
+[node name="Actions" type="Node" parent="."]
+script = ExtResource("4")
+
+[node name="NameLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
+billboard = 1
+text = "Aria"
+font_size = 32
+modulate = Color(0.4, 0.7, 1.0, 1)
+outline_size = 8
+outline_modulate = Color(0, 0, 0, 1)
