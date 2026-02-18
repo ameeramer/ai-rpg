@@ -11,6 +11,7 @@ var _last_action: String = "idle"
 var _world_objects: Array = []
 var _chat_history: Array = []
 var _event_log: Array = []
+var _events_synced: int = 0
 var MAX_EVENTS: int = 20
 
 
@@ -28,17 +29,15 @@ func ensure_initialized() -> void:
 		GameManager.game_tick.connect(_on_game_tick)
 	FileLogger.log_msg("AiNpcBrain initialized")
 
-
 func set_player(p: Node3D) -> void:
 	_player = p
-
 
 func set_world_objects(objects: Array) -> void:
 	_world_objects = objects
 
-
 func set_chat_history(messages: Array) -> void:
 	_chat_history = messages
+	_events_synced = _event_log.size()
 	_decision_cooldown = min(_decision_cooldown, 2)
 
 
@@ -46,7 +45,13 @@ func log_event(text: String) -> void:
 	_event_log.append(text)
 	if _event_log.size() > MAX_EVENTS:
 		_event_log.pop_front()
+		_events_synced = max(0, _events_synced - 1)
 
+
+func get_new_events() -> Array:
+	var new_evts = _event_log.slice(_events_synced)
+	_events_synced = _event_log.size()
+	return new_evts
 
 func _on_game_tick(_tick) -> void:
 	if _npc == null or _npc.get("_is_dead"):
@@ -65,10 +70,8 @@ func _on_game_tick(_tick) -> void:
 
 
 func _request_decision() -> void:
-	var state = _build_game_state()
 	var system = _build_system_prompt()
-	AiNpcManager.call("send_brain_request", system, state, Callable(self, "_on_decision"))
-
+	AiNpcManager.call("send_brain_request", system, _build_game_state(), Callable(self, "_on_decision"))
 
 func _build_system_prompt() -> String:
 	return "You are an AI NPC named %s in an OSRS-style RPG. You decide what action to take next to level up your skills and become stronger. Respond with ONLY a JSON object (no markdown) with keys: \"action\" (one of: \"gather_trees\", \"gather_rocks\", \"gather_fish\", \"attack_goblins\", \"attack_skeletons\", \"idle\", \"approach_player_chat\", \"approach_player_trade\"), and \"reason\" (short explanation). Consider your current skill levels, HP, and what would be most efficient to train." % _npc.get("display_name")
@@ -131,24 +134,21 @@ func _on_decision(response: String) -> void:
 
 
 func _extract_json(text: String) -> String:
-	# Try raw parse first
 	if JSON.parse_string(text) != null:
 		return text
-	# Find JSON object in response (model may wrap in markdown/text)
 	var start = text.find("{")
 	var end = text.rfind("}")
 	if start >= 0 and end > start:
 		return text.substr(start, end - start + 1)
 	return text
 
-
 func _execute_action(action: String) -> void:
 	if action == "gather_trees" or action == "move_to_trees":
-		_find_and_gather(8)
+		_find_and_gather("Woodcutting")
 	elif action == "gather_rocks" or action == "move_to_rocks":
-		_find_and_gather(8)
+		_find_and_gather("Mining")
 	elif action == "gather_fish" or action == "move_to_fish":
-		_find_and_gather(8)
+		_find_and_gather("Fishing")
 	elif action == "attack_goblins" or action == "attack_skeletons":
 		_find_and_attack()
 	elif action == "approach_player_chat":
@@ -160,16 +160,19 @@ func _execute_action(action: String) -> void:
 		_npc.call("move_to", wander)
 
 
-func _find_and_gather(layer: int) -> void:
+func _find_and_gather(skill: String) -> void:
 	var best = null
 	var best_dist = 999.0
 	for obj in _world_objects:
 		if not is_instance_valid(obj):
 			continue
 		var ol = obj.get("collision_layer")
-		if ol != layer:
+		if ol != 8:
 			continue
 		if obj.get("_is_depleted"):
+			continue
+		var rs = obj.get("required_skill")
+		if rs != skill:
 			continue
 		var dist = _npc.global_position.distance_to(obj.global_position)
 		if dist < best_dist:

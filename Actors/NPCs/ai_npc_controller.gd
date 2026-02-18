@@ -345,6 +345,7 @@ func serialize() -> Dictionary:
 		var ev = brain.get("_event_log")
 		if ev and ev.size() > 0:
 			data["events"] = ev
+			data["events_synced"] = brain.get("_events_synced")
 	return data
 
 
@@ -376,3 +377,6 @@ func deserialize(data: Dictionary) -> void:
 		var events = data.get("events")
 		if events:
 			brain.set("_event_log", events)
+			var es = data.get("events_synced")
+			if es != null:
+				brain.set("_events_synced", int(es))

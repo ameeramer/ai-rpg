@@ -94,12 +94,18 @@ func open_chat(npc_name: String, npc: Node3D) -> void:
 			if saved and saved.size() > 0:
 				_messages = saved.duplicate()
 				for msg in _messages:
-					var who = "You" if msg["role"] == "user" else npc_name
-					_add_msg_bubble(who, msg["content"], msg["role"] == "user")
+					var c = str(msg["content"])
+					if c.begins_with("[Things that happened"):
+						_add_event_bubble(c)
+					else:
+						var who = "You" if msg["role"] == "user" else npc_name
+						_add_msg_bubble(who, c, msg["role"] == "user")
 			else:
 				_add_msg_bubble(npc_name, "Hello! What would you like to talk about?", false)
 		else:
 			_add_msg_bubble(npc_name, "Hello! What would you like to talk about?", false)
+	# Inject new events that happened since last chat
+	_inject_new_events(npc, npc_name)
 	visible = true
 	_input_field.grab_focus()
 	await get_tree().process_frame
@@ -125,23 +131,12 @@ func _on_send_text(_text: String) -> void:
 
 func _build_chat_system() -> String:
 	var skills = ""
-	var events = ""
 	if _npc_ref:
 		var ns = _npc_ref.get("npc_skills")
 		if ns:
 			for s in ns:
 				skills += "%s:%d " % [s, ns[s]["level"]]
-		var brain = _npc_ref.get_node_or_null("Brain")
-		if brain:
-			var log = brain.get("_event_log")
-			if log and log.size() > 0:
-				var start = max(0, log.size() - 10)
-				for i in range(start, log.size()):
-					events += "- " + str(log[i]) + "\n"
-	var prompt = "You are %s, an AI companion in an OSRS-style RPG. You are friendly, helpful, and talk like an adventurer. Your skills: %s. Keep responses short (1-3 sentences). You can discuss strategy, offer to trade items, or just chat." % [_npc_name, skills]
-	if events != "":
-		prompt += "\n\nThings that happened recently (use this to inform your responses):\n" + events
-	return prompt
+	return "You are %s, an AI companion in an OSRS-style RPG. You are friendly, helpful, and talk like an adventurer. Your skills: %s. Keep responses short (1-3 sentences). You can discuss strategy, offer to trade items, or just chat. Messages in brackets like [Things that happened...] are game events that occurred — use them for context but respond naturally as if you experienced them." % [_npc_name, skills]
 
 
 func _on_chat_response(text: String) -> void:
@@ -160,6 +155,21 @@ func _sync_chat_to_brain() -> void:
 	var brain = _npc_ref.get_node_or_null("Brain")
 	if brain:
 		brain.call("set_chat_history", _messages)
+
+
+func _inject_new_events(npc: Node3D, npc_name: String) -> void:
+	var brain = npc.get_node_or_null("Brain")
+	if brain == null:
+		return
+	var new_evts = brain.call("get_new_events")
+	if new_evts == null or new_evts.size() == 0:
+		return
+	var parts = []
+	for ev in new_evts:
+		parts.append(str(ev))
+	var summary = "[Things that happened since our last message: %s]" % ", ".join(parts)
+	_messages.append({"role": "user", "content": summary})
+	_add_event_bubble(summary)
 
 
 func _add_msg_bubble(sender: String, text: String, is_player: bool) -> void:
@@ -196,6 +206,27 @@ func _add_msg_bubble(sender: String, text: String, is_player: bool) -> void:
 	_msg_container.add_child(panel)
 	await get_tree().process_frame
 	_scroll.scroll_vertical = 999999
+
+
+func _add_event_bubble(text: String) -> void:
+	var panel = PanelContainer.new()
+	var ps = StyleBoxFlat.new()
+	ps.bg_color = Color(0.12, 0.12, 0.15, 0.7)
+	ps.set_corner_radius_all(6)
+	ps.content_margin_left = 12
+	ps.content_margin_right = 12
+	ps.content_margin_top = 6
+	ps.content_margin_bottom = 6
+	panel.add_theme_stylebox_override("panel", ps)
+	var lbl = RichTextLabel.new()
+	lbl.bbcode_enabled = false
+	lbl.text = text
+	lbl.fit_content = true
+	lbl.scroll_active = false
+	lbl.add_theme_font_size_override("normal_font_size", 22)
+	lbl.add_theme_color_override("default_color", Color(0.6, 0.6, 0.5))
+	panel.add_child(lbl)
+	_msg_container.add_child(panel)
 
 
 func _clear_messages() -> void:
