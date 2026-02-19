@@ -173,7 +173,7 @@ func _die() -> void:
 	_is_dead = true
 	_target = null
 	_drop_loot()
-	PlayerSkills.add_combat_xp(xp_reward)
+	# XP distributed per-hit via CombatStyle in combat_state.gd
 	died.emit(self)
 	visible = false
 	collision_layer = 0

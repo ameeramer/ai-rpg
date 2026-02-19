@@ -56,6 +56,9 @@ res://
 3. `InputManager` — Unified input for mouse (PC) and touch (Android)
 4. `PlayerSkills` — OSRS-style skills system (16 skills, XP table, level-ups)
 5. `PlayerInventory` — 28-slot OSRS inventory (items stored as `{item, quantity}` dicts)
+6. `PlayerEquipment` — 10-slot OSRS equipment system
+7. `ItemRegistry` — Maps item IDs to `.tres` paths for save/load serialization
+8. `SaveManager` — Save/load/export/import game state, auto-saves on Android background
 
 ## Android / Mobile Conventions
 - **Input**: Always handle both `InputEventScreenTouch` and `InputEventMouseButton`. Map touch to the same logic as mouse click so we can debug on PC and deploy to Android.
@@ -216,6 +219,31 @@ PlayerInventory.add_item(item, qty)
 PlayerInventory.call("add_item", item, qty)
 ```
 
+### 12. NEVER use `DirAccess.open()` to enumerate resource directories on Android
+```gdscript
+# BAD — DirAccess cannot list files inside APK-packed res:// directories
+var dir = DirAccess.open("res://Data/Items")
+dir.list_dir_begin()  # returns nothing on Android
+
+# GOOD — use a hardcoded manifest (see Systems/item_registry.gd)
+var ITEM_MANIFEST = {
+    995: "res://Data/Items/coins.tres",
+    1277: "res://Data/Weapons/bronze_sword.tres",
+}
+```
+On Android, `res://` resources are packed inside the APK. `DirAccess.open()` silently returns an empty directory. **Always use hardcoded path lists** for any code that needs to enumerate `.tres` or other resource files at runtime. When adding new items, add their ID and path to `ITEM_MANIFEST` in `Systems/item_registry.gd`.
+
+### 13. Pass explicit node references — avoid `get_nodes_in_group()` for critical lookups
+```gdscript
+# BAD — groups can appear empty on Android
+var players = get_tree().get_nodes_in_group("player")
+
+# GOOD — pass the reference explicitly from the scene that owns it
+# In main.gd:
+SaveManager.call("set_player", player)
+```
+`get_nodes_in_group()` is unreliable on Android. For critical systems like save/load, pass node references directly from `Main.gd` rather than relying on group lookups.
+
 ### Collision Layer Reference (used for type detection)
 | Layer | Value | Usage |
 |-------|-------|-------|
@@ -252,6 +280,7 @@ Raycast mask: `1 | 4 | 8` (excludes player layer)
 - **Keep signals to 0-2 parameters** — 3+ param signals may cause silent parse failures on Android.
 - Type-hint function params with **built-in types only** (`int`, `float`, `String`, `Node3D`, `Dictionary`, etc.). Never use custom `class_name` types in hints.
 - **Android-safe method calls**: Use `.call("method", args)` instead of `has_method()` guards. Use `.get("property")` instead of `is Type` guards. Use `.get("signal_name")` before `.connect()`. See "Android Godot 4.3 Compatibility Rules" above.
+- **When adding new items**: You **MUST** add the item's `id` and `.tres` path to the `ITEM_MANIFEST` dictionary in `Systems/item_registry.gd`. Without this, the save/load system cannot resolve the item and saved inventories containing it will silently lose it on load.
 
 ## Testing
 - Test on PC first using mouse input (maps 1:1 with touch).

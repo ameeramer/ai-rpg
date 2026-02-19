@@ -68,3 +68,14 @@ func seconds_to_ticks(seconds: float) -> int:
 ## Convert game ticks to real seconds
 func ticks_to_seconds(ticks: int) -> float:
 	return ticks * TICK_INTERVAL
+
+
+func serialize() -> Dictionary:
+	return {"tick_count": tick_count}
+
+
+func deserialize(data: Dictionary) -> void:
+	var tc = data.get("tick_count")
+	if tc != null:
+		tick_count = int(tc)
+	FileLogger.log_msg("GameManager: deserialized, tick_count=%d" % tick_count)

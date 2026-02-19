@@ -4,6 +4,7 @@ extends VBoxContainer
 ## NO class_name — instantiated via PackedScene on Android.
 
 var _skill_rows: Dictionary = {}
+var _combat_level_label: Node = null
 
 var SKILL_NAMES = [
 	"Attack", "Strength", "Defence", "Hitpoints",
@@ -18,6 +19,9 @@ func setup() -> void:
 	FileLogger.log_msg("SkillsUI.setup() start")
 	PlayerSkills.xp_gained.connect(_on_xp_gained)
 	PlayerSkills.level_up.connect(_on_level_up)
+	var sc_sig = PlayerSkills.get("skills_changed")
+	if sc_sig:
+		PlayerSkills.skills_changed.connect(refresh)
 	_build_ui()
 	refresh()
 	FileLogger.log_msg("SkillsUI.setup() done, %d rows" % _skill_rows.size())
@@ -28,6 +32,19 @@ func _build_ui() -> void:
 		child.queue_free()
 
 	add_theme_constant_override("separation", 2)
+
+	# Combat level header
+	_combat_level_label = Label.new()
+	_combat_level_label.text = "Combat Level: %d" % PlayerSkills.call("get_combat_level")
+	_combat_level_label.add_theme_font_size_override("font_size", 39)
+	_combat_level_label.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	_combat_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_combat_level_label.custom_minimum_size = Vector2(0, 60)
+	add_child(_combat_level_label)
+
+	var sep = HSeparator.new()
+	sep.custom_minimum_size = Vector2(0, 6)
+	add_child(sep)
 
 	var xp_bg := StyleBoxFlat.new()
 	xp_bg.bg_color = Color(0.15, 0.12, 0.08, 0.8)
@@ -86,6 +103,8 @@ func _create_skill_row(skill_name: String, xp_bg: StyleBoxFlat, xp_fill: StyleBo
 
 
 func refresh() -> void:
+	if _combat_level_label:
+		_combat_level_label.text = "Combat Level: %d" % PlayerSkills.call("get_combat_level")
 	for skill_name in SKILL_NAMES:
 		if not _skill_rows.has(skill_name):
 			continue

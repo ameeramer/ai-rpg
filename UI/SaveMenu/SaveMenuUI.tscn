@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://UI/SaveMenu/save_menu_ui.gd" id="1"]
+
+[node name="SaveMenuUI" type="VBoxContainer"]
+script = ExtResource("1")
+theme_override_constants/separation = 10

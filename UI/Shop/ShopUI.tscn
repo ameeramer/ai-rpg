@@ -2,6 +2,6 @@
 
 [ext_resource type="Script" path="res://UI/Shop/shop_ui.gd" id="1"]
 
-[node name="ShopUI" type="VBoxContainer"]
+[node name="ShopUI" type="PanelContainer"]
 visible = false
 script = ExtResource("1")

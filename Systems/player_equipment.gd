@@ -152,3 +152,32 @@ func get_defence_bonus() -> int:
 
 func get_weapon() -> Object:
 	return slots.get("Weapon", null)
+
+
+func serialize() -> Dictionary:
+	var saved_slots = {}
+	for slot_name in SLOT_NAMES:
+		var item = slots[slot_name]
+		if item == null:
+			saved_slots[slot_name] = null
+		else:
+			var item_id = item.get("id")
+			saved_slots[slot_name] = int(item_id) if item_id != null else 0
+	return {"slots": saved_slots}
+
+
+func deserialize(data: Dictionary) -> void:
+	var saved_slots = data.get("slots", {})
+	for slot_name in SLOT_NAMES:
+		if saved_slots.has(slot_name) and saved_slots[slot_name] != null:
+			var item_id = int(saved_slots[slot_name])
+			var item = ItemRegistry.call("get_item_by_id", item_id)
+			if item != null:
+				slots[slot_name] = item
+			else:
+				slots[slot_name] = null
+				FileLogger.log_msg("PlayerEquipment: skipped unknown item id %d in %s" % [item_id, slot_name])
+		else:
+			slots[slot_name] = null
+	equipment_changed.emit()
+	FileLogger.log_msg("PlayerEquipment: deserialized equipment")

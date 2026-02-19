@@ -63,7 +63,7 @@ func on_physics_update(delta: float) -> void:
 		return
 
 	# Face the target
-	var look_pos := _target.global_position
+	var look_pos = _target.global_position
 	look_pos.y = player.global_position.y
 	if look_pos.distance_to(player.global_position) > 0.01:
 		player.look_at(look_pos, Vector3.UP)
@@ -96,8 +96,8 @@ func _on_game_tick(_tick) -> void:
 
 func _perform_attack() -> void:
 	FileLogger.log_msg("Combat: _perform_attack() start")
-	var max_hit := _calculate_max_hit()
-	var damage := randi_range(0, max_hit)
+	var max_hit = _calculate_max_hit()
+	var damage = randi_range(0, max_hit)
 	FileLogger.log_msg("Combat: max_hit=%d damage=%d" % [max_hit, damage])
 
 	# Call take_damage directly — we know layer 4 objects are enemies with this method
@@ -111,6 +111,9 @@ func _perform_attack() -> void:
 	else:
 		GameManager.log_action("You miss the %s." % target_name)
 	FileLogger.log_msg("Combat: dealt %d damage to %s" % [damage, target_name])
+
+	# Distribute XP based on current attack style
+	CombatStyle.call("distribute_combat_xp", damage)
 
 	# Play tween attack animation
 	player.play_attack_animation()
@@ -126,6 +129,11 @@ func _calculate_max_hit() -> int:
 	var strength_bonus = PlayerEquipment.call("get_strength_bonus")
 	if strength_bonus == null:
 		strength_bonus = 0
-	var effective_strength = strength_level + 8
+	# Apply invisible boost from combat style
+	var boosts = CombatStyle.call("get_invisible_boost")
+	if boosts == null:
+		boosts = {}
+	var str_boost = boosts.get("Strength", 0)
+	var effective_strength = strength_level + str_boost + 8
 	var max_hit = int(0.5 + effective_strength * (strength_bonus + 64) / 640.0)
 	return max(1, max_hit)

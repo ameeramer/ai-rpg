@@ -1,184 +1,159 @@
-extends VBoxContainer
-## Shop UI — buy/sell items from merchant NPCs.
+extends PanelContainer
+## Shop UI — centered overlay with Buy/Sell tabs and touch-drag scrolling.
 
 signal shop_closed()
 
 var _shop_stock: Array = []
-var _shop_grid: GridContainer
-var _player_grid: GridContainer
-var _coins_label: Label
+var _tab = "buy"
 var _title_label: Label
-var _stock_buttons: Array = []
-var _inv_buttons: Array = []
+var _coins_label: Label
+var _buy_btn: Button
+var _sell_btn: Button
+var _scroll: ScrollContainer
+var _items_grid: Node
+var _dragging = false
+var _drag_start_y = 0.0
+var _scroll_start = 0.0
 
 
 func _ready() -> void:
 	FileLogger.log_msg("ShopUI._ready() start")
-	add_theme_constant_override("separation", 8)
 	_build_ui()
 	FileLogger.log_msg("ShopUI._ready() done")
 
 
 func _build_ui() -> void:
-	_title_label = _add_label(45, Color(0.3, 1.0, 0.3))
-	_coins_label = _add_label(39, Color(1, 0.85, 0.3))
-	_add_label(36, Color(0.7, 0.65, 0.5)).text = "-- Shop Stock --"
-	var shop_scroll = ScrollContainer.new()
-	shop_scroll.custom_minimum_size = Vector2(0, 300)
-	add_child(shop_scroll)
-	_shop_grid = _make_grid()
-	shop_scroll.add_child(_shop_grid)
-	_add_label(36, Color(0.7, 0.65, 0.5)).text = "-- Your Items (tap to sell) --"
-	var inv_scroll = ScrollContainer.new()
-	inv_scroll.custom_minimum_size = Vector2(0, 300)
-	add_child(inv_scroll)
-	_player_grid = _make_grid()
-	inv_scroll.add_child(_player_grid)
+	var s = StyleBoxFlat.new()
+	s.bg_color = Color(0.1, 0.08, 0.06, 0.95)
+	s.set_border_width_all(3)
+	s.border_color = Color(0.55, 0.45, 0.28, 1)
+	s.set_corner_radius_all(12)
+	add_theme_stylebox_override("panel", s)
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	add_child(vbox)
+	# Header row
+	var header = HBoxContainer.new()
+	header.custom_minimum_size = Vector2(0, 84)
+	vbox.add_child(header)
+	_title_label = Label.new()
+	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title_label.add_theme_color_override("font_color", Color(1, 0.9, 0.5))
+	_title_label.add_theme_font_size_override("font_size", 45)
+	_title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.add_child(_title_label)
+	_coins_label = Label.new()
+	_coins_label.add_theme_color_override("font_color", Color(1, 0.85, 0.3))
+	_coins_label.add_theme_font_size_override("font_size", 36)
+	_coins_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.add_child(_coins_label)
+	var close_btn = Button.new()
+	close_btn.text = "X"
+	close_btn.custom_minimum_size = Vector2(90, 78)
+	close_btn.add_theme_font_size_override("font_size", 42)
+	close_btn.pressed.connect(_on_close)
+	header.add_child(close_btn)
+	# Tab row
+	var tab_row = HBoxContainer.new()
+	tab_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(tab_row)
+	_buy_btn = _make_tab_btn("Buy")
+	_buy_btn.pressed.connect(_switch_tab.bind("buy"))
+	tab_row.add_child(_buy_btn)
+	_sell_btn = _make_tab_btn("Sell")
+	_sell_btn.pressed.connect(_switch_tab.bind("sell"))
+	tab_row.add_child(_sell_btn)
+	# Scroll + grid
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(_scroll)
+	# Load shop items grid as PackedScene
+	var sc = load("res://UI/Shop/ShopItems.tscn")
+	if sc:
+		_items_grid = sc.instantiate()
+		_scroll.add_child(_items_grid)
+		var sig = _items_grid.get("transaction_done")
+		if sig:
+			_items_grid.transaction_done.connect(_refresh)
 
-func _add_label(size: int, color: Color) -> Label:
-	var lbl = Label.new()
-	lbl.add_theme_font_size_override("font_size", size)
-	lbl.add_theme_color_override("font_color", color)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(lbl)
-	return lbl
 
-func _make_grid() -> GridContainer:
-	var g = GridContainer.new()
-	g.columns = 4
-	g.add_theme_constant_override("h_separation", 6)
-	g.add_theme_constant_override("v_separation", 6)
-	return g
+func _make_tab_btn(label: String) -> Button:
+	var btn = Button.new()
+	btn.text = label
+	btn.custom_minimum_size = Vector2(180, 66)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.add_theme_font_size_override("font_size", 33)
+	return btn
+
+
+func _style_tabs() -> void:
+	_apply_tab_style(_buy_btn, _tab == "buy")
+	_apply_tab_style(_sell_btn, _tab == "sell")
+
+
+func _apply_tab_style(btn: Button, active: bool) -> void:
+	var ts = StyleBoxFlat.new()
+	if active:
+		ts.bg_color = Color(0.3, 0.25, 0.15, 1)
+		ts.border_color = Color(0.7, 0.6, 0.3, 1)
+	else:
+		ts.bg_color = Color(0.15, 0.12, 0.08, 0.8)
+		ts.border_color = Color(0.35, 0.3, 0.2, 0.6)
+	ts.set_border_width_all(2)
+	ts.set_corner_radius_all(6)
+	btn.add_theme_stylebox_override("normal", ts)
 
 
 func open_shop(npc_name: String, stock: Array) -> void:
 	_shop_stock = stock
 	_title_label.text = npc_name + "'s Shop"
+	_tab = "buy"
 	visible = true
-	refresh()
+	_style_tabs()
+	_refresh()
 
 
-func refresh() -> void:
-	_update_coins()
-	_build_shop_buttons()
-	_build_inv_buttons()
+func _switch_tab(tab: String) -> void:
+	_tab = tab
+	_style_tabs()
+	_refresh()
 
 
-func _update_coins() -> void:
+func _refresh() -> void:
 	var coins = PlayerInventory.call("count_item", 995)
 	if coins == null:
 		coins = 0
-	_coins_label.text = "Coins: %d" % coins
+	_coins_label.text = str(coins) + " gp"
+	if _items_grid:
+		_items_grid.call("show_items", _tab, _shop_stock)
 
 
-func _build_shop_buttons() -> void:
-	for child in _shop_grid.get_children():
-		child.queue_free()
-	_stock_buttons.clear()
-	var btn_style = _make_slot_style()
-	for i in range(_shop_stock.size()):
-		var entry = _shop_stock[i]
-		var item = entry["item"]
-		var price = entry["price"]
-		var btn = Button.new()
-		btn.custom_minimum_size = Vector2(144, 144)
-		btn.add_theme_stylebox_override("normal", btn_style)
-		btn.add_theme_font_size_override("font_size", 27)
-		btn.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
-		var name_str = item.call("get_display_name")
-		btn.text = str(name_str).substr(0, 5) + "\n" + str(price) + "gp"
-		btn.tooltip_text = "%s - %d gp" % [name_str, price]
-		btn.pressed.connect(_on_buy.bind(i))
-		_shop_grid.add_child(btn)
-		_stock_buttons.append(btn)
+func _on_close() -> void:
+	visible = false
+	shop_closed.emit()
 
 
-func _build_inv_buttons() -> void:
-	for child in _player_grid.get_children():
-		child.queue_free()
-	_inv_buttons.clear()
-	var inv_slots = PlayerInventory.get("slots")
-	if inv_slots == null:
+func _input(event) -> void:
+	if not visible:
 		return
-	var btn_style = _make_slot_style()
-	for i in range(inv_slots.size()):
-		var slot = inv_slots[i]
-		if slot == null:
-			continue
-		var item = slot["item"]
-		var qty = slot["quantity"]
-		var sell_price = item.get("value")
-		if sell_price == null:
-			sell_price = 0
-		sell_price = int(sell_price * 0.6)
-		if sell_price < 1:
-			sell_price = 1
-		var btn = Button.new()
-		btn.custom_minimum_size = Vector2(144, 144)
-		btn.add_theme_stylebox_override("normal", btn_style)
-		btn.add_theme_font_size_override("font_size", 27)
-		btn.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
-		var name_str = item.call("get_display_name")
-		var label_text = str(name_str).substr(0, 5)
-		if qty > 1:
-			label_text += " x" + str(qty)
-		label_text += "\n" + str(sell_price) + "gp"
-		btn.text = label_text
-		btn.pressed.connect(_on_sell.bind(i))
-		_player_grid.add_child(btn)
-		_inv_buttons.append(btn)
-
-
-func _on_buy(stock_idx: int) -> void:
-	if stock_idx >= _shop_stock.size():
-		return
-	var entry = _shop_stock[stock_idx]
-	var item = entry["item"]
-	var price = entry["price"]
-	var coins = PlayerInventory.call("count_item", 995)
-	if coins == null:
-		coins = 0
-	if coins < price:
-		GameManager.log_action("You don't have enough coins.")
-		return
-	var full = PlayerInventory.call("is_full")
-	if full:
-		GameManager.log_action("Your inventory is full.")
-		return
-	PlayerInventory.call("remove_item_by_id", 995, price)
-	PlayerInventory.call("add_item", item, 1)
-	var name_str = item.call("get_display_name")
-	GameManager.log_action("You buy a %s for %d coins." % [name_str, price])
-	refresh()
-
-
-func _on_sell(inv_slot: int) -> void:
-	var inv_slots = PlayerInventory.get("slots")
-	if inv_slots == null or inv_slot >= inv_slots.size():
-		return
-	var slot = inv_slots[inv_slot]
-	if slot == null:
-		return
-	var item = slot["item"]
-	var sell_price = item.get("value")
-	if sell_price == null:
-		sell_price = 0
-	sell_price = int(sell_price * 0.6)
-	if sell_price < 1:
-		sell_price = 1
-	PlayerInventory.call("remove_item_at", inv_slot, 1)
-	var coins_item = load("res://Data/Items/coins.tres")
-	if coins_item:
-		PlayerInventory.call("add_item", coins_item, sell_price)
-	var name_str = item.call("get_display_name")
-	GameManager.log_action("You sell a %s for %d coins." % [name_str, sell_price])
-	refresh()
-
-
-func _make_slot_style() -> StyleBoxFlat:
-	var s = StyleBoxFlat.new()
-	s.bg_color = Color(0.18, 0.15, 0.12, 0.9)
-	s.border_color = Color(0.35, 0.3, 0.2, 0.8)
-	s.set_border_width_all(1)
-	s.set_corner_radius_all(3)
-	return s
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_dragging = true
+			_drag_start_y = event.position.y
+			_scroll_start = _scroll.scroll_vertical
+		else:
+			_dragging = false
+	elif event is InputEventScreenDrag and _dragging:
+		var dy = _drag_start_y - event.position.y
+		_scroll.scroll_vertical = int(_scroll_start + dy)
+	elif event is InputEventMouseButton:
+		if event.pressed:
+			_dragging = true
+			_drag_start_y = event.position.y
+			_scroll_start = _scroll.scroll_vertical
+		else:
+			_dragging = false
+	elif event is InputEventMouseMotion and _dragging:
+		var dy = _drag_start_y - event.position.y
+		_scroll.scroll_vertical = int(_scroll_start + dy)

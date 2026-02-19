@@ -7,6 +7,7 @@ signal action_selected(action, slot_idx)
 var _slot_idx: int = -1
 var _item = null
 var _vbox: VBoxContainer
+var _player_ref: Node3D = null
 
 
 func _ready() -> void:
@@ -110,6 +111,38 @@ func _add_action_button(action_name: String) -> void:
 	_vbox.add_child(btn)
 
 
+func set_player(p: Node3D) -> void:
+	_player_ref = p
+
+
 func _on_action(action_name: String) -> void:
+	_handle_action(action_name, _slot_idx)
 	action_selected.emit(action_name, _slot_idx)
 	visible = false
+
+
+func _handle_action(action: String, slot_idx: int) -> void:
+	var inv_slots = PlayerInventory.get("slots")
+	if inv_slots == null or slot_idx >= inv_slots.size() or inv_slots[slot_idx] == null:
+		return
+	var item = inv_slots[slot_idx]["item"]
+	if action == "Eat":
+		var heal = item.get("heal_amount")
+		if heal != null and heal > 0 and _player_ref:
+			_player_ref.call("heal", heal)
+			PlayerInventory.call("remove_item_at", slot_idx, 1)
+			GameManager.log_action("You eat the %s. It heals %d." % [item.call("get_display_name"), heal])
+	elif action == "Equip":
+		PlayerEquipment.call("equip_item", item, slot_idx)
+	elif action == "Bury":
+		PlayerInventory.call("remove_item_at", slot_idx, 1)
+		PlayerSkills.call("add_xp", "Prayer", 4.5)
+		GameManager.log_action("You bury the bones.")
+	elif action == "Drop":
+		PlayerInventory.call("remove_item_at", slot_idx, 1)
+		GameManager.log_action("You drop the %s." % item.call("get_display_name"))
+	elif action == "Examine":
+		var desc = item.get("description")
+		if desc == null or desc == "":
+			desc = item.call("get_display_name")
+		GameManager.log_action(desc)
