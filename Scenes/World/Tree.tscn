@@ -18,6 +18,7 @@ required_skill = "Woodcutting"
 required_level = 1
 xp_reward = 25.0
 respawn_ticks = 15
+model_height = 6.0
 
 [node name="Collision" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)

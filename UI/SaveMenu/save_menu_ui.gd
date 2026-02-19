@@ -8,6 +8,7 @@ var _import_field: TextEdit
 var _import_status: Label
 var _api_key_field: LineEdit
 var _api_status: Label
+var _scale_buttons: Dictionary = {}
 var _initialized: bool = false
 
 
@@ -107,6 +108,27 @@ func _build_ui() -> void:
 	_api_status.add_theme_color_override("font_color", Color(0.6, 0.85, 0.6))
 	add_child(_api_status)
 	_update_api_status()
+	# UI Scale section
+	var scale_sep = HSeparator.new()
+	scale_sep.add_theme_constant_override("separation", 16)
+	add_child(scale_sep)
+	var scale_header = _make_label("UI Scale")
+	scale_header.add_theme_color_override("font_color", Color(0.8, 0.7, 1.0))
+	add_child(scale_header)
+	var scale_row = HBoxContainer.new()
+	scale_row.add_theme_constant_override("separation", 8)
+	add_child(scale_row)
+	var scale_options = ["large", "medium", "small", "tiny"]
+	var scale_labels = {"large": "Large", "medium": "Medium", "small": "Small", "tiny": "Tiny"}
+	for key in scale_options:
+		var btn = Button.new()
+		btn.text = scale_labels[key]
+		btn.custom_minimum_size = Vector2(180, 84)
+		btn.add_theme_font_size_override("font_size", 33)
+		btn.pressed.connect(_on_scale_pressed.bind(key))
+		scale_row.add_child(btn)
+		_scale_buttons[key] = btn
+	_refresh_scale_buttons()
 
 
 func _make_button(text: String) -> Button:
@@ -205,3 +227,27 @@ func _update_api_status() -> void:
 		_api_status.text = "API key is set. AI NPC is active."
 	else:
 		_api_status.text = "No API key set. AI NPC uses random behavior."
+
+
+func _on_scale_pressed(key: String) -> void:
+	GameManager.call("set_ui_scale", key)
+	_refresh_scale_buttons()
+
+
+func _refresh_scale_buttons() -> void:
+	var current = GameManager.get("ui_scale")
+	if current == null:
+		current = "large"
+	for key in _scale_buttons:
+		var btn = _scale_buttons[key]
+		var active = (key == current)
+		var s = StyleBoxFlat.new()
+		s.set_corner_radius_all(8)
+		s.set_border_width_all(2)
+		if active:
+			s.bg_color = Color(0.3, 0.25, 0.4, 0.95)
+			s.border_color = Color(0.8, 0.7, 1.0, 1)
+		else:
+			s.bg_color = Color(0.18, 0.15, 0.1, 0.95)
+			s.border_color = Color(0.5, 0.42, 0.28, 1)
+		btn.add_theme_stylebox_override("normal", s)

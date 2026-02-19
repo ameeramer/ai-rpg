@@ -14,6 +14,10 @@ extends StaticBody3D
 @export var is_active: bool = true
 @export var respawn_ticks: int = 0
 
+## Model sizing — set desired height in meters, 0 = no scaling
+@export var model_height = 0.0
+@export var depleted_model_height = 0.0
+
 ## Gathering-specific exports
 @export var min_gathers: int = 1
 @export var max_gathers: int = 5

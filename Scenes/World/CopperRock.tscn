@@ -17,6 +17,7 @@ required_skill = "Mining"
 required_level = 1
 xp_reward = 17.5
 respawn_ticks = 10
+model_height = 1.0
 
 [node name="Collision" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)

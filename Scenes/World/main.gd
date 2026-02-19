@@ -25,6 +25,9 @@ func _ready() -> void:
 	# Force-initialize all enemies and interactables
 	_force_initialize_objects()
 
+	# Auto-ground model containers using mesh AABB data
+	_ground_all_models()
+
 	# HUD setup — passes player ref; HUD handles its own UI children
 	hud.call("setup", player)
 	FileLogger.log_msg("HUD setup done")
@@ -139,4 +142,59 @@ func _get_all_descendants(node: Node) -> Array:
 	for child in node.get_children():
 		result.append(child)
 		result.append_array(_get_all_descendants(child))
+	return result
+
+
+func _ground_all_models() -> void:
+	var names = ["Model", "EnemyMesh", "NPCMesh", "ActiveMesh", "DepletedMesh"]
+	for node in _get_all_descendants(self):
+		if not (node is Node3D) or not names.has(node.name):
+			continue
+		var target = 0.0
+		var par = node.get_parent()
+		if par:
+			var key = "model_height"
+			if node.name == "DepletedMesh":
+				key = "depleted_model_height"
+			var mh = par.get(key)
+			if mh != null and mh > 0:
+				target = mh
+		_ground_model(node, target)
+
+
+func _ground_model(container: Node3D, target_h: float) -> void:
+	var min_y = INF
+	var max_y = -INF
+	var inv = container.global_transform.affine_inverse()
+	for mi in _find_mesh_instances(container):
+		var aabb = mi.get_aabb()
+		if aabb.size == Vector3.ZERO:
+			continue
+		var t = inv * mi.global_transform
+		var p = aabb.position
+		var e = aabb.position + aabb.size
+		for corner in [t * Vector3(p.x, p.y, p.z), t * Vector3(e.x, p.y, p.z),
+			t * Vector3(p.x, e.y, p.z), t * Vector3(e.x, e.y, p.z),
+			t * Vector3(p.x, p.y, e.z), t * Vector3(e.x, p.y, e.z),
+			t * Vector3(p.x, e.y, e.z), t * Vector3(e.x, e.y, e.z)]:
+			if corner.y < min_y:
+				min_y = corner.y
+			if corner.y > max_y:
+				max_y = corner.y
+	if min_y >= INF:
+		return
+	var sf = 1.0
+	if target_h > 0.0 and (max_y - min_y) > 0.001:
+		sf = target_h / (max_y - min_y)
+		container.scale = Vector3(sf, sf, sf)
+	if abs(min_y * sf) > 0.001:
+		container.position.y = -min_y * sf
+
+
+func _find_mesh_instances(node: Node) -> Array:
+	var result: Array = []
+	for child in node.get_children():
+		if child is MeshInstance3D:
+			result.append(child)
+		result.append_array(_find_mesh_instances(child))
 	return result
