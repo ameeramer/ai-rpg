@@ -12,3 +12,4 @@ max_stack = 1
 weight = 2.0
 value = 1
 category = "Resource"
+model_path = "res://Assets/Models/Items/logs.glb"

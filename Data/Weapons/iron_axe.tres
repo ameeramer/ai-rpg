@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Data/WeaponData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = 1353
+item_name = "Iron Axe"
+description = "An iron woodcutting axe."
+is_stackable = false
+max_stack = 1
+weight = 2.2
+value = 56
+category = "Tool"
+model_path = "res://Assets/Models/Weapons/iron_axe.glb"
+is_equippable = true
+attack_damage = 4
+attack_speed = 3.0
+attack_range = 1.5
+required_attack_level = 1
+attack_bonus = 5
+strength_bonus = 3
+combat_style = "Melee"
+attack_type = "Slash"
+weapon_category = "axe"
+attack_animation = "attack_slash"

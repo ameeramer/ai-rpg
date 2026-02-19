@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Systems/interactable.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Assets/Models/World/fishing_spot.glb" id="fishing_model"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_water"]
+radius = 1.5
+height = 0.5
+
+[node name="TroutSpot" type="StaticBody3D"]
+collision_layer = 8
+script = ExtResource("1")
+display_name = "Fishing Spot"
+interaction_verb = "Fish"
+ticks_per_action = 5
+required_skill = "Fishing"
+required_level = 20
+xp_reward = 50.0
+respawn_ticks = 12
+min_gathers = 2
+max_gathers = 8
+
+[node name="ActiveMesh" type="Node3D" parent="."]
+
+[node name="FishingModel" parent="ActiveMesh" instance=ExtResource("fishing_model")]
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+shape = SubResource("CylinderShape3D_water")

@@ -10,6 +10,9 @@ extends Node3D
 @export var default_zoom: float = 12.0
 @export var zoom_speed: float = 2.0
 @export var camera_angle: float = -55.0  # OSRS-like top-down angle
+@export var rotation_sensitivity: float = 0.3
+@export var min_pitch: float = -80.0
+@export var max_pitch: float = -10.0
 
 @onready var camera: Camera3D = $Camera3D
 
@@ -25,8 +28,11 @@ func _ready() -> void:
 	# Set up the camera angle
 	rotation_degrees.x = camera_angle
 
-	# Connect to InputManager zoom signal
+	# Connect to InputManager signals
 	InputManager.zoom_changed.connect(_on_zoom_changed)
+	var drag_sig = InputManager.get("camera_drag")
+	if drag_sig:
+		InputManager.camera_drag.connect(_on_camera_drag)
 
 	# Register this camera with the InputManager
 	if camera:
@@ -51,3 +57,9 @@ func _process(delta: float) -> void:
 
 func _on_zoom_changed(zoom_delta) -> void:
 	_target_zoom = clamp(_target_zoom - zoom_delta, min_zoom, max_zoom)
+
+
+func _on_camera_drag(delta) -> void:
+	rotation_degrees.y -= delta.x * rotation_sensitivity
+	var new_pitch = rotation_degrees.x - delta.y * rotation_sensitivity
+	rotation_degrees.x = clamp(new_pitch, min_pitch, max_pitch)

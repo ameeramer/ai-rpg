@@ -1,26 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://Actors/Enemies/enemy_base.gd" id="1"]
+[ext_resource type="PackedScene" path="res://Assets/Models/Enemies/skeleton.glb" id="skeleton_model"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_skeleton"]
 radius = 0.4
 height = 2.0
-
-[sub_resource type="StandardMaterial3D" id="mat_skeleton"]
-shading_mode = 0
-albedo_color = Color(0.85, 0.82, 0.75, 1)
-
-[sub_resource type="CapsuleMesh" id="mesh_skeleton"]
-radius = 0.35
-height = 1.8
-
-[sub_resource type="StandardMaterial3D" id="mat_skeleton_head"]
-shading_mode = 0
-albedo_color = Color(0.85, 0.82, 0.75, 1)
-
-[sub_resource type="SphereMesh" id="mesh_skeleton_head"]
-radius = 0.22
-height = 0.44
 
 [node name="Skeleton" type="CharacterBody3D"]
 collision_layer = 4
@@ -40,12 +25,6 @@ respawn_ticks = 80
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_skeleton")
 
-[node name="EnemyMesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-mesh = SubResource("mesh_skeleton")
-material_override = SubResource("mat_skeleton")
+[node name="EnemyMesh" type="Node3D" parent="."]
 
-[node name="Head" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
-mesh = SubResource("mesh_skeleton_head")
-material_override = SubResource("mat_skeleton_head")
+[node name="SkeletonModel" parent="EnemyMesh" instance=ExtResource("skeleton_model")]

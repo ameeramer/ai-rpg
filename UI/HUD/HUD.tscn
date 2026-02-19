@@ -57,13 +57,13 @@ script = ExtResource("1")
 anchors_preset = 0
 offset_left = 12.0
 offset_top = 12.0
-offset_right = 300.0
-offset_bottom = 72.0
+offset_right = 540.0
+offset_bottom = 126.0
 mouse_filter = 2
 
 [node name="HPBar" type="ProgressBar" parent="TopLeft"]
 layout_mode = 2
-custom_minimum_size = Vector2(280, 56)
+custom_minimum_size = Vector2(510, 102)
 theme_override_styles/background = SubResource("StyleBoxFlat_hp")
 theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 max_value = 10.0
@@ -81,7 +81,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 45
 text = "HP: 10 / 10"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -91,8 +91,8 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -170.0
-offset_bottom = -90.0
+offset_top = -300.0
+offset_bottom = -153.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
@@ -101,7 +101,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_log")
 [node name="ActionLog" type="RichTextLabel" parent="ActionLogContainer"]
 layout_mode = 2
 theme_override_colors/default_color = Color(0.9, 0.85, 0.7, 1)
-theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/normal_font_size = 39
 bbcode_enabled = true
 text = "Welcome to AI RPG."
 scroll_following = true
@@ -111,34 +111,55 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -88.0
+offset_top = -150.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_toolbar")
 
 [node name="ButtonRow" type="HBoxContainer" parent="BottomToolbar"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 8
 alignment = 1
 
 [node name="InventoryBtn" type="Button" parent="BottomToolbar/ButtonRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(140, 72)
-theme_override_font_sizes/font_size = 24
+custom_minimum_size = Vector2(190, 126)
+theme_override_font_sizes/font_size = 36
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 text = "Bag"
 
 [node name="SkillsBtn" type="Button" parent="BottomToolbar/ButtonRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(140, 72)
-theme_override_font_sizes/font_size = 24
+custom_minimum_size = Vector2(190, 126)
+theme_override_font_sizes/font_size = 36
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 text = "Skills"
 
+[node name="EquipBtn" type="Button" parent="BottomToolbar/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(190, 126)
+theme_override_font_sizes/font_size = 36
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+text = "Equip"
+
+[node name="CombatBtn" type="Button" parent="BottomToolbar/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(190, 126)
+theme_override_font_sizes/font_size = 36
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+text = "Combat"
+
+[node name="MenuBtn" type="Button" parent="BottomToolbar/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(190, 126)
+theme_override_font_sizes/font_size = 36
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+text = "Menu"
+
 [node name="DebugBtn" type="Button" parent="BottomToolbar/ButtonRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(100, 72)
-theme_override_font_sizes/font_size = 18
+custom_minimum_size = Vector2(140, 126)
+theme_override_font_sizes/font_size = 33
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 text = "DBG"
 
@@ -158,10 +179,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -320.0
-offset_top = -300.0
-offset_right = 320.0
-offset_bottom = 300.0
+offset_left = -570.0
+offset_top = -510.0
+offset_right = 570.0
+offset_bottom = 510.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
@@ -172,25 +193,29 @@ theme_override_constants/separation = 6
 
 [node name="Header" type="HBoxContainer" parent="InventoryOverlay/VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 90)
 
 [node name="Title" type="Label" parent="InventoryOverlay/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 51
 text = "Inventory"
 vertical_alignment = 1
 
 [node name="CloseBtn" type="Button" parent="InventoryOverlay/VBox/Header"]
 layout_mode = 2
-custom_minimum_size = Vector2(56, 48)
-theme_override_font_sizes/font_size = 26
+custom_minimum_size = Vector2(102, 84)
+theme_override_font_sizes/font_size = 45
 text = "X"
 
-[node name="InventoryPanel" type="Panel" parent="InventoryOverlay/VBox"]
+[node name="InventoryScroll" type="ScrollContainer" parent="InventoryOverlay/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="InventoryPanel" type="VBoxContainer" parent="InventoryOverlay/VBox/InventoryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="SkillsOverlay" type="PanelContainer" parent="."]
 visible = false
@@ -199,10 +224,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -320.0
-offset_right = 300.0
-offset_bottom = 320.0
+offset_left = -540.0
+offset_top = -540.0
+offset_right = 540.0
+offset_bottom = 540.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
@@ -213,20 +238,20 @@ theme_override_constants/separation = 6
 
 [node name="Header" type="HBoxContainer" parent="SkillsOverlay/VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 90)
 
 [node name="Title" type="Label" parent="SkillsOverlay/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 51
 text = "Skills"
 vertical_alignment = 1
 
 [node name="CloseBtn" type="Button" parent="SkillsOverlay/VBox/Header"]
 layout_mode = 2
-custom_minimum_size = Vector2(56, 48)
-theme_override_font_sizes/font_size = 26
+custom_minimum_size = Vector2(102, 84)
+theme_override_font_sizes/font_size = 45
 text = "X"
 
 [node name="SkillsScroll" type="ScrollContainer" parent="SkillsOverlay/VBox"]
@@ -234,5 +259,136 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="SkillsPanel" type="VBoxContainer" parent="SkillsOverlay/VBox/SkillsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EquipmentOverlay" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -510.0
+offset_top = -540.0
+offset_right = 510.0
+offset_bottom = 540.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
+
+[node name="VBox" type="VBoxContainer" parent="EquipmentOverlay"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Header" type="HBoxContainer" parent="EquipmentOverlay/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 90)
+
+[node name="Title" type="Label" parent="EquipmentOverlay/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 51
+text = "Equipment"
+vertical_alignment = 1
+
+[node name="CloseBtn" type="Button" parent="EquipmentOverlay/VBox/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(102, 84)
+theme_override_font_sizes/font_size = 45
+text = "X"
+
+[node name="EquipmentPanel" type="Panel" parent="EquipmentOverlay/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SaveMenuOverlay" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -540.0
+offset_top = -540.0
+offset_right = 540.0
+offset_bottom = 540.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
+
+[node name="VBox" type="VBoxContainer" parent="SaveMenuOverlay"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Header" type="HBoxContainer" parent="SaveMenuOverlay/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 90)
+
+[node name="Title" type="Label" parent="SaveMenuOverlay/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 51
+text = "Menu"
+vertical_alignment = 1
+
+[node name="CloseBtn" type="Button" parent="SaveMenuOverlay/VBox/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(102, 84)
+theme_override_font_sizes/font_size = 45
+text = "X"
+
+[node name="SaveMenuScroll" type="ScrollContainer" parent="SaveMenuOverlay/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SaveMenuPanel" type="VBoxContainer" parent="SaveMenuOverlay/VBox/SaveMenuScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CombatOverlay" type="PanelContainer" parent="."]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -480.0
+offset_top = -480.0
+offset_right = 480.0
+offset_bottom = 480.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
+
+[node name="VBox" type="VBoxContainer" parent="CombatOverlay"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Header" type="HBoxContainer" parent="CombatOverlay/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 90)
+
+[node name="Title" type="Label" parent="CombatOverlay/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 51
+text = "Combat Styles"
+vertical_alignment = 1
+
+[node name="CloseBtn" type="Button" parent="CombatOverlay/VBox/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(102, 84)
+theme_override_font_sizes/font_size = 45
+text = "X"
+
+[node name="CombatScroll" type="ScrollContainer" parent="CombatOverlay/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CombatPanel" type="VBoxContainer" parent="CombatOverlay/VBox/CombatScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
