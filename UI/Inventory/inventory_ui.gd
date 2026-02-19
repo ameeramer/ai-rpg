@@ -14,7 +14,7 @@ var _current_model: Node3D
 
 func _ready() -> void:
 	FileLogger.log_msg("InventoryUI._ready() start")
-	columns = 4
+	columns = 6
 	add_theme_constant_override("h_separation", 6)
 	add_theme_constant_override("v_separation", 6)
 	_setup_render_viewport()

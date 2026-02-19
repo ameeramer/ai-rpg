@@ -13,7 +13,7 @@ var _shop_stock: Array = []
 
 func _ready() -> void:
 	FileLogger.log_msg("ShopItems._ready() start")
-	columns = 4
+	columns = 6
 	add_theme_constant_override("h_separation", 8)
 	add_theme_constant_override("v_separation", 8)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL

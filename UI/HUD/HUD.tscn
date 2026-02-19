@@ -209,9 +209,13 @@ custom_minimum_size = Vector2(102, 84)
 theme_override_font_sizes/font_size = 45
 text = "X"
 
-[node name="InventoryPanel" type="Panel" parent="InventoryOverlay/VBox"]
+[node name="InventoryScroll" type="ScrollContainer" parent="InventoryOverlay/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="InventoryPanel" type="VBoxContainer" parent="InventoryOverlay/VBox/InventoryScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="SkillsOverlay" type="PanelContainer" parent="."]
 visible = false

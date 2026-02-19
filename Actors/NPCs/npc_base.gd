@@ -47,6 +47,10 @@ func is_merchant() -> bool:
 	return npc_role == "merchant"
 
 
+func is_ai_npc() -> bool:
+	return false
+
+
 func get_shop_stock() -> Array:
 	# Returns array of dictionaries: {"item": Resource, "price": int}
 	var stock: Array = []
