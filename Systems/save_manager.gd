@@ -11,6 +11,7 @@ var SAVE_VERSION: int = 1
 var AUTO_SAVE_INTERVAL: int = 500
 var _initialized: bool = false
 var _player_ref: Node3D = null
+var _ai_npc_ref: Node3D = null
 
 
 func _ready() -> void:
@@ -30,6 +31,11 @@ func ensure_initialized() -> void:
 func set_player(p: Node3D) -> void:
 	_player_ref = p
 	FileLogger.log_msg("SaveManager: player ref set")
+
+
+func set_ai_npc(npc: Node3D) -> void:
+	_ai_npc_ref = npc
+	FileLogger.log_msg("SaveManager: AI NPC ref set")
 
 
 func _notification(what: int) -> void:
@@ -132,6 +138,10 @@ func _collect_save_data() -> Dictionary:
 				_player_ref.global_position.z
 			]
 		}
+	if _ai_npc_ref and is_instance_valid(_ai_npc_ref):
+		var ai_data = _ai_npc_ref.call("serialize")
+		if ai_data:
+			data["systems"]["ai_npc"] = ai_data
 	return data
 
 
@@ -161,6 +171,8 @@ func _apply_save_data(data: Dictionary) -> bool:
 		GameManager.call("deserialize", systems["game_manager"])
 	if systems.has("player"):
 		_apply_player_data(systems["player"])
+	if systems.has("ai_npc"):
+		_apply_ai_npc_data(systems["ai_npc"])
 	FileLogger.log_msg("SaveManager: loaded save (version %d)" % version)
 	load_completed.emit(true)
 	return true
@@ -183,6 +195,14 @@ func _apply_player_data(pdata: Dictionary) -> void:
 	if sm:
 		sm.call("transition_to", "Idle")
 	FileLogger.log_msg("SaveManager: player data applied")
+
+
+func _apply_ai_npc_data(data: Dictionary) -> void:
+	if _ai_npc_ref == null or not is_instance_valid(_ai_npc_ref):
+		FileLogger.log_msg("SaveManager: no AI NPC ref for apply_ai_npc_data")
+		return
+	_ai_npc_ref.call("deserialize", data)
+	FileLogger.log_msg("SaveManager: AI NPC data applied")
 
 
 func _get_timestamp() -> String:

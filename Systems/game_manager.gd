@@ -15,13 +15,44 @@ signal action_logged(message)
 
 var tick_count: int = 0
 var is_paused: bool = false
+var ui_scale: String = "large"
+
+var UI_SCALE_MAP = {
+	"large": Vector2i(1280, 720),
+	"medium": Vector2i(1600, 900),
+	"small": Vector2i(1920, 1080),
+	"tiny": Vector2i(2560, 1440)
+}
 
 var _tick_timer: float = 0.0
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_apply_default_scale()
 	FileLogger.log_msg("GameManager ready")
+
+
+func _apply_default_scale() -> void:
+	var platform = OS.get_name()
+	if platform == "Android" or platform == "iOS":
+		ui_scale = "large"
+	else:
+		ui_scale = "small"
+	apply_ui_scale()
+
+
+func set_ui_scale(key: String) -> void:
+	if not UI_SCALE_MAP.has(key):
+		return
+	ui_scale = key
+	apply_ui_scale()
+
+
+func apply_ui_scale() -> void:
+	var size = UI_SCALE_MAP.get(ui_scale, Vector2i(1280, 720))
+	get_tree().root.content_scale_size = size
+	FileLogger.log_msg("UI scale set to '%s' (%dx%d)" % [ui_scale, size.x, size.y])
 
 
 func _process(delta: float) -> void:
@@ -71,11 +102,15 @@ func ticks_to_seconds(ticks: int) -> float:
 
 
 func serialize() -> Dictionary:
-	return {"tick_count": tick_count}
+	return {"tick_count": tick_count, "ui_scale": ui_scale}
 
 
 func deserialize(data: Dictionary) -> void:
 	var tc = data.get("tick_count")
 	if tc != null:
 		tick_count = int(tc)
-	FileLogger.log_msg("GameManager: deserialized, tick_count=%d" % tick_count)
+	var saved_scale = data.get("ui_scale")
+	if saved_scale != null and UI_SCALE_MAP.has(saved_scale):
+		ui_scale = saved_scale
+		apply_ui_scale()
+	FileLogger.log_msg("GameManager: deserialized, tick_count=%d, ui_scale=%s" % [tick_count, ui_scale])
