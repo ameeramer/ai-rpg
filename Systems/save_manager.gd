@@ -1,22 +1,18 @@
 extends Node
-## SaveManager — Handles save/load/export/import of game state.
-## Registered as "SaveManager" in project.godot autoloads.
-## No class_name — autoloads are accessed by name, not type.
 
 signal save_completed(success)
 signal load_completed(success)
 
 var SAVE_PATH = "user://savegame.json"
-var SAVE_VERSION: int = 1
-var AUTO_SAVE_INTERVAL: int = 500
-var _initialized: bool = false
-var _player_ref: Node3D = null
-var _ai_npc_ref: Node3D = null
-
+var EXPORT_FILENAME = "airpg_save.json"
+var SAVE_VERSION = 1
+var AUTO_SAVE_INTERVAL = 500
+var _initialized = false
+var _player_ref = null
+var _ai_npc_ref = null
 
 func _ready() -> void:
 	ensure_initialized()
-
 
 func ensure_initialized() -> void:
 	if _initialized:
@@ -27,116 +23,108 @@ func ensure_initialized() -> void:
 		GameManager.game_tick.connect(_on_game_tick)
 	FileLogger.log_msg("SaveManager initialized")
 
-
-func set_player(p: Node3D) -> void:
+func set_player(p) -> void:
 	_player_ref = p
-	FileLogger.log_msg("SaveManager: player ref set")
 
-
-func set_ai_npc(npc: Node3D) -> void:
+func set_ai_npc(npc) -> void:
 	_ai_npc_ref = npc
-	FileLogger.log_msg("SaveManager: AI NPC ref set")
 
-
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_PAUSED:
-		FileLogger.log_msg("SaveManager: app paused, auto-saving")
+func _notification(what) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		save_game()
-	elif what == NOTIFICATION_WM_CLOSE_REQUEST:
-		FileLogger.log_msg("SaveManager: closing, auto-saving")
-		save_game()
-
 
 func _on_game_tick(tc) -> void:
 	if int(tc) > 0 and int(tc) % AUTO_SAVE_INTERVAL == 0:
-		FileLogger.log_msg("SaveManager: periodic auto-save at tick %d" % int(tc))
 		save_game()
 
-
 func save_game() -> bool:
-	var save_data = _collect_save_data()
-	var json_str = JSON.stringify(save_data, "  ")
+	var json_str = JSON.stringify(_collect_save_data(), "  ")
 	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
-		FileLogger.log_msg("SaveManager: cannot open %s for writing" % SAVE_PATH)
 		save_completed.emit(false)
 		return false
 	file.store_string(json_str)
 	file.flush()
 	file = null
-	FileLogger.log_msg("SaveManager: saved (%d bytes)" % json_str.length())
 	save_completed.emit(true)
 	return true
 
-
 func load_game() -> bool:
 	if not FileAccess.file_exists(SAVE_PATH):
-		FileLogger.log_msg("SaveManager: no save file found")
 		load_completed.emit(false)
 		return false
 	var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
 	if file == null:
-		FileLogger.log_msg("SaveManager: cannot open save file")
 		load_completed.emit(false)
 		return false
-	var json_str = file.get_as_text()
+	var parsed = JSON.parse_string(file.get_as_text())
 	file = null
-	var parsed = JSON.parse_string(json_str)
 	if parsed == null:
-		FileLogger.log_msg("SaveManager: corrupt save file (parse failed)")
 		load_completed.emit(false)
 		return false
 	return _apply_save_data(parsed)
 
+func get_export_path() -> String:
+	if OS.get_name() == "Android":
+		var dl = OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS)
+		if dl != "":
+			return dl.path_join(EXPORT_FILENAME)
+	var docs = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)
+	if docs != "":
+		return docs.path_join(EXPORT_FILENAME)
+	return ProjectSettings.globalize_path("user://").path_join(EXPORT_FILENAME)
 
-func export_save_string() -> String:
-	var save_data = _collect_save_data()
-	var json_str = JSON.stringify(save_data)
-	var bytes = json_str.to_utf8_buffer()
-	return Marshalls.raw_to_base64(bytes)
+func export_save_file() -> String:
+	var json_str = JSON.stringify(_collect_save_data(), "  ")
+	var path = get_export_path()
+	var file = FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		path = "user://" + EXPORT_FILENAME
+		file = FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		FileLogger.log_msg("SaveManager: export failed")
+		return ""
+	file.store_string(json_str)
+	file.flush()
+	file = null
+	FileLogger.log_msg("SaveManager: exported to %s" % path)
+	return path
 
-
-func import_save_string(b64_str: String) -> bool:
-	var trimmed = b64_str.strip_edges()
-	var bytes = Marshalls.base64_to_raw(trimmed)
-	if bytes.size() == 0:
-		FileLogger.log_msg("SaveManager: empty or invalid base64 string")
-		return false
-	var json_str = bytes.get_string_from_utf8()
-	var parsed = JSON.parse_string(json_str)
+func import_save_file() -> Dictionary:
+	var path = get_export_path()
+	if not FileAccess.file_exists(path):
+		var alt = "user://" + EXPORT_FILENAME
+		if FileAccess.file_exists(alt):
+			path = alt
+		else:
+			return {"success": false, "error": "No file found. Place %s in Downloads." % EXPORT_FILENAME}
+	var file = FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"success": false, "error": "Cannot read file."}
+	var parsed = JSON.parse_string(file.get_as_text())
+	file = null
 	if parsed == null:
-		FileLogger.log_msg("SaveManager: corrupt import data (parse failed)")
-		return false
-	var result = _apply_save_data(parsed)
-	if result:
+		return {"success": false, "error": "File is corrupt or not a valid save."}
+	var ok = _apply_save_data(parsed)
+	if ok:
 		save_game()
-	return result
-
+	return {"success": ok, "error": "" if ok else "Failed to apply save.", "path": path}
 
 func has_save_file() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)
 
-
 func _collect_save_data() -> Dictionary:
-	var data = {
-		"save_version": SAVE_VERSION,
-		"timestamp": _get_timestamp(),
-		"systems": {}
-	}
-	_save_system(data, "player_skills", PlayerSkills)
-	_save_system(data, "player_inventory", PlayerInventory)
-	_save_system(data, "player_equipment", PlayerEquipment)
-	_save_system(data, "combat_style", CombatStyle)
-	_save_system(data, "game_manager", GameManager)
+	var data = {"save_version": SAVE_VERSION, "timestamp": _get_timestamp(), "systems": {}}
+	_save_sys(data, "player_skills", PlayerSkills)
+	_save_sys(data, "player_inventory", PlayerInventory)
+	_save_sys(data, "player_equipment", PlayerEquipment)
+	_save_sys(data, "combat_style", CombatStyle)
+	_save_sys(data, "game_manager", GameManager)
 	if _player_ref and is_instance_valid(_player_ref):
 		data["systems"]["player"] = {
 			"hitpoints": _player_ref.get("hitpoints"),
 			"max_hitpoints": _player_ref.get("max_hitpoints"),
-			"position": [
-				_player_ref.global_position.x,
-				_player_ref.global_position.y,
-				_player_ref.global_position.z
-			]
+			"position": [_player_ref.global_position.x, _player_ref.global_position.y, _player_ref.global_position.z]
 		}
 	if _ai_npc_ref and is_instance_valid(_ai_npc_ref):
 		var ai_data = _ai_npc_ref.call("serialize")
@@ -144,21 +132,17 @@ func _collect_save_data() -> Dictionary:
 			data["systems"]["ai_npc"] = ai_data
 	return data
 
-
-func _save_system(data: Dictionary, key: String, system: Node) -> void:
+func _save_sys(data, key, system) -> void:
 	var result = system.call("serialize")
 	if result != null:
 		data["systems"][key] = result
 
-
-func _apply_save_data(data: Dictionary) -> bool:
+func _apply_save_data(data) -> bool:
 	var version = data.get("save_version", 0)
 	if version < 1:
-		FileLogger.log_msg("SaveManager: unsupported save version %d" % version)
 		load_completed.emit(false)
 		return false
 	var systems = data.get("systems", {})
-	FileLogger.log_msg("SaveManager: applying keys: %s" % str(systems.keys()))
 	if systems.has("player_skills"):
 		PlayerSkills.call("deserialize", systems["player_skills"])
 	if systems.has("player_inventory"):
@@ -173,14 +157,11 @@ func _apply_save_data(data: Dictionary) -> bool:
 		_apply_player_data(systems["player"])
 	if systems.has("ai_npc"):
 		_apply_ai_npc_data(systems["ai_npc"])
-	FileLogger.log_msg("SaveManager: loaded save (version %d)" % version)
 	load_completed.emit(true)
 	return true
 
-
-func _apply_player_data(pdata: Dictionary) -> void:
+func _apply_player_data(pdata) -> void:
 	if _player_ref == null or not is_instance_valid(_player_ref):
-		FileLogger.log_msg("SaveManager: no player ref for apply_player_data")
 		return
 	var hp = pdata.get("hitpoints")
 	if hp != null:
@@ -194,20 +175,12 @@ func _apply_player_data(pdata: Dictionary) -> void:
 	var sm = _player_ref.get("state_machine")
 	if sm:
 		sm.call("transition_to", "Idle")
-	FileLogger.log_msg("SaveManager: player data applied")
 
-
-func _apply_ai_npc_data(data: Dictionary) -> void:
+func _apply_ai_npc_data(data) -> void:
 	if _ai_npc_ref == null or not is_instance_valid(_ai_npc_ref):
-		FileLogger.log_msg("SaveManager: no AI NPC ref for apply_ai_npc_data")
 		return
 	_ai_npc_ref.call("deserialize", data)
-	FileLogger.log_msg("SaveManager: AI NPC data applied")
-
 
 func _get_timestamp() -> String:
 	var dt = Time.get_datetime_dict_from_system()
-	return "%04d-%02d-%02dT%02d:%02d:%02d" % [
-		dt["year"], dt["month"], dt["day"],
-		dt["hour"], dt["minute"], dt["second"]
-	]
+	return "%04d-%02d-%02dT%02d:%02d:%02d" % [dt["year"], dt["month"], dt["day"], dt["hour"], dt["minute"], dt["second"]]
