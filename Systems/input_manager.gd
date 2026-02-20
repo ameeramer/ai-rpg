@@ -34,6 +34,9 @@ var _right_pressed: bool = false
 var _right_start_pos: Vector2 = Vector2.ZERO
 var _right_dragged: bool = false
 var _camera: Camera3D
+var _touch_positions = {}
+var _pinch_active: bool = false
+var _pinch_start_dist = 0.0
 
 
 func set_camera(camera: Camera3D) -> void:
@@ -46,9 +49,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_handle_screen_touch(event)
 		return
 
-	# Handle touch drag for camera rotation (Android)
+	# Handle touch drag for camera rotation / pinch zoom (Android)
 	if event is InputEventScreenDrag:
 		_handle_screen_drag(event)
+		return
+
+	# Handle Mac trackpad pinch-to-zoom
+	if event is InputEventMagnifyGesture:
+		zoom_changed.emit((event.factor - 1.0) * 5.0)
 		return
 
 	# Handle mouse click (PC only — skip emulated mouse events on touchscreen devices)
@@ -85,23 +93,43 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 
 func _handle_screen_touch(event: InputEventScreenTouch) -> void:
 	if event.pressed:
-		_touch_start_time = Time.get_ticks_msec() / 1000.0
-		_touch_start_pos = event.position
-		_is_touching = true
-		_touch_is_drag = false
-	elif _is_touching:
-		_is_touching = false
-		_touch_is_drag = false
-		var hold_duration = (Time.get_ticks_msec() / 1000.0) - _touch_start_time
-		var drag_distance = event.position.distance_to(_touch_start_pos)
-
-		# Only process as tap if finger didn't move much (not a drag/pan)
-		if drag_distance < DRAG_THRESHOLD:
-			var is_long_press = hold_duration >= LONG_PRESS_THRESHOLD
-			_do_raycast(event.position, is_long_press)
+		_touch_positions[event.index] = event.position
+		if _touch_positions.size() >= 2:
+			_pinch_active = true
+			var keys = _touch_positions.keys()
+			_pinch_start_dist = _touch_positions[keys[0]].distance_to(_touch_positions[keys[1]])
+			_touch_is_drag = false
+		elif event.index == 0:
+			_touch_start_time = Time.get_ticks_msec() / 1000.0
+			_touch_start_pos = event.position
+			_is_touching = true
+			_touch_is_drag = false
+	else:
+		_touch_positions.erase(event.index)
+		if _pinch_active:
+			_pinch_active = false
+			_is_touching = false
+			return
+		if event.index == 0 and _is_touching:
+			_is_touching = false
+			_touch_is_drag = false
+			var hold_duration = (Time.get_ticks_msec() / 1000.0) - _touch_start_time
+			var drag_distance = event.position.distance_to(_touch_start_pos)
+			if drag_distance < DRAG_THRESHOLD:
+				var is_long_press = hold_duration >= LONG_PRESS_THRESHOLD
+				_do_raycast(event.position, is_long_press)
 
 
 func _handle_screen_drag(event: InputEventScreenDrag) -> void:
+	_touch_positions[event.index] = event.position
+	if _pinch_active and _touch_positions.size() >= 2:
+		var keys = _touch_positions.keys()
+		var cur_dist = _touch_positions[keys[0]].distance_to(_touch_positions[keys[1]])
+		var diff = (cur_dist - _pinch_start_dist) * 0.02
+		if abs(diff) > 0.01:
+			zoom_changed.emit(diff)
+			_pinch_start_dist = cur_dist
+		return
 	if not _is_touching:
 		return
 	if not _touch_is_drag:

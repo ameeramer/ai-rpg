@@ -96,10 +96,9 @@ func open_chat(npc_name: String, npc: Node3D) -> void:
 				for msg in _messages:
 					var c = str(msg["content"])
 					if c.begins_with("[Things that happened"):
-						_add_event_bubble(c)
-					else:
-						var who = "You" if msg["role"] == "user" else npc_name
-						_add_msg_bubble(who, c, msg["role"] == "user")
+						continue
+					var who = "You" if msg["role"] == "user" else npc_name
+					_add_msg_bubble(who, c, msg["role"] == "user")
 			else:
 				_add_msg_bubble(npc_name, "Hello! What would you like to talk about?", false)
 		else:
@@ -169,7 +168,6 @@ func _inject_new_events(npc: Node3D, npc_name: String) -> void:
 		parts.append(str(ev))
 	var summary = "[Things that happened since our last message: %s]" % ", ".join(parts)
 	_messages.append({"role": "user", "content": summary})
-	_add_event_bubble(summary)
 
 
 func _add_msg_bubble(sender: String, text: String, is_player: bool) -> void:

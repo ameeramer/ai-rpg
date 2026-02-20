@@ -49,8 +49,8 @@ func _setup_render_viewport() -> void:
 	_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
 	_cam.size = 2.0
 	_cam.position = Vector3(0, 0.5, 2.5)
-	_cam.look_at(Vector3(0, 0.3, 0), Vector3.UP)
 	_viewport.add_child(_cam)
+	_cam.look_at(Vector3(0, 0.3, 0), Vector3.UP)
 	var light = DirectionalLight3D.new()
 	light.rotation_degrees = Vector3(-45, 30, 0)
 	light.light_energy = 1.5
@@ -106,10 +106,10 @@ func refresh() -> void:
 			btn.icon = null
 		else:
 			var mp = item.get("model_path")
-			if mp and mp != "" and _icon_cache.has(mp):
+			if mp and mp != "" and _icon_cache.has(mp) and _icon_cache[mp] != null:
 				btn.icon = _icon_cache[mp]
 				btn.text = ""
-			elif mp and mp != "":
+			elif mp and mp != "" and not _icon_cache.has(mp):
 				btn.text = str(item.item_name).substr(0, 5)
 				if not to_render.has(mp):
 					to_render.append(mp)
@@ -149,9 +149,10 @@ func _process_render_queue() -> void:
 		return
 	var scene = load(mp)
 	if scene == null:
+		_icon_cache[mp] = null
 		_process_render_queue()
 		return
-	if _current_model:
+	if _current_model and is_instance_valid(_current_model):
 		_current_model.queue_free()
 		_current_model = null
 	_current_model = scene.instantiate()
@@ -162,7 +163,8 @@ func _process_render_queue() -> void:
 	var img = _viewport.get_texture().get_image()
 	var tex = ImageTexture.create_from_image(img)
 	_icon_cache[mp] = tex
-	_current_model.queue_free()
+	if _current_model and is_instance_valid(_current_model):
+		_current_model.queue_free()
 	_current_model = null
 	_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	_process_render_queue()

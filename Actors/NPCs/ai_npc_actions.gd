@@ -1,7 +1,6 @@
 extends Node
-## AI NPC Actions — combat ticks, gathering ticks, XP, serialization.
-## Child of AiNpc. NO class_name. Under 130 lines.
-
+## AI NPC Actions — combat, gathering, XP, inventory, serialization.
+## Child of AiNpc. NO class_name.
 var _npc = null
 var _initialized = false
 var _xp_table = []
@@ -87,6 +86,13 @@ func gathering_tick() -> void:
 	var xp = target.get("xp_reward")
 	if sk and xp:
 		add_xp(str(sk), float(xp))
+	# Add gathered items to NPC inventory
+	var dt = target.get("drop_table")
+	if dt:
+		for drop_entry in dt:
+			var drop = drop_entry.call("roll")
+			if drop and not drop.is_empty():
+				_npc.call("add_to_inventory", drop["item"], drop["quantity"])
 	var gr = target.get("_gathers_remaining")
 	if gr != null:
 		gr -= 1
@@ -135,6 +141,14 @@ func serialize() -> Dictionary:
 		"dead": _npc.get("_is_dead"),
 		"pos": [_npc.global_position.x, _npc.global_position.y, _npc.global_position.z]
 	}
+	# Serialize NPC inventory
+	var inv = _npc.get("npc_inventory")
+	if inv and inv.size() > 0:
+		var saved_inv = []
+		for entry in inv:
+			var item = entry["item"]
+			saved_inv.append({"id": item.id, "quantity": entry["quantity"]})
+		data["npc_inventory"] = saved_inv
 	var brain = _npc.get_node_or_null("Brain")
 	if brain:
 		var ch = brain.get("_chat_history")
@@ -163,6 +177,17 @@ func deserialize(data: Dictionary) -> void:
 		_npc.collision_layer = 0
 		_npc.set("_current_action", "dead")
 		_npc.set("_respawn_counter", 50)
+	# Deserialize NPC inventory
+	var saved_inv = data.get("npc_inventory")
+	if saved_inv and saved_inv is Array:
+		var loaded_inv = []
+		for entry in saved_inv:
+			var item_id = int(entry.get("id", 0))
+			var qty = int(entry.get("quantity", 1))
+			var item = ItemRegistry.call("get_item_by_id", item_id)
+			if item:
+				loaded_inv.append({"item": item, "quantity": qty})
+		_npc.set("npc_inventory", loaded_inv)
 	var pos = data.get("pos")
 	if pos != null and pos is Array and pos.size() >= 3:
 		_npc.global_position = Vector3(float(pos[0]), float(pos[1]), float(pos[2]))

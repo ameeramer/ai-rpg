@@ -6,14 +6,14 @@ extends CharacterBody3D
 @export var attack_speed_ticks: int = 4
 @export var attack_range: float = 2.0
 @export var aggro_range: float = 0.0
+@export var defence_level: int = 1
 @export var combat_level: int = 1
 @export var xp_reward: float = 40.0
 @export var drop_table: Array = []
 @export var respawn_ticks: int = 50
-
+@export var move_speed: float = 2.5
 signal died(enemy)
 signal took_damage(amount, current_hp)
-
 var hp: int = 0
 var _target: Node3D = null
 var _ticks_since_attack: int = 0
@@ -26,7 +26,6 @@ var _initialized: bool = false
 
 func _ready() -> void:
 	ensure_initialized()
-
 func ensure_initialized() -> void:
 	if _initialized:
 		return
@@ -40,46 +39,62 @@ func ensure_initialized() -> void:
 	if not get_node_or_null("NameLabel"):
 		_add_name_label()
 	GameManager.game_tick.connect(_on_game_tick)
-	FileLogger.log_msg("Enemy.init: %s hp=%d aggro=%.1f" % [display_name, hp, aggro_range])
-
 func _collect_materials(node: Node) -> void:
 	if node == null:
 		return
 	if node is MeshInstance3D:
-		var mi = node
-		var mat = mi.get("material_override")
+		var mat = node.get("material_override")
 		if mat and mat is StandardMaterial3D:
 			_mesh_materials.append({"mat": mat, "color": mat.albedo_color})
-		else:
-			var sc = 0
-			if mi.mesh:
-				sc = mi.mesh.get_surface_count()
-			for i in range(sc):
-				var smat = mi.get_surface_override_material(i)
-				if smat == null and mi.mesh:
-					smat = mi.mesh.surface_get_material(i)
+		elif node.mesh:
+			for i in range(node.mesh.get_surface_count()):
+				var smat = node.get_surface_override_material(i)
+				if smat == null:
+					smat = node.mesh.surface_get_material(i)
 				if smat and smat is StandardMaterial3D:
 					if not smat.resource_local_to_scene:
 						var dup = smat.duplicate()
-						mi.set_surface_override_material(i, dup)
-						_mesh_materials.append({"mat": dup, "color": dup.albedo_color})
-					else:
-						_mesh_materials.append({"mat": smat, "color": smat.albedo_color})
+						node.set_surface_override_material(i, dup)
+						smat = dup
+					_mesh_materials.append({"mat": smat, "color": smat.albedo_color})
 	for child in node.get_children():
 		_collect_materials(child)
-
 func _add_name_label() -> void:
-	var label = Label3D.new()
-	label.name = "NameLabel"
-	label.text = "%s (Lv %d)" % [display_name, combat_level]
-	label.font_size = 32
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.modulate = Color(1, 1, 0)
-	label.outline_size = 8
-	label.outline_modulate = Color(0, 0, 0)
-	label.position.y = 2.3
-	add_child(label)
-
+	var lbl = Label3D.new()
+	lbl.name = "NameLabel"
+	lbl.text = "%s (Lv %d)" % [display_name, combat_level]
+	lbl.font_size = 32
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.modulate = Color(1, 1, 0)
+	lbl.outline_size = 8
+	lbl.position.y = 2.3
+	add_child(lbl)
+func _physics_process(_delta: float) -> void:
+	if _is_dead:
+		return
+	if _target == null or not is_instance_valid(_target):
+		_return_to_spawn()
+		return
+	var look_pos = _target.global_position
+	look_pos.y = global_position.y
+	if look_pos.distance_to(global_position) > 0.01:
+		look_at(look_pos, Vector3.UP)
+	var dist = global_position.distance_to(_target.global_position)
+	if dist > attack_range * 0.8:
+		var dir = (_target.global_position - global_position).normalized()
+		dir.y = 0
+		velocity = dir * move_speed
+		move_and_slide()
+	else:
+		velocity = Vector3.ZERO
+func _return_to_spawn() -> void:
+	if global_position.distance_to(_spawn_position) < 0.5:
+		velocity = Vector3.ZERO
+		return
+	var dir = (_spawn_position - global_position).normalized()
+	dir.y = 0
+	velocity = dir * move_speed
+	move_and_slide()
 func take_damage(amount: int) -> void:
 	ensure_initialized()
 	if _is_dead:
@@ -90,7 +105,10 @@ func take_damage(amount: int) -> void:
 	_show_hitsplat(amount)
 	if hp <= 0:
 		_die()
-
+	elif _target == null:
+		var players = get_tree().get_nodes_in_group("player")
+		if players.size() > 0:
+			_target = players[0]
 func _flash_damage() -> void:
 	if _mesh_materials.is_empty():
 		return
@@ -103,28 +121,22 @@ func _flash_damage() -> void:
 	tween.set_parallel(true)
 	for entry in _mesh_materials:
 		tween.tween_property(entry["mat"], "albedo_color", entry["color"], 0.2)
-
 func _show_hitsplat(amount: int) -> void:
-	var label = Label3D.new()
-	label.text = str(amount) if amount > 0 else "Miss"
-	label.font_size = 48
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.no_depth_test = true
-	label.outline_size = 10
-	label.outline_modulate = Color(0, 0, 0)
-	label.modulate = Color(1, 0.15, 0.15) if amount > 0 else Color(0.6, 0.6, 0.6)
-	label.position.y = 2.0
-	add_child(label)
-	var tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(label, "position:y", 3.5, 0.8)
-	tween.tween_property(label, "modulate:a", 0.0, 0.8)
-	tween.set_parallel(false)
-	tween.tween_callback(label.queue_free)
-
-func is_dead() -> bool:
-	return _is_dead
-
+	var lbl = Label3D.new()
+	lbl.text = str(amount) if amount > 0 else "Miss"
+	lbl.font_size = 48
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.no_depth_test = true
+	lbl.outline_size = 10
+	lbl.modulate = Color(1, 0.15, 0.15) if amount > 0 else Color(0.6, 0.6, 0.6)
+	lbl.position.y = 2.0
+	add_child(lbl)
+	var tw = create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(lbl, "position:y", 3.5, 0.8)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.8)
+	tw.set_parallel(false)
+	tw.tween_callback(lbl.queue_free)
 func _on_game_tick(_tick) -> void:
 	if _is_dead:
 		_handle_respawn()
@@ -133,7 +145,6 @@ func _on_game_tick(_tick) -> void:
 		_check_aggro()
 	if _target and is_instance_valid(_target):
 		_combat_tick()
-
 func _check_aggro() -> void:
 	var players = get_tree().get_nodes_in_group("player")
 	for player in players:
@@ -143,7 +154,6 @@ func _check_aggro() -> void:
 			_target = player
 			GameManager.log_action("The %s attacks you!" % display_name)
 			break
-
 func _combat_tick() -> void:
 	if not is_instance_valid(_target):
 		_target = null
@@ -154,12 +164,12 @@ func _combat_tick() -> void:
 	var distance = global_position.distance_to(_target.global_position)
 	if distance > aggro_range * 2 and aggro_range > 0:
 		_target = null
+		velocity = Vector3.ZERO
 		return
 	_ticks_since_attack += 1
 	if _ticks_since_attack >= attack_speed_ticks and distance <= attack_range:
 		_perform_attack()
 		_ticks_since_attack = 0
-
 func _perform_attack() -> void:
 	if _target:
 		var damage = randi_range(0, attack_damage)
@@ -168,17 +178,15 @@ func _perform_attack() -> void:
 			GameManager.log_action("The %s hits you for %d damage." % [display_name, damage])
 		else:
 			GameManager.log_action("The %s misses." % display_name)
-
 func _die() -> void:
 	_is_dead = true
 	_target = null
+	velocity = Vector3.ZERO
 	_drop_loot()
-	# XP distributed per-hit via CombatStyle in combat_state.gd
 	died.emit(self)
 	visible = false
 	collision_layer = 0
 	_respawn_counter = respawn_ticks
-
 func _drop_loot() -> void:
 	for entry in drop_table:
 		var drop = entry.call("roll")
@@ -189,7 +197,6 @@ func _drop_loot() -> void:
 			var added = PlayerInventory.call("add_item", item, qty)
 			if not added:
 				GameManager.log_action("Your inventory is full!")
-
 func _handle_respawn() -> void:
 	_respawn_counter -= 1
 	if _respawn_counter <= 0:

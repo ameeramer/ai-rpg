@@ -103,6 +103,18 @@ func _do_request(json_body: String, cb: Callable, retry: int) -> void:
 		FileLogger.log_msg("AiNpcManager: request() queued OK (no threads)")
 
 
+func send_trade_request(system_prompt: String, user_msg: String, callback: Callable) -> void:
+	if api_key == "":
+		return
+	var body = {
+		"model": "claude-haiku-4-5-20251001",
+		"max_tokens": 400,
+		"system": system_prompt,
+		"messages": [{"role": "user", "content": user_msg}]
+	}
+	var json_body = JSON.stringify(body)
+	_do_request(json_body, callback, 0)
+
 func send_chat_request(system_prompt: String, messages: Array, callback: Callable) -> void:
 	if api_key == "":
 		return

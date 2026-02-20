@@ -1,231 +1,194 @@
 extends PanelContainer
-## Trade UI — Player-NPC item trading interface.
-
+## Trade UI — Two-player-style AI NPC trading.
 signal trade_closed()
-
-var _npc_ref: Node3D = null
-var _npc_name: String = ""
-var _player_offer: Array = []
-var _npc_offer: Array = []
-var _player_grid: GridContainer
-var _npc_grid: GridContainer
-var _title_label: Label
-var _accept_btn: Button
-var _close_btn: Button
-var _status_label: Label
-
+var _npc_ref = null
+var _npc_name = ""
+var _player_offer = []
+var _npc_offer = []
+var _state = "offer"
+var _pgrid = null
+var _ngrid = null
+var _title = null
+var _offer_btn = null
+var _accept_btn = null
+var _decline_btn = null
+var _status = null
 
 func _ready() -> void:
-	_build_ui()
+	var b = load("res://UI/Trade/trade_ui_builder.gd").new()
+	b.call("build", self)
 
-
-func _build_ui() -> void:
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.06, 0.04, 0.95)
-	style.set_border_width_all(3)
-	style.border_color = Color(0.55, 0.45, 0.28, 1)
-	style.set_corner_radius_all(12)
-	style.content_margin_left = 16
-	style.content_margin_top = 12
-	style.content_margin_right = 16
-	style.content_margin_bottom = 12
-	add_theme_stylebox_override("panel", style)
-	var vbox = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	add_child(vbox)
-	# Header
-	var header = HBoxContainer.new()
-	vbox.add_child(header)
-	_title_label = Label.new()
-	_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_title_label.add_theme_color_override("font_color", Color(1, 0.9, 0.5))
-	_title_label.add_theme_font_size_override("font_size", 36)
-	header.add_child(_title_label)
-	_close_btn = Button.new()
-	_close_btn.text = "X"
-	_close_btn.custom_minimum_size = Vector2(72, 60)
-	_close_btn.add_theme_font_size_override("font_size", 36)
-	_close_btn.pressed.connect(_on_close)
-	header.add_child(_close_btn)
-	# Trade panels side by side
-	var trade_row = HBoxContainer.new()
-	trade_row.add_theme_constant_override("separation", 16)
-	trade_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(trade_row)
-	# Your offer
-	var your_panel = _make_trade_panel("Your Offer", true)
-	trade_row.add_child(your_panel)
-	# NPC offer
-	var npc_panel = _make_trade_panel("Their Offer", false)
-	trade_row.add_child(npc_panel)
-	# Status + accept
-	_status_label = Label.new()
-	_status_label.text = "Tap your items to offer them for trade"
-	_status_label.add_theme_font_size_override("font_size", 24)
-	_status_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.6))
-	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(_status_label)
-	var btn_row = HBoxContainer.new()
-	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_row.add_theme_constant_override("separation", 16)
-	vbox.add_child(btn_row)
-	_accept_btn = Button.new()
-	_accept_btn.text = "Accept Trade"
-	_accept_btn.custom_minimum_size = Vector2(240, 66)
-	_accept_btn.add_theme_font_size_override("font_size", 28)
-	_accept_btn.pressed.connect(_on_accept)
-	btn_row.add_child(_accept_btn)
-
-
-func _make_trade_panel(title: String, is_player: bool) -> VBoxContainer:
-	var vb = VBoxContainer.new()
-	vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var lbl = Label.new()
-	lbl.text = title
-	lbl.add_theme_font_size_override("font_size", 28)
-	if is_player:
-		lbl.add_theme_color_override("font_color", Color(0.6, 1, 0.6))
-	else:
-		lbl.add_theme_color_override("font_color", Color(0.4, 0.7, 1.0))
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vb.add_child(lbl)
-	var grid = GridContainer.new()
-	grid.columns = 6
-	grid.add_theme_constant_override("h_separation", 4)
-	grid.add_theme_constant_override("v_separation", 4)
-	if is_player:
-		_player_grid = grid
-	else:
-		_npc_grid = grid
-	var scroll = ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 250)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.add_child(grid)
-	vb.add_child(scroll)
-	return vb
-
-
-func open_trade(npc_name: String, npc: Node3D) -> void:
+func open_trade(npc_name: String, npc) -> void:
 	_npc_name = npc_name
 	_npc_ref = npc
-	_title_label.text = "Trade with " + npc_name
+	_title.text = "Trade with " + npc_name
 	_player_offer.clear()
 	_npc_offer.clear()
-	_status_label.text = "Tap your items to offer them for trade"
+	_state = "offer"
+	_upd_btns()
+	_status.text = "Tap your items to offer them for trade"
 	visible = true
-	_refresh_grids()
+	_refresh()
 
-
-func _refresh_grids() -> void:
-	_clear_grid(_player_grid)
-	_clear_grid(_npc_grid)
-	# Show player inventory as offer-able items
+func _refresh() -> void:
+	for g in [_pgrid, _ngrid]:
+		for c in g.get_children():
+			c.queue_free()
 	var slots = PlayerInventory.get("slots")
 	if slots:
 		for i in range(slots.size()):
-			var slot = slots[i]
-			if slot == null:
+			if slots[i] == null:
 				continue
-			var item = slot.get("item")
-			var qty = slot.get("quantity")
+			var item = slots[i].get("item")
+			var qty = slots[i].get("quantity")
 			if item == null:
 				continue
-			var offered = _is_in_offer(_player_offer, i)
-			var btn = _make_item_btn(item, qty, offered)
-			btn.pressed.connect(_toggle_player_offer.bind(i, item, qty))
-			_player_grid.add_child(btn)
-	# Show NPC inventory
-	var npc_inv = _npc_ref.get("npc_inventory") if _npc_ref else []
-	if npc_inv:
-		for i in range(npc_inv.size()):
-			var entry = npc_inv[i]
-			if entry == null:
+			var hl = _has_slot(_player_offer, i)
+			var b = _ibtn(item, qty, hl, Color(0.2, 0.4, 0.2, 0.9))
+			if _state == "offer":
+				b.pressed.connect(_toggle.bind(i, item, qty))
+			_pgrid.add_child(b)
+	var ni = _npc_ref.get("npc_inventory") if _npc_ref else []
+	if ni:
+		for e in ni:
+			if e == null or e.get("item") == null:
 				continue
-			var item = entry.get("item")
-			var qty = entry.get("quantity")
-			if item == null:
-				continue
-			var offered = _is_in_offer(_npc_offer, i)
-			var btn = _make_item_btn(item, qty, offered)
-			_npc_grid.add_child(btn)
-	# Show offered items
-	_update_offer_display()
+			var hl = _has_id(_npc_offer, e["item"].id)
+			_ngrid.add_child(_ibtn(e["item"], e["quantity"], hl, Color(0.15, 0.3, 0.5, 0.9)))
 
-
-func _make_item_btn(item, qty: int, offered: bool) -> Button:
-	var btn = Button.new()
-	var name = item.call("get_display_name")
-	if name == null:
-		name = "Item"
-	btn.text = "%s\nx%d" % [name, qty]
-	btn.custom_minimum_size = Vector2(100, 80)
-	btn.add_theme_font_size_override("font_size", 18)
-	if offered:
+func _ibtn(item, qty: int, hl: bool, col: Color) -> Button:
+	var b = Button.new()
+	var n = item.call("get_display_name")
+	b.text = "%s\nx%d" % [n if n else "Item", qty]
+	b.custom_minimum_size = Vector2(100, 80)
+	b.add_theme_font_size_override("font_size", 18)
+	if hl:
 		var s = StyleBoxFlat.new()
-		s.bg_color = Color(0.2, 0.4, 0.2, 0.9)
+		s.bg_color = col
 		s.set_corner_radius_all(6)
-		btn.add_theme_stylebox_override("normal", s)
-	return btn
+		b.add_theme_stylebox_override("normal", s)
+	return b
 
-
-func _toggle_player_offer(slot_idx: int, item, qty: int) -> void:
-	var found = -1
+func _toggle(si: int, item, qty: int) -> void:
+	if _state != "offer":
+		return
+	var f = -1
 	for i in range(_player_offer.size()):
-		if _player_offer[i]["slot"] == slot_idx:
-			found = i
+		if _player_offer[i]["slot"] == si:
+			f = i
 			break
-	if found >= 0:
-		_player_offer.remove_at(found)
+	if f >= 0:
+		_player_offer.remove_at(f)
 	else:
-		_player_offer.append({"slot": slot_idx, "item": item, "quantity": qty})
-	_refresh_grids()
+		_player_offer.append({"slot": si, "item": item, "quantity": qty})
+	_status.text = "Offering %d item(s)" % _player_offer.size() if _player_offer.size() > 0 else "Tap items to offer"
+	_refresh()
 
-
-func _is_in_offer(offer: Array, idx: int) -> bool:
-	for entry in offer:
-		if entry.get("slot") == idx:
+func _has_slot(arr: Array, idx: int) -> bool:
+	for e in arr:
+		if e.get("slot") == idx:
 			return true
 	return false
 
+func _has_id(arr: Array, id: int) -> bool:
+	for e in arr:
+		if int(e.get("item_id", -1)) == id:
+			return true
+	return false
 
-func _update_offer_display() -> void:
-	var count = _player_offer.size()
-	if count > 0:
-		_status_label.text = "Offering %d item(s). Press Accept to trade." % count
+func _on_offer() -> void:
+	_state = "waiting"
+	_upd_btns()
+	_status.text = "Waiting for %s..." % _npc_name
+	var sys = "You are %s, evaluating a trade in an OSRS RPG. Respond ONLY with JSON: {\"accept\": true/false, \"npc_offer\": [{\"item_id\": 995, \"quantity\": 50}], \"message\": \"reason\"}. If declining, npc_offer=[]. The player may offer nothing — they might just want to see what you'll give. Be fair but shrewd — consider item gold values." % _npc_name
+	var msg = "Player offers:\n"
+	if _player_offer.is_empty():
+		msg += "- (nothing)\n"
 	else:
-		_status_label.text = "Tap your items to offer them for trade"
+		for e in _player_offer:
+			msg += "- %s x%d (value: %d gp)\n" % [e["item"].call("get_display_name"), e["quantity"], e["item"].value]
+	msg += "\nYour inventory:\n"
+	var ni = _npc_ref.get("npc_inventory") if _npc_ref else []
+	if ni and ni.size() > 0:
+		for e in ni:
+			msg += "- %s x%d (id:%d, value:%d gp)\n" % [e["item"].call("get_display_name"), e["quantity"], e["item"].id, e["item"].value]
+	else:
+		msg += "- (empty)\n"
+	# Include recent chat history for context
+	var brain = _npc_ref.get_node_or_null("Brain") if _npc_ref else null
+	var ch = brain.get("_chat_history") if brain else null
+	if ch and ch.size() > 0:
+		msg += "\nRecent chat with player:\n"
+		var start = max(0, ch.size() - 6)
+		for i in range(start, ch.size()):
+			var who = "Player" if ch[i]["role"] == "user" else "You"
+			msg += "%s: %s\n" % [who, ch[i]["content"]]
+	AiNpcManager.call("send_trade_request", sys, msg, Callable(self, "_on_trade_response"))
 
-
-func _clear_grid(grid: GridContainer) -> void:
-	if grid == null:
+func _on_trade_response(response: String) -> void:
+	if not visible:
 		return
-	for child in grid.get_children():
-		child.queue_free()
-
+	var js = response
+	var s = response.find("{")
+	var e = response.rfind("}")
+	if s >= 0 and e > s:
+		js = response.substr(s, e - s + 1)
+	var p = JSON.parse_string(js)
+	if p == null:
+		_state = "offer"
+		_upd_btns()
+		_status.text = "%s didn't understand. Try again." % _npc_name
+		return
+	_npc_offer = p.get("npc_offer", [])
+	_state = "review" if p.get("accept", false) else "offer"
+	_status.text = "%s: \"%s\"" % [_npc_name, p.get("message", "")]
+	_upd_btns()
+	_refresh()
 
 func _on_accept() -> void:
-	if _player_offer.is_empty():
-		_status_label.text = "You haven't offered anything!"
-		return
-	# Execute trade - remove items from player inventory
 	var given = []
-	for entry in _player_offer:
-		var slot = entry["slot"]
-		var qty = entry["quantity"]
-		PlayerInventory.call("remove_item_at", slot, qty)
-		var iname = entry["item"].call("get_display_name")
-		given.append("%s x%d" % [iname, qty])
-	GameManager.log_action("You traded: %s to %s" % [", ".join(given), _npc_name])
+	var got = []
+	for en in _player_offer:
+		PlayerInventory.call("remove_item_at", en["slot"], en["quantity"])
+		_npc_ref.call("add_to_inventory", en["item"], en["quantity"])
+		given.append("%s x%d" % [en["item"].call("get_display_name"), en["quantity"]])
+	for en in _npc_offer:
+		var iid = int(en.get("item_id", 0))
+		var qty = int(en.get("quantity", 1))
+		var item = ItemRegistry.call("get_item_by_id", iid)
+		if item:
+			PlayerInventory.call("add_item", item, qty)
+			_npc_ref.call("remove_from_inventory", iid, qty)
+			got.append("%s x%d" % [item.call("get_display_name"), qty])
+	GameManager.log_action("Traded with %s: gave [%s], got [%s]" % [_npc_name, ", ".join(given), ", ".join(got)])
+	# Log trade event to NPC brain so it remembers the trade happened
+	var brain = _npc_ref.get_node_or_null("Brain") if _npc_ref else null
+	if brain:
+		var event_msg = "Completed trade with player. Gave: %s. Received: %s." % [", ".join(got) if got.size() > 0 else "nothing", ", ".join(given) if given.size() > 0 else "nothing"]
+		brain.call("log_event", event_msg)
+	_state = "complete"
+	_status.text = "Trade complete!"
+	_upd_btns()
 	_player_offer.clear()
 	_npc_offer.clear()
-	_status_label.text = "Trade complete!"
-	_refresh_grids()
+	_refresh()
 
+func _on_decline() -> void:
+	_npc_offer.clear()
+	_state = "offer"
+	_upd_btns()
+	_status.text = "Trade declined. Modify your offer."
+	_refresh()
+
+func _upd_btns() -> void:
+	_offer_btn.visible = _state == "offer"
+	_accept_btn.visible = _state == "review"
+	_decline_btn.visible = _state == "review"
 
 func _on_close() -> void:
 	visible = false
+	_state = "offer"
 	trade_closed.emit()
-
 
 func setup() -> void:
 	pass

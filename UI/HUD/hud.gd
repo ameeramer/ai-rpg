@@ -22,7 +22,9 @@ var _dialogue_ui: Control
 var _shop_ui: Control
 var _chat_ui: Control
 var _trade_ui: Control
+var _bank_ui: Control
 var _context_menu: Control
+var _npc_menu: Control
 var _current_panel: Control = null
 
 func _ready() -> void:
@@ -69,6 +71,7 @@ func setup(player) -> void:
 			_dialogue_ui.trade_requested.connect(_on_trade_requested)
 	_init_chat_ui()
 	_init_trade_ui()
+	_init_npc_menu()
 
 func _init_chat_ui() -> void:
 	var sc = load("res://UI/Chat/ChatUI.tscn")
@@ -103,6 +106,15 @@ func _init_trade_ui() -> void:
 		var sig = _trade_ui.get("trade_closed")
 		if sig:
 			_trade_ui.trade_closed.connect(_close_panels)
+
+func _init_npc_menu() -> void:
+	var sc = load("res://UI/NPC/NpcInteractionMenu.tscn")
+	if sc:
+		_npc_menu = sc.instantiate()
+		add_child(_npc_menu)
+		var sig = _npc_menu.get("option_selected")
+		if sig:
+			_npc_menu.option_selected.connect(_on_npc_menu_option)
 
 func _load_ui(path: String, parent: Control) -> void:
 	var scene = load(path)
@@ -167,6 +179,10 @@ func _close_panels() -> void:
 		_chat_ui.visible = false
 	if _trade_ui and is_instance_valid(_trade_ui):
 		_trade_ui.visible = false
+	if _bank_ui and is_instance_valid(_bank_ui):
+		_bank_ui.visible = false
+	if _npc_menu and is_instance_valid(_npc_menu):
+		_npc_menu.visible = false
 
 func _on_blocker_input(event: InputEvent) -> void:
 	if (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
@@ -188,9 +204,9 @@ func show_context_menu(item, slot_idx: int, pos: Vector2) -> void:
 		_context_menu.call("show_for_item", item, slot_idx, pos)
 
 func show_dialogue(npc_name: String, lines: Array, merchant: bool = false, npc: Node3D = null) -> void:
-	# Check if this is an AI NPC — show chat UI instead of dialogue
+	# Check if this is an AI NPC — show interaction menu instead of dialogue
 	if npc and npc.call("is_ai_npc"):
-		show_ai_chat(npc)
+		_show_npc_menu(npc)
 		return
 	if _dialogue_ui:
 		_dialogue_ui.call("show_dialogue", npc_name, lines, merchant, npc)
@@ -234,6 +250,46 @@ func show_shop(npc_name: String, stock: Array) -> void:
 		_shop_ui.visible = true
 		touch_blocker.visible = true
 		_current_panel = _shop_ui
+
+func show_bank() -> void:
+	if _bank_ui == null or not is_instance_valid(_bank_ui):
+		var sc = load("res://UI/Bank/BankUI.tscn")
+		if sc:
+			_bank_ui = sc.instantiate()
+			_bank_ui.anchor_left = 0.5
+			_bank_ui.anchor_top = 0.5
+			_bank_ui.anchor_right = 0.5
+			_bank_ui.anchor_bottom = 0.5
+			_bank_ui.offset_left = -480
+			_bank_ui.offset_top = -350
+			_bank_ui.offset_right = 480
+			_bank_ui.offset_bottom = 350
+			_bank_ui.grow_horizontal = Control.GROW_DIRECTION_BOTH
+			_bank_ui.grow_vertical = Control.GROW_DIRECTION_BOTH
+			add_child(_bank_ui)
+			var sig = _bank_ui.get("bank_closed")
+			if sig:
+				_bank_ui.bank_closed.connect(_close_panels)
+	if _bank_ui:
+		_close_panels()
+		_bank_ui.call("open_bank")
+		_bank_ui.visible = true
+		touch_blocker.visible = true
+		_current_panel = _bank_ui
+
+func _show_npc_menu(npc) -> void:
+	if _npc_menu == null:
+		return
+	_close_panels()
+	_npc_menu.call("show_for_npc", npc)
+	touch_blocker.visible = true
+	_current_panel = _npc_menu
+
+func _on_npc_menu_option(option, npc) -> void:
+	if option == "Chat":
+		show_ai_chat(npc)
+	elif option == "Trade":
+		show_ai_trade(npc)
 
 func show_ai_chat(npc) -> void:
 	if _chat_ui == null:

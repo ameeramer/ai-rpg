@@ -72,7 +72,7 @@ func _request_decision() -> void:
 
 func _build_system_prompt() -> String:
 	var name = _npc.get("display_name")
-	return "You are %s, an AI companion in an OSRS-style RPG. You see the world map and choose what to interact with, just like a player clicking on objects. Respond with ONLY a JSON object:\n- Click an object: {\"target\": \"ObjectName\", \"reason\": \"...\"}\n- Walk somewhere: {\"target\": \"walk\", \"x\": 5, \"z\": -3, \"reason\": \"...\"}\n- Talk/trade with player: {\"target\": \"player\", \"intent\": \"chat\" or \"trade\", \"reason\": \"...\"}\n- Idle/wander: {\"target\": \"idle\", \"reason\": \"...\"}\nPick objects by their exact ID from the world map. Consider distance, skill requirements, your HP, and training efficiency." % name
+	return "You are %s, an AI companion in an OSRS-style RPG. You see the world map and choose what to interact with, just like a player clicking on objects. Respond with ONLY a JSON object:\n- Click an object: {\"target\": \"ObjectName\", \"reason\": \"...\"}\n- Walk somewhere: {\"target\": \"walk\", \"x\": 5, \"z\": -3, \"reason\": \"...\"}\n- Talk/trade with player: {\"target\": \"player\", \"intent\": \"chat\" or \"trade\", \"reason\": \"...\"}\n- Idle/wander: {\"target\": \"idle\", \"reason\": \"...\"}\nPick objects by their exact ID from the world map. Consider distance, skill requirements, your HP, and training efficiency. You have a real inventory that fills up when you gather items. Trading is a real game mechanic — when you approach the player to trade, a trade window opens where both sides can offer items." % name
 
 func _build_game_state() -> String:
 	var skills = _npc.get("npc_skills")

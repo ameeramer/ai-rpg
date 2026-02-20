@@ -95,14 +95,11 @@ func _on_game_tick(_tick) -> void:
 
 
 func _perform_attack() -> void:
-	FileLogger.log_msg("Combat: _perform_attack() start")
-	var max_hit = _calculate_max_hit()
-	var damage = randi_range(0, max_hit)
-	FileLogger.log_msg("Combat: max_hit=%d damage=%d" % [max_hit, damage])
-
-	# Call take_damage directly — we know layer 4 objects are enemies with this method
+	var hit = _roll_accuracy()
+	var damage = 0
+	if hit:
+		damage = randi_range(0, _calculate_max_hit())
 	_target.call("take_damage", damage)
-
 	var target_name = _target.get("display_name")
 	if target_name == null:
 		target_name = _target.name
@@ -110,18 +107,29 @@ func _perform_attack() -> void:
 		GameManager.log_action("You hit the %s for %d damage." % [target_name, damage])
 	else:
 		GameManager.log_action("You miss the %s." % target_name)
-	FileLogger.log_msg("Combat: dealt %d damage to %s" % [damage, target_name])
-
-	# Distribute XP based on current attack style
 	CombatStyle.call("distribute_combat_xp", damage)
-
-	# Play tween attack animation
 	player.play_attack_animation()
-
-	# Check if target is dead
 	if _is_target_dead():
 		GameManager.log_action("You defeated the %s!" % target_name)
 		state_machine.transition_to("Idle")
+
+
+func _roll_accuracy() -> bool:
+	var attack_level = PlayerSkills.get_level("Attack")
+	var attack_bonus = PlayerEquipment.call("get_attack_bonus")
+	if attack_bonus == null:
+		attack_bonus = 0
+	var boosts = CombatStyle.call("get_invisible_boost")
+	if boosts == null:
+		boosts = {}
+	var atk_boost = boosts.get("Attack", 0)
+	var atk_roll = (attack_level + atk_boost + 8) * (attack_bonus + 64)
+	var enemy_def = _target.get("defence_level")
+	if enemy_def == null:
+		enemy_def = 1
+	var def_roll = (enemy_def + 9) * 64
+	var hit_chance = float(atk_roll) / float(atk_roll + def_roll)
+	return randf() < hit_chance
 
 
 func _calculate_max_hit() -> int:
@@ -129,11 +137,17 @@ func _calculate_max_hit() -> int:
 	var strength_bonus = PlayerEquipment.call("get_strength_bonus")
 	if strength_bonus == null:
 		strength_bonus = 0
-	# Apply invisible boost from combat style
 	var boosts = CombatStyle.call("get_invisible_boost")
 	if boosts == null:
 		boosts = {}
 	var str_boost = boosts.get("Strength", 0)
 	var effective_strength = strength_level + str_boost + 8
-	var max_hit = int(0.5 + effective_strength * (strength_bonus + 64) / 640.0)
-	return max(1, max_hit)
+	var base = int(0.5 + effective_strength * (strength_bonus + 64) / 640.0)
+	# Add weapon base damage so better weapons hit noticeably harder
+	var weapon = PlayerEquipment.call("get_weapon")
+	var weapon_dmg = 0
+	if weapon:
+		var wd = weapon.get("attack_damage")
+		if wd != null:
+			weapon_dmg = int(wd * 0.5)
+	return max(1, base + weapon_dmg)

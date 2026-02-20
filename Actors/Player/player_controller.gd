@@ -172,11 +172,12 @@ func set_hud(hud: Node) -> void:
 func open_dialogue(npc_name: String, lines: Array, merchant: bool = false, npc: Node3D = null) -> void:
 	if _hud_ref:
 		_hud_ref.call("show_dialogue", npc_name, lines, merchant, npc)
-
 func open_shop(npc_name: String, stock: Array) -> void:
 	if _hud_ref:
 		_hud_ref.call("show_shop", npc_name, stock)
-
+func open_bank() -> void:
+	if _hud_ref:
+		_hud_ref.call("show_bank")
 func play_attack_animation() -> void:
 	if not model:
 		return
