@@ -2,7 +2,6 @@ extends Node
 
 signal save_completed(success)
 signal load_completed(success)
-
 var SAVE_PATH = "user://savegame.json"
 var EXPORT_FILENAME = "airpg_save.json"
 var SAVE_VERSION = 1
@@ -64,43 +63,58 @@ func load_game() -> bool:
 		return false
 	return _apply_save_data(parsed)
 
-func get_export_path() -> String:
+func _add_unique(paths, seen, p) -> void:
+	if not seen.has(p):
+		paths.append(p)
+		seen[p] = true
+
+func _get_download_paths() -> Array:
+	var paths = []
+	var seen = {}
 	if OS.get_name() == "Android":
 		var dl = OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS)
 		if dl != "":
-			return dl.path_join(EXPORT_FILENAME)
+			_add_unique(paths, seen, dl.path_join(EXPORT_FILENAME))
+		_add_unique(paths, seen, "/storage/emulated/0/Download".path_join(EXPORT_FILENAME))
+		_add_unique(paths, seen, "/sdcard/Download".path_join(EXPORT_FILENAME))
 	var docs = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)
 	if docs != "":
-		return docs.path_join(EXPORT_FILENAME)
-	return ProjectSettings.globalize_path("user://").path_join(EXPORT_FILENAME)
+		_add_unique(paths, seen, docs.path_join(EXPORT_FILENAME))
+	_add_unique(paths, seen, ProjectSettings.globalize_path("user://").path_join(EXPORT_FILENAME))
+	return paths
 
 func export_save_file() -> String:
+	if OS.get_name() == "Android":
+		OS.request_permissions()
 	var json_str = JSON.stringify(_collect_save_data(), "  ")
-	var path = get_export_path()
-	var file = FileAccess.open(path, FileAccess.WRITE)
-	if file == null:
-		path = "user://" + EXPORT_FILENAME
-		file = FileAccess.open(path, FileAccess.WRITE)
-	if file == null:
-		FileLogger.log_msg("SaveManager: export failed")
-		return ""
-	file.store_string(json_str)
-	file.flush()
-	file = null
-	FileLogger.log_msg("SaveManager: exported to %s" % path)
-	return path
+	for path in _get_download_paths():
+		FileLogger.log_msg("SaveManager: trying export to %s" % path)
+		var file = FileAccess.open(path, FileAccess.WRITE)
+		if file != null:
+			file.store_string(json_str)
+			file.flush()
+			file = null
+			FileLogger.log_msg("SaveManager: exported to %s" % path)
+			return path
+		var err = FileAccess.get_open_error()
+		FileLogger.log_msg("SaveManager: failed %s err=%d" % [path, err])
+	FileLogger.log_msg("SaveManager: export failed all paths")
+	return ""
 
 func import_save_file() -> Dictionary:
-	var path = get_export_path()
-	if not FileAccess.file_exists(path):
-		var alt = "user://" + EXPORT_FILENAME
-		if FileAccess.file_exists(alt):
-			path = alt
-		else:
-			return {"success": false, "error": "No file found. Place %s in Downloads." % EXPORT_FILENAME}
-	var file = FileAccess.open(path, FileAccess.READ)
+	if OS.get_name() == "Android":
+		OS.request_permissions()
+	var found_path = ""
+	for path in _get_download_paths():
+		if FileAccess.file_exists(path):
+			found_path = path
+			break
+	if found_path == "":
+		return {"success": false, "error": "No file found. Place %s in Downloads." % EXPORT_FILENAME}
+	FileLogger.log_msg("SaveManager: importing from %s" % found_path)
+	var file = FileAccess.open(found_path, FileAccess.READ)
 	if file == null:
-		return {"success": false, "error": "Cannot read file."}
+		return {"success": false, "error": "Cannot read file at %s" % found_path}
 	var parsed = JSON.parse_string(file.get_as_text())
 	file = null
 	if parsed == null:
@@ -108,7 +122,7 @@ func import_save_file() -> Dictionary:
 	var ok = _apply_save_data(parsed)
 	if ok:
 		save_game()
-	return {"success": ok, "error": "" if ok else "Failed to apply save.", "path": path}
+	return {"success": ok, "error": "" if ok else "Failed to apply save.", "path": found_path}
 
 func has_save_file() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)
@@ -117,6 +131,7 @@ func _collect_save_data() -> Dictionary:
 	var data = {"save_version": SAVE_VERSION, "timestamp": _get_timestamp(), "systems": {}}
 	_save_sys(data, "player_skills", PlayerSkills)
 	_save_sys(data, "player_inventory", PlayerInventory)
+	_save_sys(data, "player_bank", PlayerBank)
 	_save_sys(data, "player_equipment", PlayerEquipment)
 	_save_sys(data, "combat_style", CombatStyle)
 	_save_sys(data, "game_manager", GameManager)
@@ -147,6 +162,8 @@ func _apply_save_data(data) -> bool:
 		PlayerSkills.call("deserialize", systems["player_skills"])
 	if systems.has("player_inventory"):
 		PlayerInventory.call("deserialize", systems["player_inventory"])
+	if systems.has("player_bank"):
+		PlayerBank.call("deserialize", systems["player_bank"])
 	if systems.has("player_equipment"):
 		PlayerEquipment.call("deserialize", systems["player_equipment"])
 	if systems.has("combat_style"):

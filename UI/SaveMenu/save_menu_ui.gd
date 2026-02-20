@@ -130,7 +130,12 @@ func _on_load_pressed() -> void:
 func _on_export_pressed() -> void:
 	var path = SaveManager.call("export_save_file")
 	if path and str(path) != "":
-		_transfer_status.text = "Saved to: " + str(path)
+		var p = str(path)
+		var is_downloads = p.find("Download") != -1
+		if is_downloads:
+			_transfer_status.text = "Saved to Downloads: airpg_save.json"
+		else:
+			_transfer_status.text = "Saved to: " + p
 		_transfer_status.add_theme_color_override("font_color", Color(0.6, 0.85, 0.6))
 		GameManager.log_action("Save exported to file!")
 	else:

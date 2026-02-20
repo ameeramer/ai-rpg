@@ -41,6 +41,14 @@ func ensure_initialized() -> void:
 		_nav_agent.max_speed = move_speed
 	for s in ["Attack","Strength","Defence","Hitpoints","Ranged","Prayer","Magic","Cooking","Woodcutting","Fishing","Mining","Smithing","Crafting","Firemaking","Agility","Thieving"]:
 		npc_skills[s] = {"level": 10 if s == "Hitpoints" else 1, "xp": 1154.0 if s == "Hitpoints" else 0.0}
+	# Starter inventory: 100 coins + bronze sword
+	if npc_inventory.size() == 0:
+		var coins = ItemRegistry.call("get_item_by_id", 995)
+		if coins:
+			npc_inventory.append({"item": coins, "quantity": 100})
+		var sword = ItemRegistry.call("get_item_by_id", 1277)
+		if sword:
+			npc_inventory.append({"item": sword, "quantity": 1})
 	if not _tick_connected:
 		var sig = GameManager.get("game_tick")
 		if sig:
@@ -208,6 +216,23 @@ func _log_event(text: String) -> void:
 	var brain = get_node_or_null("Brain")
 	if brain:
 		brain.call("log_event", text)
+
+func add_to_inventory(item, qty: int) -> void:
+	for entry in npc_inventory:
+		if entry["item"].id == item.id:
+			entry["quantity"] += qty
+			return
+	npc_inventory.append({"item": item, "quantity": qty})
+
+func remove_from_inventory(item_id: int, qty: int) -> void:
+	for i in range(npc_inventory.size() - 1, -1, -1):
+		var entry = npc_inventory[i]
+		if entry["item"].id == item_id:
+			if entry["quantity"] <= qty:
+				npc_inventory.remove_at(i)
+			else:
+				entry["quantity"] -= qty
+			return
 
 func serialize() -> Dictionary:
 	var act = get_node_or_null("Actions")
